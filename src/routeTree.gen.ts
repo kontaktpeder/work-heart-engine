@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
+import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authenticated/prosjekter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedArbeidstyperRouteImport } from './routes/_authenticated/arbeidstyper'
 
@@ -41,6 +42,11 @@ const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
   path: '/rapport',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProsjekterRoute = AuthenticatedProsjekterRouteImport.update({
+  id: '/prosjekter',
+  path: '/prosjekter',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
 }
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
 }
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/prosjekter': typeof AuthenticatedProsjekterRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
 }
@@ -86,10 +95,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/arbeidstyper'
     | '/dashboard'
+    | '/prosjekter'
     | '/rapport'
     | '/timeliste'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/arbeidstyper' | '/dashboard' | '/rapport' | '/timeliste'
+  to:
+    | '/'
+    | '/auth'
+    | '/arbeidstyper'
+    | '/dashboard'
+    | '/prosjekter'
+    | '/rapport'
+    | '/timeliste'
   id:
     | '__root__'
     | '/'
@@ -97,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/arbeidstyper'
     | '/_authenticated/dashboard'
+    | '/_authenticated/prosjekter'
     | '/_authenticated/rapport'
     | '/_authenticated/timeliste'
   fileRoutesById: FileRoutesById
@@ -144,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRapportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/prosjekter': {
+      id: '/_authenticated/prosjekter'
+      path: '/prosjekter'
+      fullPath: '/prosjekter'
+      preLoaderRoute: typeof AuthenticatedProsjekterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -164,6 +189,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedArbeidstyperRoute: typeof AuthenticatedArbeidstyperRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProsjekterRoute: typeof AuthenticatedProsjekterRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
   AuthenticatedTimelisteRoute: typeof AuthenticatedTimelisteRoute
 }
@@ -171,6 +197,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedArbeidstyperRoute: AuthenticatedArbeidstyperRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProsjekterRoute: AuthenticatedProsjekterRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
   AuthenticatedTimelisteRoute: AuthenticatedTimelisteRoute,
 }
@@ -186,13 +213,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -7,12 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   fetchActiveSession,
   fetchOrganizations,
+  fetchProjects,
   fetchTimeEntries,
-  fetchWorkTypes,
   formatDuration,
-  startOfDay,
   entryMinutes,
+  type Project,
 } from "@/lib/work-core";
+import { startOfDay } from "@/lib/time-utils";
+import { ProjectPicker } from "@/components/project-picker";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -28,7 +30,7 @@ function Dashboard() {
   const today = startOfDay();
   const entriesQ = useQuery({
     queryKey: ["entries", "today"],
-    queryFn: () => fetchTimeEntries(today),
+    queryFn: () => fetchTimeEntries({ from: today }),
   });
 
   const orgs = orgsQ.data ?? [];
@@ -37,15 +39,14 @@ function Dashboard() {
     if (!orgId && orgs.length) setOrgId(orgs[0].id);
   }, [orgs, orgId]);
 
-  const typesQ = useQuery({
-    queryKey: ["types", orgId],
-    queryFn: () => fetchWorkTypes(orgId),
+  const projectsQ = useQuery({
+    queryKey: ["projects", orgId],
+    queryFn: () => fetchProjects(orgId),
     enabled: !!orgId,
   });
 
   const activeSession = sessionQ.data;
 
-  // Live ticking elapsed time
   const [, setTick] = useState(0);
   useEffect(() => {
     if (!activeSession) return;
@@ -57,24 +58,36 @@ function Dashboard() {
     ? Math.floor((Date.now() - new Date(activeSession.started_at).getTime()) / 60000)
     : 0;
 
-  const todayMin = useMemo(() => {
-    return (entriesQ.data ?? []).reduce((sum, e) => sum + entryMinutes(e), 0);
-  }, [entriesQ.data]);
+  const todayMin = useMemo(
+    () => (entriesQ.data ?? []).reduce((sum, e) => sum + entryMinutes(e), 0),
+    [entriesQ.data],
+  );
 
   const [comment, setComment] = useState("");
-  const [typeId, setTypeId] = useState<string>("");
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [breakMin, setBreakMin] = useState<number>(0);
   const [busy, setBusy] = useState(false);
+
+  // resolve project name when session active
+  useEffect(() => {
+    const pid = projectId ?? activeSession?.project_id ?? null;
+    if (!pid) { setProject(null); return; }
+    const p = (projectsQ.data ?? []).find((x) => x.id === pid);
+    if (p) setProject(p);
+  }, [projectId, activeSession, projectsQ.data]);
 
   const greeting = user.user_metadata?.full_name?.split(" ")[0] ?? user.email?.split("@")[0] ?? "der";
 
   async function startWork() {
     if (!orgId) return toast.error("Velg organisasjon");
+    if (!projectId) return toast.error("Velg prosjekt");
     setBusy(true);
     const { error } = await supabase.from("work_sessions").insert({
       user_id: user.id,
       organization_id: orgId,
-      work_type_id: typeId || null,
+      project_id: projectId,
       comment: comment || null,
     });
     setBusy(false);
@@ -86,28 +99,25 @@ function Dashboard() {
   async function stopWork() {
     if (!activeSession) return;
     setBusy(true);
+    const start = new Date(activeSession.started_at);
+    const end = new Date();
+    const pid = projectId ?? activeSession.project_id;
     const { error: insErr } = await supabase.from("time_entries").insert({
       user_id: activeSession.user_id,
       organization_id: activeSession.organization_id,
-      work_type_id: typeId || activeSession.work_type_id,
-      started_at: activeSession.started_at,
-      ended_at: new Date().toISOString(),
+      project_id: pid,
+      date: start.toISOString().slice(0, 10),
+      start_time: start.toTimeString().slice(0, 8),
+      end_time: end.toTimeString().slice(0, 8),
       break_minutes: breakMin,
       comment: comment || activeSession.comment,
+      source: "timer",
     });
-    if (insErr) {
-      setBusy(false);
-      return toast.error(insErr.message);
-    }
-    const { error: delErr } = await supabase
-      .from("work_sessions")
-      .delete()
-      .eq("id", activeSession.id);
+    if (insErr) { setBusy(false); return toast.error(insErr.message); }
+    const { error: delErr } = await supabase.from("work_sessions").delete().eq("id", activeSession.id);
     setBusy(false);
     if (delErr) return toast.error(delErr.message);
-    setComment("");
-    setBreakMin(0);
-    setTypeId("");
+    setComment(""); setBreakMin(0); setProjectId(null);
     toast.success("Timeføring lagret");
     qc.invalidateQueries({ queryKey: ["session"] });
     qc.invalidateQueries({ queryKey: ["entries"] });
@@ -124,50 +134,34 @@ function Dashboard() {
         <div className="surface-card text-center space-y-5 border-primary/40">
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Du jobber</p>
-            <p className="mt-2 text-5xl font-bold tabular-nums">
-              {formatDuration(elapsedMin)}
-            </p>
+            <p className="mt-2 text-5xl font-bold tabular-nums">{formatDuration(elapsedMin)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Startet kl. {new Date(activeSession.started_at).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
+              {project?.name ?? "—"} · startet kl. {new Date(activeSession.started_at).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
             </p>
           </div>
 
           <div className="space-y-2 text-left">
-            <label className="text-xs text-muted-foreground">Arbeidstype</label>
-            <select
-              value={typeId || activeSession.work_type_id || ""}
-              onChange={(e) => setTypeId(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            <label className="text-xs text-muted-foreground">Prosjekt</label>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left"
             >
-              <option value="">Ingen</option>
-              {(typesQ.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+              {project?.name ?? "Velg prosjekt…"}
+            </button>
 
             <label className="text-xs text-muted-foreground mt-2 block">Pause (min)</label>
             <input
-              type="number"
-              min={0}
-              value={breakMin}
+              type="number" min={0} value={breakMin}
               onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             />
 
             <label className="text-xs text-muted-foreground mt-2 block">Kommentar</label>
-            <input
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Hva gjorde du?"
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-            />
+            <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Hva gjorde du?" className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
           </div>
 
-          <button
-            onClick={stopWork}
-            disabled={busy}
-            className="w-full tap-target bg-destructive text-destructive-foreground text-lg disabled:opacity-60"
-          >
+          <button onClick={stopWork} disabled={busy} className="w-full tap-target bg-destructive text-destructive-foreground text-lg h-16 disabled:opacity-60">
             <Square className="w-5 h-5 mr-2" fill="currentColor" />
             Stopp arbeid
           </button>
@@ -176,34 +170,21 @@ function Dashboard() {
         <div className="surface-card space-y-4">
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground">Organisasjon</label>
-            <select
-              value={orgId}
-              onChange={(e) => setOrgId(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-            >
-              {orgs.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
+            <select value={orgId} onChange={(e) => { setOrgId(e.target.value); setProjectId(null); setProject(null); }} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
+              {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
 
-            <label className="text-xs text-muted-foreground mt-2 block">Arbeidstype (valgfritt)</label>
-            <select
-              value={typeId}
-              onChange={(e) => setTypeId(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-            >
-              <option value="">Velg…</option>
-              {(typesQ.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+            <label className="text-xs text-muted-foreground mt-2 block">Prosjekt</label>
+            <button type="button" onClick={() => setPickerOpen(true)} className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between">
+              <span className={project ? "" : "text-muted-foreground"}>{project?.name ?? "Velg prosjekt…"}</span>
+              {project?.hourly_rate != null && <span className="text-xs text-muted-foreground">{project.hourly_rate} kr/t</span>}
+            </button>
+
+            <label className="text-xs text-muted-foreground mt-2 block">Kommentar (valgfri)</label>
+            <input value={comment} onChange={(e) => setComment(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
           </div>
 
-          <button
-            onClick={startWork}
-            disabled={busy || !orgId}
-            className="w-full tap-target bg-primary text-primary-foreground text-lg h-16 disabled:opacity-60"
-          >
+          <button onClick={startWork} disabled={busy || !orgId || !projectId} className="w-full tap-target bg-primary text-primary-foreground text-lg h-16 disabled:opacity-60">
             <Play className="w-6 h-6 mr-2" fill="currentColor" />
             Start arbeid
           </button>
@@ -216,6 +197,14 @@ function Dashboard() {
           <span className="text-2xl font-bold tabular-nums">{formatDuration(todayMin)}</span>
         </div>
       </div>
+
+      <ProjectPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        orgId={orgId}
+        value={projectId ?? activeSession?.project_id ?? null}
+        onChange={(id, p) => { setProjectId(id); setProject(p); }}
+      />
     </div>
   );
 }

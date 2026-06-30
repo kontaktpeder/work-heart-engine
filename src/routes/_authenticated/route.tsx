@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, List, Tag, BarChart3, LogOut } from "lucide-react";
+import { Home, List, FolderKanban, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated")({
 const tabs = [
   { to: "/dashboard", label: "Start", icon: Home },
   { to: "/timeliste", label: "Timer", icon: List },
-  { to: "/arbeidstyper", label: "Typer", icon: Tag },
+  { to: "/prosjekter", label: "Prosjekter", icon: FolderKanban },
   { to: "/rapport", label: "Rapport", icon: BarChart3 },
 ] as const;
 

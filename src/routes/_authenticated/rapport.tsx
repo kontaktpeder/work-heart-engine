@@ -1,103 +1,181 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Download, FileText } from "lucide-react";
 import {
   fetchOrganizations,
+  fetchProjects,
   fetchTimeEntries,
-  fetchWorkTypes,
   entryMinutes,
   formatDuration,
-  startOfWeek,
+  formatNok,
 } from "@/lib/work-core";
+import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
+import { buildCsv, buildPdf, buildRows } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/rapport")({
   head: () => ({ meta: [{ title: "Rapport · Work Core" }] }),
-  component: Report,
+  component: Rapport,
 });
 
-function Report() {
-  const from = startOfWeek();
-  const entriesQ = useQuery({ queryKey: ["entries", "report-week"], queryFn: () => fetchTimeEntries(from) });
+function Rapport() {
+  const [from, setFrom] = useState(toDateInput(startOfMonth()));
+  const [to, setTo] = useState(toDateInput(endOfMonth()));
+  const [orgId, setOrgId] = useState("");
+  const [projectId, setProjectId] = useState("");
+
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
-  const typesQ = useQuery({ queryKey: ["types-all"], queryFn: () => fetchWorkTypes() });
+  const projectsQ = useQuery({ queryKey: ["projects-all"], queryFn: () => fetchProjects() });
+
+  const fromDate = new Date(from + "T00:00:00");
+  const toDate = new Date(to + "T23:59:59");
+
+  const entriesQ = useQuery({
+    queryKey: ["entries", "report", from, to, orgId, projectId],
+    queryFn: () => fetchTimeEntries({
+      from: fromDate,
+      to: toDate,
+      orgId: orgId || undefined,
+      projectId: projectId || undefined,
+    }),
+  });
 
   const entries = entriesQ.data ?? [];
-  const total = entries.reduce((s, e) => s + entryMinutes(e), 0);
+  const projById = useMemo(() => new Map((projectsQ.data ?? []).map((p) => [p.id, p])), [projectsQ.data]);
 
-  const byOrg = useMemo(() => groupBy(entries, "organization_id"), [entries]);
-  const byType = useMemo(() => groupBy(entries, "work_type_id"), [entries]);
-  const byDay = useMemo(() => {
-    const map = new Map<string, number>();
+  const totalMin = entries.reduce((s, e) => s + entryMinutes(e), 0);
+  const totalAmount = entries.reduce((s, e) => s + (e.amount ?? 0), 0);
+  const anyAmount = entries.some((e) => e.amount != null);
+
+  const byProject = useMemo(() => {
+    const m = new Map<string, { min: number; amount: number; name: string }>();
     for (const e of entries) {
-      const day = new Date(e.started_at).toLocaleDateString("nb-NO", { weekday: "short", day: "numeric" });
-      map.set(day, (map.get(day) ?? 0) + entryMinutes(e));
+      const name = e.project_id ? projById.get(e.project_id)?.name ?? "—" : "—";
+      const key = e.project_id ?? "—";
+      const cur = m.get(key) ?? { min: 0, amount: 0, name };
+      cur.min += entryMinutes(e);
+      cur.amount += e.amount ?? 0;
+      m.set(key, cur);
     }
-    return [...map.entries()];
+    return [...m.values()].sort((a, b) => b.min - a.min);
+  }, [entries, projById]);
+
+  const byRate = useMemo(() => {
+    const m = new Map<number, { min: number; amount: number }>();
+    for (const e of entries) {
+      if (e.hourly_rate == null) continue;
+      const cur = m.get(e.hourly_rate) ?? { min: 0, amount: 0 };
+      cur.min += entryMinutes(e);
+      cur.amount += e.amount ?? 0;
+      m.set(e.hourly_rate, cur);
+    }
+    return [...m.entries()].sort((a, b) => a[0] - b[0]);
   }, [entries]);
 
-  const orgName = (id: string) => orgsQ.data?.find((o) => o.id === id)?.name ?? "—";
-  const typeName = (id: string | null) => (id ? typesQ.data?.find((t) => t.id === id)?.name : null) ?? "Uten type";
-
-  const max = Math.max(1, ...byDay.map(([, v]) => v));
+  function exportCsv() {
+    const rows = buildRows(entries, projById);
+    buildCsv(rows, `timer_${from}_${to}.csv`);
+  }
+  function exportPdf() {
+    const rows = buildRows(entries, projById);
+    const orgName = orgId ? orgsQ.data?.find((o) => o.id === orgId)?.name : "Alle organisasjoner";
+    buildPdf(rows, {
+      title: "Timeoppgave",
+      periodLabel: `${orgName} · ${from} – ${to}`,
+      filename: `timer_${from}_${to}.pdf`,
+    });
+  }
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Denne uka</h1>
+      <h1 className="text-2xl font-bold">Rapport</h1>
 
-      <div className="surface-card text-center">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Totalt</p>
-        <p className="mt-1 text-4xl font-bold tabular-nums">{formatDuration(total)}</p>
-      </div>
-
-      <div className="surface-card">
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Per dag</h2>
-        <div className="space-y-2">
-          {byDay.length === 0 && <p className="text-sm text-muted-foreground">Ingen aktivitet.</p>}
-          {byDay.map(([day, min]) => (
-            <div key={day}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="capitalize">{day}</span>
-                <span className="tabular-nums text-muted-foreground">{formatDuration(min)}</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${(min / max) * 100}%` }} />
-              </div>
-            </div>
-          ))}
+      <div className="surface-card space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-muted-foreground">Fra</label>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Til</label>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Organisasjon</label>
+          <select value={orgId} onChange={(e) => setOrgId(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
+            <option value="">Alle</option>
+            {(orgsQ.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Prosjekt</label>
+          <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
+            <option value="">Alle</option>
+            {(projectsQ.data ?? []).filter((p) => !orgId || p.organization_id === orgId).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <Section title="Per organisasjon" rows={Object.entries(byOrg).map(([k, v]) => ({ label: orgName(k), minutes: sum(v) }))} />
-      <Section title="Per arbeidstype" rows={Object.entries(byType).map(([k, v]) => ({ label: typeName(k === "null" ? null : k), minutes: sum(v) }))} />
-    </div>
-  );
-}
-
-function Section({ title, rows }: { title: string; rows: { label: string; minutes: number }[] }) {
-  const sorted = [...rows].sort((a, b) => b.minutes - a.minutes);
-  return (
-    <div className="surface-card">
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3">{title}</h2>
-      {sorted.length === 0 && <p className="text-sm text-muted-foreground">Ingen data.</p>}
-      <div className="space-y-2">
-        {sorted.map((r) => (
-          <div key={r.label} className="flex justify-between text-sm">
-            <span>{r.label}</span>
-            <span className="font-semibold tabular-nums">{formatDuration(r.minutes)}</span>
+      <div className="surface-card space-y-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-muted-foreground">Total tid</span>
+          <span className="text-2xl font-bold tabular-nums">{formatDuration(totalMin)}</span>
+        </div>
+        {anyAmount && (
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-muted-foreground">Total beløp</span>
+            <span className="text-xl font-bold tabular-nums">{formatNok(totalAmount)}</span>
           </div>
-        ))}
+        )}
+      </div>
+
+      {byProject.length > 0 && (
+        <div className="surface-card">
+          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Per prosjekt</h2>
+          <div className="space-y-2">
+            {byProject.map((p) => (
+              <div key={p.name} className="flex items-baseline justify-between">
+                <span className="truncate">{p.name}</span>
+                <div className="text-right">
+                  <div className="tabular-nums font-medium">{formatDuration(p.min)}</div>
+                  {p.amount > 0 && <div className="text-xs text-muted-foreground tabular-nums">{formatNok(p.amount)}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {byRate.length > 0 && (
+        <div className="surface-card">
+          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Per sats</h2>
+          <div className="space-y-2">
+            {byRate.map(([rate, v]) => (
+              <div key={rate} className="flex items-baseline justify-between">
+                <span className="tabular-nums">{rate} kr/t</span>
+                <div className="text-right">
+                  <div className="tabular-nums font-medium">{formatDuration(v.min)}</div>
+                  <div className="text-xs text-muted-foreground tabular-nums">{formatNok(v.amount)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={exportCsv} disabled={!entries.length} className="tap-target bg-secondary text-secondary-foreground h-12 disabled:opacity-50">
+          <Download className="w-4 h-4 mr-2" />
+          CSV
+        </button>
+        <button onClick={exportPdf} disabled={!entries.length} className="tap-target bg-primary text-primary-foreground h-12 disabled:opacity-50">
+          <FileText className="w-4 h-4 mr-2" />
+          PDF
+        </button>
       </div>
     </div>
   );
-}
-
-function groupBy<T extends Record<string, unknown>>(items: T[], key: keyof T): Record<string, T[]> {
-  return items.reduce((acc, item) => {
-    const k = String(item[key] ?? "null");
-    (acc[k] ||= []).push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
-}
-function sum(items: { ended_at: string; started_at: string; break_minutes: number }[]): number {
-  return items.reduce((s, e) => s + Math.max(0, Math.round((new Date(e.ended_at).getTime() - new Date(e.started_at).getTime()) / 60000) - (e.break_minutes ?? 0)), 0);
 }

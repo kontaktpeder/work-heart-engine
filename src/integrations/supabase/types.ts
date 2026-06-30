@@ -76,48 +76,113 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          code: string | null
+          created_at: string
+          description: string | null
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
+          amount: number | null
           booking_id: string | null
           break_minutes: number
           comment: string | null
           created_at: string
-          ended_at: string
+          date: string | null
+          end_time: string | null
+          ended_at: string | null
           finance_entry_id: string | null
+          hourly_rate: number | null
           id: string
           organization_id: string
           project_id: string | null
-          started_at: string
+          source: Database["public"]["Enums"]["time_entry_source"]
+          start_time: string | null
+          started_at: string | null
+          total_minutes: number | null
           updated_at: string
           user_id: string
           work_type_id: string | null
         }
         Insert: {
+          amount?: number | null
           booking_id?: string | null
           break_minutes?: number
           comment?: string | null
           created_at?: string
-          ended_at: string
+          date?: string | null
+          end_time?: string | null
+          ended_at?: string | null
           finance_entry_id?: string | null
+          hourly_rate?: number | null
           id?: string
           organization_id: string
           project_id?: string | null
-          started_at: string
+          source?: Database["public"]["Enums"]["time_entry_source"]
+          start_time?: string | null
+          started_at?: string | null
+          total_minutes?: number | null
           updated_at?: string
           user_id: string
           work_type_id?: string | null
         }
         Update: {
+          amount?: number | null
           booking_id?: string | null
           break_minutes?: number
           comment?: string | null
           created_at?: string
-          ended_at?: string
+          date?: string | null
+          end_time?: string | null
+          ended_at?: string | null
           finance_entry_id?: string | null
+          hourly_rate?: number | null
           id?: string
           organization_id?: string
           project_id?: string | null
-          started_at?: string
+          source?: Database["public"]["Enums"]["time_entry_source"]
+          start_time?: string | null
+          started_at?: string | null
+          total_minutes?: number | null
           updated_at?: string
           user_id?: string
           work_type_id?: string | null
@@ -128,6 +193,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -145,6 +217,7 @@ export type Database = {
           created_at: string
           id: string
           organization_id: string
+          project_id: string | null
           started_at: string
           user_id: string
           work_type_id: string | null
@@ -154,6 +227,7 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id: string
+          project_id?: string | null
           started_at?: string
           user_id: string
           work_type_id?: string | null
@@ -163,6 +237,7 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id?: string
+          project_id?: string | null
           started_at?: string
           user_id?: string
           work_type_id?: string | null
@@ -173,6 +248,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -235,6 +317,7 @@ export type Database = {
     }
     Enums: {
       org_role: "owner" | "admin" | "editor" | "viewer"
+      time_entry_source: "manual" | "timer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -363,6 +446,7 @@ export const Constants = {
   public: {
     Enums: {
       org_role: ["owner", "admin", "editor", "viewer"],
+      time_entry_source: ["manual", "timer"],
     },
   },
 } as const
