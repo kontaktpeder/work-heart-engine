@@ -35,7 +35,7 @@ function Timeliste() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TimeEntry | null>(null);
 
-  const range = useMemo(() => {
+  const range = useMemo<{ from?: Date; to?: Date }>(() => {
     if (period === "week") return { from: startOfWeek(), to: endOfWeek() };
     if (period === "lastweek") return previousWeek();
     if (period === "month") return { from: startOfMonth(), to: endOfMonth() };
