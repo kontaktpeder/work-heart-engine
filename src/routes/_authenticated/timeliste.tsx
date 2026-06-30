@@ -1,244 +1,166 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import {
   fetchOrganizations,
+  fetchProjects,
   fetchTimeEntries,
-  fetchWorkTypes,
   entryMinutes,
   formatDuration,
-  startOfWeek,
+  formatNok,
+  type TimeEntry,
 } from "@/lib/work-core";
+import {
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  previousWeek,
+  previousMonth,
+} from "@/lib/time-utils";
+import { TimeEntrySheet } from "@/components/time-entry-sheet";
 
 export const Route = createFileRoute("/_authenticated/timeliste")({
   head: () => ({ meta: [{ title: "Timer · Work Core" }] }),
   component: Timeliste,
 });
 
+type Period = "week" | "lastweek" | "month" | "lastmonth" | "all";
+
 function Timeliste() {
-  const qc = useQueryClient();
-  const [filter, setFilter] = useState<"week" | "month" | "all">("week");
-  const [open, setOpen] = useState(false);
+  const [period, setPeriod] = useState<Period>("week");
+  const [orgFilter, setOrgFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<TimeEntry | null>(null);
 
   const range = useMemo(() => {
-    if (filter === "week") return { from: startOfWeek() };
-    if (filter === "month") {
-      const d = new Date();
-      return { from: new Date(d.getFullYear(), d.getMonth(), 1) };
-    }
+    if (period === "week") return { from: startOfWeek(), to: endOfWeek() };
+    if (period === "lastweek") return previousWeek();
+    if (period === "month") return { from: startOfMonth(), to: endOfMonth() };
+    if (period === "lastmonth") return previousMonth();
     return {};
-  }, [filter]);
+  }, [period]);
 
   const entriesQ = useQuery({
-    queryKey: ["entries", filter],
-    queryFn: () => fetchTimeEntries(range.from),
+    queryKey: ["entries", period, orgFilter, projectFilter],
+    queryFn: () => fetchTimeEntries({
+      from: range.from,
+      to: range.to,
+      orgId: orgFilter || undefined,
+      projectId: projectFilter || undefined,
+    }),
   });
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
-  const typesQ = useQuery({ queryKey: ["types-all"], queryFn: () => fetchWorkTypes() });
+  const projectsQ = useQuery({ queryKey: ["projects-all"], queryFn: () => fetchProjects() });
 
-  const typesById = useMemo(() => {
-    const m = new Map<string, string>();
-    (typesQ.data ?? []).forEach((t) => m.set(t.id, t.name));
-    return m;
-  }, [typesQ.data]);
-  const orgsById = useMemo(() => {
-    const m = new Map<string, string>();
-    (orgsQ.data ?? []).forEach((o) => m.set(o.id, o.name));
-    return m;
-  }, [orgsQ.data]);
+  const projById = useMemo(() => new Map((projectsQ.data ?? []).map((p) => [p.id, p])), [projectsQ.data]);
+  const orgById = useMemo(() => new Map((orgsQ.data ?? []).map((o) => [o.id, o])), [orgsQ.data]);
 
   const entries = entriesQ.data ?? [];
-  const total = entries.reduce((s, e) => s + entryMinutes(e), 0);
+  const totalMin = entries.reduce((s, e) => s + entryMinutes(e), 0);
+  const totalAmount = entries.reduce((s, e) => s + (e.amount ?? 0), 0);
+  const anyAmount = entries.some((e) => e.amount != null);
 
-  async function remove(id: string) {
-    if (!confirm("Slette denne timeføringen?")) return;
-    const { error } = await supabase.from("time_entries").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["entries"] });
-  }
+  function openNew() { setEditing(null); setSheetOpen(true); }
+  function openEdit(e: TimeEntry) { setEditing(e); setSheetOpen(true); }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Timer</h1>
-        <button
-          onClick={() => setOpen(true)}
-          className="tap-target bg-primary text-primary-foreground h-11 px-4"
-        >
+        <button onClick={openNew} className="tap-target bg-primary text-primary-foreground h-11 px-4">
           <Plus className="w-5 h-5 mr-1" />
           Legg til
         </button>
       </div>
 
-      <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        {(["week", "month", "all"] as const).map((f) => (
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-muted text-xs">
+        {([
+          ["week", "Denne uka"],
+          ["lastweek", "Forrige uke"],
+          ["month", "Måned"],
+          ["lastmonth", "Forr. måned"],
+          ["all", "Alle"],
+        ] as const).map(([k, label]) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg ${
-              filter === f ? "bg-card" : "text-muted-foreground"
-            }`}
+            key={k}
+            onClick={() => setPeriod(k)}
+            className={`py-2 font-medium rounded-lg ${period === k ? "bg-card" : "text-muted-foreground"}`}
           >
-            {f === "week" ? "Denne uka" : f === "month" ? "Måned" : "Alle"}
+            {label}
           </button>
         ))}
       </div>
 
+      <div className="grid grid-cols-2 gap-2">
+        <select value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
+          <option value="">Alle organisasjoner</option>
+          {(orgsQ.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+        </select>
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
+          <option value="">Alle prosjekter</option>
+          {(projectsQ.data ?? []).filter((p) => !orgFilter || p.organization_id === orgFilter).map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="surface-card flex items-baseline justify-between">
         <span className="text-sm text-muted-foreground">Totalt</span>
-        <span className="text-2xl font-bold tabular-nums">{formatDuration(total)}</span>
+        <div className="text-right">
+          <div className="text-2xl font-bold tabular-nums">{formatDuration(totalMin)}</div>
+          {anyAmount && <div className="text-sm text-muted-foreground tabular-nums">{formatNok(totalAmount)}</div>}
+        </div>
       </div>
 
       <div className="space-y-2">
         {entries.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-12">Ingen timer registrert ennå.</p>
+          <p className="text-center text-sm text-muted-foreground py-12">Ingen timer registrert.</p>
         )}
         {entries.map((e) => {
-          const start = new Date(e.started_at);
-          const end = new Date(e.ended_at);
+          const start = e.started_at ? new Date(e.started_at) : null;
+          const end = e.ended_at ? new Date(e.ended_at) : null;
+          const proj = e.project_id ? projById.get(e.project_id) : null;
           return (
-            <div key={e.id} className="surface-card flex items-start justify-between gap-3 p-4">
+            <button
+              key={e.id}
+              onClick={() => openEdit(e)}
+              className="w-full surface-card flex items-start justify-between gap-3 p-4 text-left hover:border-primary/40 transition"
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{start.toLocaleDateString("nb-NO", { weekday: "short", day: "numeric", month: "short" })}</span>
+                  <span>{start?.toLocaleDateString("nb-NO", { weekday: "short", day: "numeric", month: "short" })}</span>
                   <span>·</span>
-                  <span>{orgsById.get(e.organization_id) ?? "—"}</span>
+                  <span>{orgById.get(e.organization_id)?.name ?? "—"}</span>
                 </div>
                 <div className="mt-1 font-medium">
-                  {start.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
+                  {start?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
                   {" – "}
-                  {end.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
+                  {end?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
                   {e.break_minutes ? <span className="text-muted-foreground text-sm"> · {e.break_minutes} min pause</span> : null}
                 </div>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  {e.work_type_id && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-accent">{typesById.get(e.work_type_id) ?? "Type"}</span>
-                  )}
+                  {proj && <span className="text-xs px-2 py-0.5 rounded-full bg-accent">{proj.name}</span>}
                   <span className="text-sm font-semibold tabular-nums">{formatDuration(entryMinutes(e))}</span>
+                  {e.amount != null && (
+                    <span className="text-sm text-muted-foreground tabular-nums">· {formatNok(e.amount)}</span>
+                  )}
                 </div>
                 {e.comment && <p className="mt-1 text-sm text-muted-foreground">{e.comment}</p>}
               </div>
-              <button onClick={() => remove(e.id)} className="text-muted-foreground hover:text-destructive p-2" aria-label="Slett">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {open && (
-        <ManualEntryModal
-          onClose={() => setOpen(false)}
-          orgs={orgsQ.data ?? []}
-          types={typesQ.data ?? []}
-        />
-      )}
-    </div>
-  );
-}
-
-function ManualEntryModal({
-  onClose,
-  orgs,
-  types,
-}: {
-  onClose: () => void;
-  orgs: { id: string; name: string }[];
-  types: { id: string; name: string; organization_id: string }[];
-}) {
-  const qc = useQueryClient();
-  const today = new Date().toISOString().slice(0, 10);
-  const [date, setDate] = useState(today);
-  const [start, setStart] = useState("09:00");
-  const [end, setEnd] = useState("17:00");
-  const [breakMin, setBreakMin] = useState(0);
-  const [orgId, setOrgId] = useState(orgs[0]?.id ?? "");
-  const [typeId, setTypeId] = useState("");
-  const [comment, setComment] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const filteredTypes = types.filter((t) => t.organization_id === orgId);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!orgId) return toast.error("Velg organisasjon");
-    setBusy(true);
-    const startISO = new Date(`${date}T${start}`).toISOString();
-    const endISO = new Date(`${date}T${end}`).toISOString();
-    if (new Date(endISO) <= new Date(startISO)) {
-      setBusy(false);
-      return toast.error("Sluttid må være etter starttid");
-    }
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const { error } = await supabase.from("time_entries").insert({
-      user_id: u.user.id,
-      organization_id: orgId,
-      work_type_id: typeId || null,
-      started_at: startISO,
-      ended_at: endISO,
-      break_minutes: breakMin,
-      comment: comment || null,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Lagret");
-    qc.invalidateQueries({ queryKey: ["entries"] });
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-0 sm:p-6">
-      <form onSubmit={save} className="w-full max-w-md surface-card rounded-b-none sm:rounded-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Ny timeføring</h2>
-          <button type="button" onClick={onClose} className="p-2 -mr-2 text-muted-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">Dato</label>
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-muted-foreground">Start</label>
-            <input type="time" required value={start} onChange={(e) => setStart(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Slutt</label>
-            <input type="time" required value={end} onChange={(e) => setEnd(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
-          </div>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Pause (min)</label>
-          <input type="number" min={0} value={breakMin} onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Organisasjon</label>
-          <select value={orgId} onChange={(e) => { setOrgId(e.target.value); setTypeId(""); }} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
-            {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Arbeidstype</label>
-          <select value={typeId} onChange={(e) => setTypeId(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
-            <option value="">Ingen</option>
-            {filteredTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Kommentar</label>
-          <input value={comment} onChange={(e) => setComment(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
-        </div>
-        <button type="submit" disabled={busy} className="w-full tap-target bg-primary text-primary-foreground">
-          Lagre
-        </button>
-      </form>
+      <TimeEntrySheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        entry={editing}
+        defaultOrgId={orgFilter || undefined}
+      />
     </div>
   );
 }
