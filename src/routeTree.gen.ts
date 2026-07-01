@@ -23,9 +23,12 @@ import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authe
 import { Route as AuthenticatedOrgsOrgIdIndexRouteImport } from './routes/_authenticated/orgs/$orgId/index'
 import { Route as AuthenticatedOrgsOrgIdTimerRouteImport } from './routes/_authenticated/orgs/$orgId/timer'
 import { Route as AuthenticatedOrgsOrgIdStartRouteImport } from './routes/_authenticated/orgs/$orgId/start'
+import { Route as AuthenticatedOrgsOrgIdSettingsRouteImport } from './routes/_authenticated/orgs/$orgId/settings'
 import { Route as AuthenticatedOrgsOrgIdReportsRouteImport } from './routes/_authenticated/orgs/$orgId/reports'
-import { Route as AuthenticatedOrgsOrgIdRatesRouteImport } from './routes/_authenticated/orgs/$orgId/rates'
-import { Route as AuthenticatedOrgsOrgIdProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/projects'
+import { Route as AuthenticatedOrgsOrgIdSettingsIndexRouteImport } from './routes/_authenticated/orgs/$orgId/settings.index'
+import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
+import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
+import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -101,23 +104,41 @@ const AuthenticatedOrgsOrgIdStartRoute =
     path: '/start',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
+const AuthenticatedOrgsOrgIdSettingsRoute =
+  AuthenticatedOrgsOrgIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+  } as any)
 const AuthenticatedOrgsOrgIdReportsRoute =
   AuthenticatedOrgsOrgIdReportsRouteImport.update({
     id: '/reports',
     path: '/reports',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
-const AuthenticatedOrgsOrgIdRatesRoute =
-  AuthenticatedOrgsOrgIdRatesRouteImport.update({
+const AuthenticatedOrgsOrgIdSettingsIndexRoute =
+  AuthenticatedOrgsOrgIdSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdSettingsRatesRoute =
+  AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
     id: '/rates',
     path: '/rates',
-    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
-const AuthenticatedOrgsOrgIdProjectsRoute =
-  AuthenticatedOrgsOrgIdProjectsRouteImport.update({
+const AuthenticatedOrgsOrgIdSettingsProjectsRoute =
+  AuthenticatedOrgsOrgIdSettingsProjectsRouteImport.update({
     id: '/projects',
     path: '/projects',
-    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
+  AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport.update({
+    id: '/organization',
+    path: '/organization',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -131,12 +152,15 @@ export interface FileRoutesByFullPath {
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/orgs/': typeof AuthenticatedOrgsIndexRoute
-  '/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
+  '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,12 +172,14 @@ export interface FileRoutesByTo {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
-  '/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,12 +194,15 @@ export interface FileRoutesById {
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
-  '/_authenticated/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/_authenticated/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/_authenticated/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
+  '/_authenticated/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/_authenticated/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/_authenticated/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/_authenticated/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/_authenticated/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -188,12 +217,15 @@ export interface FileRouteTypes {
     | '/timeliste'
     | '/orgs/$orgId'
     | '/orgs/'
-    | '/orgs/$orgId/projects'
-    | '/orgs/$orgId/rates'
     | '/orgs/$orgId/reports'
+    | '/orgs/$orgId/settings'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId/'
+    | '/orgs/$orgId/settings/organization'
+    | '/orgs/$orgId/settings/projects'
+    | '/orgs/$orgId/settings/rates'
+    | '/orgs/$orgId/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,12 +237,14 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/orgs'
-    | '/orgs/$orgId/projects'
-    | '/orgs/$orgId/rates'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId'
+    | '/orgs/$orgId/settings/organization'
+    | '/orgs/$orgId/settings/projects'
+    | '/orgs/$orgId/settings/rates'
+    | '/orgs/$orgId/settings'
   id:
     | '__root__'
     | '/'
@@ -224,12 +258,15 @@ export interface FileRouteTypes {
     | '/_authenticated/timeliste'
     | '/_authenticated/orgs/$orgId'
     | '/_authenticated/orgs/'
-    | '/_authenticated/orgs/$orgId/projects'
-    | '/_authenticated/orgs/$orgId/rates'
     | '/_authenticated/orgs/$orgId/reports'
+    | '/_authenticated/orgs/$orgId/settings'
     | '/_authenticated/orgs/$orgId/start'
     | '/_authenticated/orgs/$orgId/timer'
     | '/_authenticated/orgs/$orgId/'
+    | '/_authenticated/orgs/$orgId/settings/organization'
+    | '/_authenticated/orgs/$orgId/settings/projects'
+    | '/_authenticated/orgs/$orgId/settings/rates'
+    | '/_authenticated/orgs/$orgId/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -338,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdStartRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
+    '/_authenticated/orgs/$orgId/settings': {
+      id: '/_authenticated/orgs/$orgId/settings'
+      path: '/settings'
+      fullPath: '/orgs/$orgId/settings'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+    }
     '/_authenticated/orgs/$orgId/reports': {
       id: '/_authenticated/orgs/$orgId/reports'
       path: '/reports'
@@ -345,27 +389,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdReportsRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
-    '/_authenticated/orgs/$orgId/rates': {
-      id: '/_authenticated/orgs/$orgId/rates'
-      path: '/rates'
-      fullPath: '/orgs/$orgId/rates'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdRatesRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+    '/_authenticated/orgs/$orgId/settings/': {
+      id: '/_authenticated/orgs/$orgId/settings/'
+      path: '/'
+      fullPath: '/orgs/$orgId/settings/'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
-    '/_authenticated/orgs/$orgId/projects': {
-      id: '/_authenticated/orgs/$orgId/projects'
+    '/_authenticated/orgs/$orgId/settings/rates': {
+      id: '/_authenticated/orgs/$orgId/settings/rates'
+      path: '/rates'
+      fullPath: '/orgs/$orgId/settings/rates'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/_authenticated/orgs/$orgId/settings/projects': {
+      id: '/_authenticated/orgs/$orgId/settings/projects'
       path: '/projects'
-      fullPath: '/orgs/$orgId/projects'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdProjectsRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+      fullPath: '/orgs/$orgId/settings/projects'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/_authenticated/orgs/$orgId/settings/organization': {
+      id: '/_authenticated/orgs/$orgId/settings/organization'
+      path: '/organization'
+      fullPath: '/orgs/$orgId/settings/organization'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
   }
 }
 
+interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
+  AuthenticatedOrgsOrgIdSettingsOrganizationRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  AuthenticatedOrgsOrgIdSettingsIndexRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
+}
+
+const AuthenticatedOrgsOrgIdSettingsRouteChildren: AuthenticatedOrgsOrgIdSettingsRouteChildren =
+  {
+    AuthenticatedOrgsOrgIdSettingsOrganizationRoute:
+      AuthenticatedOrgsOrgIdSettingsOrganizationRoute,
+    AuthenticatedOrgsOrgIdSettingsProjectsRoute:
+      AuthenticatedOrgsOrgIdSettingsProjectsRoute,
+    AuthenticatedOrgsOrgIdSettingsRatesRoute:
+      AuthenticatedOrgsOrgIdSettingsRatesRoute,
+    AuthenticatedOrgsOrgIdSettingsIndexRoute:
+      AuthenticatedOrgsOrgIdSettingsIndexRoute,
+  }
+
+const AuthenticatedOrgsOrgIdSettingsRouteWithChildren =
+  AuthenticatedOrgsOrgIdSettingsRoute._addFileChildren(
+    AuthenticatedOrgsOrgIdSettingsRouteChildren,
+  )
+
 interface AuthenticatedOrgsOrgIdRouteRouteChildren {
-  AuthenticatedOrgsOrgIdProjectsRoute: typeof AuthenticatedOrgsOrgIdProjectsRoute
-  AuthenticatedOrgsOrgIdRatesRoute: typeof AuthenticatedOrgsOrgIdRatesRoute
   AuthenticatedOrgsOrgIdReportsRoute: typeof AuthenticatedOrgsOrgIdReportsRoute
+  AuthenticatedOrgsOrgIdSettingsRoute: typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   AuthenticatedOrgsOrgIdStartRoute: typeof AuthenticatedOrgsOrgIdStartRoute
   AuthenticatedOrgsOrgIdTimerRoute: typeof AuthenticatedOrgsOrgIdTimerRoute
   AuthenticatedOrgsOrgIdIndexRoute: typeof AuthenticatedOrgsOrgIdIndexRoute
@@ -373,9 +454,9 @@ interface AuthenticatedOrgsOrgIdRouteRouteChildren {
 
 const AuthenticatedOrgsOrgIdRouteRouteChildren: AuthenticatedOrgsOrgIdRouteRouteChildren =
   {
-    AuthenticatedOrgsOrgIdProjectsRoute: AuthenticatedOrgsOrgIdProjectsRoute,
-    AuthenticatedOrgsOrgIdRatesRoute: AuthenticatedOrgsOrgIdRatesRoute,
     AuthenticatedOrgsOrgIdReportsRoute: AuthenticatedOrgsOrgIdReportsRoute,
+    AuthenticatedOrgsOrgIdSettingsRoute:
+      AuthenticatedOrgsOrgIdSettingsRouteWithChildren,
     AuthenticatedOrgsOrgIdStartRoute: AuthenticatedOrgsOrgIdStartRoute,
     AuthenticatedOrgsOrgIdTimerRoute: AuthenticatedOrgsOrgIdTimerRoute,
     AuthenticatedOrgsOrgIdIndexRoute: AuthenticatedOrgsOrgIdIndexRoute,
