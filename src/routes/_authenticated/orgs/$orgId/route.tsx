@@ -19,11 +19,11 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
 });
 
 const tabs = [
-  { path: "start", label: "Start", icon: Home },
-  { path: "timer", label: "Timer", icon: List },
-  { path: "projects", label: "Prosjekter", icon: FolderKanban },
-  { path: "rates", label: "Satser", icon: Wallet },
-  { path: "reports", label: "Rapport", icon: BarChart3 },
+  { to: "/orgs/$orgId/start", label: "Start", icon: Home },
+  { to: "/orgs/$orgId/timer", label: "Timer", icon: List },
+  { to: "/orgs/$orgId/projects", label: "Prosjekter", icon: FolderKanban },
+  { to: "/orgs/$orgId/rates", label: "Satser", icon: Wallet },
+  { to: "/orgs/$orgId/reports", label: "Rapport", icon: BarChart3 },
 ] as const;
 
 function OrgLayout() {

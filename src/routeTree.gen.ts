@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
+import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authenticated/orgs/$orgId/route'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -33,15 +34,23 @@ const AuthenticatedOrgsIndexRoute = AuthenticatedOrgsIndexRouteImport.update({
   path: '/orgs/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOrgsOrgIdRouteRoute =
+  AuthenticatedOrgsOrgIdRouteRouteImport.update({
+    id: '/orgs/$orgId',
+    path: '/orgs/$orgId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRoute
   '/orgs/': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +58,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRoute
   '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/orgs/'
+  fullPaths: '/' | '/auth' | '/orgs/$orgId' | '/orgs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/orgs'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/orgs/'
+  to: '/' | '/auth' | '/orgs/$orgId' | '/orgs'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/orgs/$orgId'
+    | '/_authenticated/orgs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +111,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/orgs/$orgId': {
+      id: '/_authenticated/orgs/$orgId'
+      path: '/orgs/$orgId'
+      fullPath: '/orgs/$orgId'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOrgsOrgIdRouteRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
   AuthenticatedOrgsIndexRoute: typeof AuthenticatedOrgsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOrgsOrgIdRouteRoute: AuthenticatedOrgsOrgIdRouteRoute,
   AuthenticatedOrgsIndexRoute: AuthenticatedOrgsIndexRoute,
 }
 
