@@ -6,7 +6,7 @@ import { Plus, Trash2, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProjects, type Organization, type Project } from "@/lib/work-core";
 
-export const Route = createFileRoute("/_authenticated/orgs/$orgId/projects")({
+export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/projects")({
   head: () => ({ meta: [{ title: "Prosjekter · Work Core" }] }),
   component: ProjectsPage,
 });

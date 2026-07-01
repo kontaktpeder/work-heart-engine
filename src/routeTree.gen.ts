@@ -24,8 +24,8 @@ import { Route as AuthenticatedOrgsOrgIdIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedOrgsOrgIdTimerRouteImport } from './routes/_authenticated/orgs/$orgId/timer'
 import { Route as AuthenticatedOrgsOrgIdStartRouteImport } from './routes/_authenticated/orgs/$orgId/start'
 import { Route as AuthenticatedOrgsOrgIdReportsRouteImport } from './routes/_authenticated/orgs/$orgId/reports'
-import { Route as AuthenticatedOrgsOrgIdRatesRouteImport } from './routes/_authenticated/orgs/$orgId/rates'
-import { Route as AuthenticatedOrgsOrgIdProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/projects'
+import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
+import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -107,16 +107,16 @@ const AuthenticatedOrgsOrgIdReportsRoute =
     path: '/reports',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
-const AuthenticatedOrgsOrgIdRatesRoute =
-  AuthenticatedOrgsOrgIdRatesRouteImport.update({
-    id: '/rates',
-    path: '/rates',
+const AuthenticatedOrgsOrgIdSettingsRatesRoute =
+  AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
+    id: '/settings/rates',
+    path: '/settings/rates',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
-const AuthenticatedOrgsOrgIdProjectsRoute =
-  AuthenticatedOrgsOrgIdProjectsRouteImport.update({
-    id: '/projects',
-    path: '/projects',
+const AuthenticatedOrgsOrgIdSettingsProjectsRoute =
+  AuthenticatedOrgsOrgIdSettingsProjectsRouteImport.update({
+    id: '/settings/projects',
+    path: '/settings/projects',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
 
@@ -131,12 +131,12 @@ export interface FileRoutesByFullPath {
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/orgs/': typeof AuthenticatedOrgsIndexRoute
-  '/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,12 +148,12 @@ export interface FileRoutesByTo {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
-  '/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,12 +168,12 @@ export interface FileRoutesById {
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
-  '/_authenticated/orgs/$orgId/projects': typeof AuthenticatedOrgsOrgIdProjectsRoute
-  '/_authenticated/orgs/$orgId/rates': typeof AuthenticatedOrgsOrgIdRatesRoute
   '/_authenticated/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/_authenticated/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/_authenticated/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/_authenticated/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -188,12 +188,12 @@ export interface FileRouteTypes {
     | '/timeliste'
     | '/orgs/$orgId'
     | '/orgs/'
-    | '/orgs/$orgId/projects'
-    | '/orgs/$orgId/rates'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId/'
+    | '/orgs/$orgId/settings/projects'
+    | '/orgs/$orgId/settings/rates'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,12 +205,12 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/orgs'
-    | '/orgs/$orgId/projects'
-    | '/orgs/$orgId/rates'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId'
+    | '/orgs/$orgId/settings/projects'
+    | '/orgs/$orgId/settings/rates'
   id:
     | '__root__'
     | '/'
@@ -224,12 +224,12 @@ export interface FileRouteTypes {
     | '/_authenticated/timeliste'
     | '/_authenticated/orgs/$orgId'
     | '/_authenticated/orgs/'
-    | '/_authenticated/orgs/$orgId/projects'
-    | '/_authenticated/orgs/$orgId/rates'
     | '/_authenticated/orgs/$orgId/reports'
     | '/_authenticated/orgs/$orgId/start'
     | '/_authenticated/orgs/$orgId/timer'
     | '/_authenticated/orgs/$orgId/'
+    | '/_authenticated/orgs/$orgId/settings/projects'
+    | '/_authenticated/orgs/$orgId/settings/rates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -345,40 +345,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdReportsRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
-    '/_authenticated/orgs/$orgId/rates': {
-      id: '/_authenticated/orgs/$orgId/rates'
-      path: '/rates'
-      fullPath: '/orgs/$orgId/rates'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdRatesRouteImport
+    '/_authenticated/orgs/$orgId/settings/rates': {
+      id: '/_authenticated/orgs/$orgId/settings/rates'
+      path: '/settings/rates'
+      fullPath: '/orgs/$orgId/settings/rates'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
-    '/_authenticated/orgs/$orgId/projects': {
-      id: '/_authenticated/orgs/$orgId/projects'
-      path: '/projects'
-      fullPath: '/orgs/$orgId/projects'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdProjectsRouteImport
+    '/_authenticated/orgs/$orgId/settings/projects': {
+      id: '/_authenticated/orgs/$orgId/settings/projects'
+      path: '/settings/projects'
+      fullPath: '/orgs/$orgId/settings/projects'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
   }
 }
 
 interface AuthenticatedOrgsOrgIdRouteRouteChildren {
-  AuthenticatedOrgsOrgIdProjectsRoute: typeof AuthenticatedOrgsOrgIdProjectsRoute
-  AuthenticatedOrgsOrgIdRatesRoute: typeof AuthenticatedOrgsOrgIdRatesRoute
   AuthenticatedOrgsOrgIdReportsRoute: typeof AuthenticatedOrgsOrgIdReportsRoute
   AuthenticatedOrgsOrgIdStartRoute: typeof AuthenticatedOrgsOrgIdStartRoute
   AuthenticatedOrgsOrgIdTimerRoute: typeof AuthenticatedOrgsOrgIdTimerRoute
   AuthenticatedOrgsOrgIdIndexRoute: typeof AuthenticatedOrgsOrgIdIndexRoute
+  AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
+  AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
 }
 
 const AuthenticatedOrgsOrgIdRouteRouteChildren: AuthenticatedOrgsOrgIdRouteRouteChildren =
   {
-    AuthenticatedOrgsOrgIdProjectsRoute: AuthenticatedOrgsOrgIdProjectsRoute,
-    AuthenticatedOrgsOrgIdRatesRoute: AuthenticatedOrgsOrgIdRatesRoute,
     AuthenticatedOrgsOrgIdReportsRoute: AuthenticatedOrgsOrgIdReportsRoute,
     AuthenticatedOrgsOrgIdStartRoute: AuthenticatedOrgsOrgIdStartRoute,
     AuthenticatedOrgsOrgIdTimerRoute: AuthenticatedOrgsOrgIdTimerRoute,
     AuthenticatedOrgsOrgIdIndexRoute: AuthenticatedOrgsOrgIdIndexRoute,
+    AuthenticatedOrgsOrgIdSettingsProjectsRoute:
+      AuthenticatedOrgsOrgIdSettingsProjectsRoute,
+    AuthenticatedOrgsOrgIdSettingsRatesRoute:
+      AuthenticatedOrgsOrgIdSettingsRatesRoute,
   }
 
 const AuthenticatedOrgsOrgIdRouteRouteWithChildren =
