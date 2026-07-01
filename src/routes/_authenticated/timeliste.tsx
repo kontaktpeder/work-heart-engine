@@ -104,7 +104,12 @@ function Timeliste() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <select value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
+        <select value={orgFilter} onChange={(e) => {
+          const v = e.target.value;
+          setOrgTouched(true);
+          setOrgFilter(v);
+          if (v) setDefaultOrgId(v).then(() => qc.invalidateQueries({ queryKey: ["default-org"] }));
+        }} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
           <option value="">Alle organisasjoner</option>
           {(orgsQ.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
