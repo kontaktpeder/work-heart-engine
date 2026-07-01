@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileText } from "lucide-react";
 import {
+  fetchDefaultOrgId,
   fetchOrganizations,
   fetchProjects,
   fetchRates,
@@ -10,6 +11,7 @@ import {
   entryMinutes,
   formatDuration,
   formatNok,
+  setDefaultOrgId,
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import { buildCsv, buildPdf, buildRows } from "@/lib/export";
@@ -20,10 +22,17 @@ export const Route = createFileRoute("/_authenticated/rapport")({
 });
 
 function Rapport() {
+  const qc = useQueryClient();
   const [from, setFrom] = useState(toDateInput(startOfMonth()));
   const [to, setTo] = useState(toDateInput(endOfMonth()));
   const [orgId, setOrgId] = useState("");
+  const [orgTouched, setOrgTouched] = useState(false);
   const [projectId, setProjectId] = useState("");
+
+  const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+  useEffect(() => {
+    if (!orgTouched && !orgId && defaultOrgQ.data) setOrgId(defaultOrgQ.data);
+  }, [defaultOrgQ.data, orgId, orgTouched]);
 
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
   const projectsQ = useQuery({
@@ -134,7 +143,12 @@ function Rapport() {
           <label className="text-xs text-muted-foreground">Organisasjon</label>
           <select
             value={orgId}
-            onChange={(e) => setOrgId(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setOrgTouched(true);
+              setOrgId(v);
+              if (v) setDefaultOrgId(v).then(() => qc.invalidateQueries({ queryKey: ["default-org"] }));
+            }}
             className="w-full h-11 px-3 rounded-xl bg-input border border-border"
           >
             <option value="">Alle</option>

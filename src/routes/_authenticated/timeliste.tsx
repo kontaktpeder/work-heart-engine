@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import {
+  fetchDefaultOrgId,
   fetchOrganizations,
   fetchProjects,
   fetchTimeEntries,
   entryMinutes,
   formatDuration,
   formatNok,
+  setDefaultOrgId,
   type TimeEntry,
 } from "@/lib/work-core";
 import {
@@ -29,11 +31,18 @@ export const Route = createFileRoute("/_authenticated/timeliste")({
 type Period = "week" | "lastweek" | "month" | "lastmonth" | "all";
 
 function Timeliste() {
+  const qc = useQueryClient();
   const [period, setPeriod] = useState<Period>("week");
   const [orgFilter, setOrgFilter] = useState("");
+  const [orgTouched, setOrgTouched] = useState(false);
   const [projectFilter, setProjectFilter] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TimeEntry | null>(null);
+
+  const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+  useEffect(() => {
+    if (!orgTouched && !orgFilter && defaultOrgQ.data) setOrgFilter(defaultOrgQ.data);
+  }, [defaultOrgQ.data, orgFilter, orgTouched]);
 
   const range = useMemo<{ from?: Date; to?: Date }>(() => {
     if (period === "week") return { from: startOfWeek(), to: endOfWeek() };
@@ -95,7 +104,12 @@ function Timeliste() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <select value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
+        <select value={orgFilter} onChange={(e) => {
+          const v = e.target.value;
+          setOrgTouched(true);
+          setOrgFilter(v);
+          if (v) setDefaultOrgId(v).then(() => qc.invalidateQueries({ queryKey: ["default-org"] }));
+        }} className="h-11 px-3 rounded-xl bg-input border border-border text-sm">
           <option value="">Alle organisasjoner</option>
           {(orgsQ.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
