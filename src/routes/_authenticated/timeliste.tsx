@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import {
+  fetchDefaultOrgId,
   fetchOrganizations,
   fetchProjects,
   fetchTimeEntries,
   entryMinutes,
   formatDuration,
   formatNok,
+  setDefaultOrgId,
   type TimeEntry,
 } from "@/lib/work-core";
 import {
