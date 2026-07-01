@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  fetchOrganizations,
   fetchProjects,
   fetchRates,
   type Project,
@@ -19,16 +18,12 @@ type Props = {
   open: boolean;
   onClose: () => void;
   entry?: TimeEntry | null;
-  defaultOrgId?: string;
+  orgId: string;
 };
 
-export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
+export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
   const qc = useQueryClient();
-  const isEdit = !!entry;
-  const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
-
-  const initial = entryFormDefaults(entry, defaultOrgId);
-  const [orgId, setOrgId] = useState(initial.orgId);
+  const initial = entryFormDefaults(entry, orgId);
   const [date, setDate] = useState(initial.date);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(initial.end);
@@ -42,11 +37,9 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Reset all fields when the sheet opens or the entry changes
   useEffect(() => {
     if (!open) return;
-    const d = entryFormDefaults(entry, defaultOrgId);
-    setOrgId(d.orgId);
+    const d = entryFormDefaults(entry, orgId);
     setDate(d.date);
     setStart(d.start);
     setEnd(d.end);
@@ -56,46 +49,36 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
     setComment(d.comment);
     setProject(null);
     setRate(null);
-  }, [open, entry?.id, defaultOrgId]);
+  }, [open, entry?.id, orgId]);
 
-  // Only auto-pick first org for NEW entries
-  useEffect(() => {
-    if (!open || isEdit) return;
-    if (!orgId && orgsQ.data?.length) setOrgId(defaultOrgId ?? orgsQ.data[0].id);
-  }, [open, isEdit, orgsQ.data, orgId, defaultOrgId]);
+  // Use entry's own org for edit (read-only), else the passed orgId
+  const activeOrgId = entry?.organization_id ?? orgId;
 
   const projectsQ = useQuery({
-    queryKey: ["projects", orgId, "include-inactive"],
-    queryFn: () => fetchProjects(orgId, true),
-    enabled: !!orgId && open,
+    queryKey: ["projects", activeOrgId, "include-inactive"],
+    queryFn: () => fetchProjects(activeOrgId, true),
+    enabled: !!activeOrgId && open,
   });
   const ratesQ = useQuery({
-    queryKey: ["rates", orgId, "include-inactive"],
-    queryFn: () => fetchRates(orgId, true),
-    enabled: !!orgId && open,
+    queryKey: ["rates", activeOrgId, "include-inactive"],
+    queryFn: () => fetchRates(activeOrgId, true),
+    enabled: !!activeOrgId && open,
   });
 
   useEffect(() => {
-    if (!projectId) {
-      setProject(null);
-      return;
-    }
+    if (!projectId) return setProject(null);
     const p = (projectsQ.data ?? []).find((x) => x.id === projectId);
     if (p) setProject(p);
   }, [projectId, projectsQ.data]);
 
   useEffect(() => {
-    if (!rateId) {
-      setRate(null);
-      return;
-    }
+    if (!rateId) return setRate(null);
     const r = (ratesQ.data ?? []).find((x) => x.id === rateId);
     if (r) setRate(r);
   }, [rateId, ratesQ.data]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!orgId) return toast.error("Velg organisasjon");
     if (!projectId) return toast.error("Velg prosjekt");
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
@@ -105,7 +88,7 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
     }
     const payload = {
       user_id: u.user.id,
-      organization_id: orgId,
+      organization_id: activeOrgId,
       project_id: projectId,
       rate_id: rateId,
       date,
@@ -205,29 +188,6 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground">Organisasjon</label>
-          <select
-            value={orgId}
-            onChange={(e) => {
-              const next = e.target.value;
-              if (next === orgId) return;
-              setOrgId(next);
-              if (!isEdit) {
-                setProjectId(null);
-                setRateId(null);
-              }
-            }}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-          >
-            {(orgsQ.data ?? []).map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
           <label className="text-xs text-muted-foreground">Prosjekt</label>
           <button
             type="button"
@@ -290,7 +250,7 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
         <ProjectPicker
           open={projectPickerOpen}
           onClose={() => setProjectPickerOpen(false)}
-          orgId={orgId}
+          orgId={activeOrgId}
           value={projectId}
           onChange={(id, p) => {
             setProjectId(id);
@@ -300,7 +260,7 @@ export function TimeEntrySheet({ open, onClose, entry, defaultOrgId }: Props) {
         <RatePicker
           open={ratePickerOpen}
           onClose={() => setRatePickerOpen(false)}
-          orgId={orgId}
+          orgId={activeOrgId}
           value={rateId}
           allowClear
           onChange={(id, r) => {
