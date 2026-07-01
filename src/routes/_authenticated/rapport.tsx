@@ -143,7 +143,12 @@ function Rapport() {
           <label className="text-xs text-muted-foreground">Organisasjon</label>
           <select
             value={orgId}
-            onChange={(e) => setOrgId(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setOrgTouched(true);
+              setOrgId(v);
+              if (v) setDefaultOrgId(v).then(() => qc.invalidateQueries({ queryKey: ["default-org"] }));
+            }}
             className="w-full h-11 px-3 rounded-xl bg-input border border-border"
           >
             <option value="">Alle</option>
