@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileText } from "lucide-react";
 import {
+  fetchDefaultOrgId,
   fetchOrganizations,
   fetchProjects,
   fetchRates,
@@ -10,6 +11,7 @@ import {
   entryMinutes,
   formatDuration,
   formatNok,
+  setDefaultOrgId,
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import { buildCsv, buildPdf, buildRows } from "@/lib/export";
