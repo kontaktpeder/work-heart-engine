@@ -268,6 +268,32 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          default_organization_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          default_organization_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          default_organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_default_organization_id_fkey"
+            columns: ["default_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_sessions: {
         Row: {
           comment: string | null
