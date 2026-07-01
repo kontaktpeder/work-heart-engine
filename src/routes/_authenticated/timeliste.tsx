@@ -31,11 +31,18 @@ export const Route = createFileRoute("/_authenticated/timeliste")({
 type Period = "week" | "lastweek" | "month" | "lastmonth" | "all";
 
 function Timeliste() {
+  const qc = useQueryClient();
   const [period, setPeriod] = useState<Period>("week");
   const [orgFilter, setOrgFilter] = useState("");
+  const [orgTouched, setOrgTouched] = useState(false);
   const [projectFilter, setProjectFilter] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TimeEntry | null>(null);
+
+  const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+  useEffect(() => {
+    if (!orgTouched && !orgFilter && defaultOrgQ.data) setOrgFilter(defaultOrgQ.data);
+  }, [defaultOrgQ.data, orgFilter, orgTouched]);
 
   const range = useMemo<{ from?: Date; to?: Date }>(() => {
     if (period === "week") return { from: startOfWeek(), to: endOfWeek() };
