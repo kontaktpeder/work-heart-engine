@@ -51,14 +51,14 @@ function OrgLayout() {
       <nav className="fixed bottom-0 inset-x-0 z-10 border-t border-border bg-background/95 backdrop-blur">
         <div className="max-w-2xl mx-auto grid grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
           {tabs.map((t) => {
-            const to = `/orgs/${orgId}/${t.path}`;
-            const active = location.pathname === to || location.pathname.startsWith(to + "/");
+            const resolved = t.to.replace("$orgId", orgId);
+            const active = location.pathname === resolved || location.pathname.startsWith(resolved + "/");
             const Icon = t.icon;
             return (
               <Link
-                key={t.path}
-                to="/orgs/$orgId/$tab"
-                params={{ orgId, tab: t.path }}
+                key={t.to}
+                to={t.to}
+                params={{ orgId }}
                 className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
