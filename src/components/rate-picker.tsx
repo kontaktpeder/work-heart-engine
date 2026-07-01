@@ -2,57 +2,59 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, Plus, X, Star } from "lucide-react";
-import { createProject, fetchFrequentProjects, fetchProjects, type Project } from "@/lib/work-core";
+import { createRate, fetchFrequentRates, fetchRates, type Rate } from "@/lib/work-core";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   orgId: string;
   value: string | null;
-  onChange: (projectId: string, project: Project) => void;
+  onChange: (rateId: string, rate: Rate) => void;
+  allowClear?: boolean;
 };
 
-export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) {
+export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }: Props) {
   const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newAmount, setNewAmount] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
-  const projectsQ = useQuery({
-    queryKey: ["projects", orgId],
-    queryFn: () => fetchProjects(orgId),
+  const ratesQ = useQuery({
+    queryKey: ["rates", orgId],
+    queryFn: () => fetchRates(orgId),
     enabled: !!orgId && open,
   });
   const frequentQ = useQuery({
-    queryKey: ["projects-frequent", orgId],
-    queryFn: () => fetchFrequentProjects(orgId),
+    queryKey: ["rates-frequent", orgId],
+    queryFn: () => fetchFrequentRates(orgId),
     enabled: !!orgId && open,
   });
 
-  const all = projectsQ.data ?? [];
+  const all = ratesQ.data ?? [];
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return all;
-    return all.filter(
-      (p) => p.name.toLowerCase().includes(q) || (p.code ?? "").toLowerCase().includes(q),
-    );
+    return all.filter((r) => r.name.toLowerCase().includes(q));
   }, [all, query]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim() || !newAmount) return;
     setBusy(true);
     try {
-      const p = await createProject({
+      const r = await createRate({
         organization_id: orgId,
         name: newName.trim(),
+        amount: Number(newAmount),
       });
-      qc.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Prosjekt opprettet");
-      onChange(p.id, p);
+      qc.invalidateQueries({ queryKey: ["rates"] });
+      toast.success("Sats opprettet");
+      onChange(r.id, r);
       onClose();
       setNewName("");
+      setNewAmount("");
       setCreating(false);
     } catch (err) {
       toast.error((err as Error).message);
@@ -73,7 +75,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold">Velg prosjekt</h2>
+          <h2 className="text-lg font-bold">Velg sats</h2>
           <button onClick={onClose} className="p-2 -mr-2 text-muted-foreground" aria-label="Lukk">
             <X className="w-5 h-5" />
           </button>
@@ -87,7 +89,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Søk i prosjekter…"
+                placeholder="Søk i satser…"
                 className="w-full h-11 pl-9 pr-3 rounded-xl bg-input border border-border"
               />
             </div>
@@ -98,13 +100,13 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
                   <Star className="w-3 h-3" /> Ofte brukt
                 </p>
                 <div className="space-y-1">
-                  {frequentQ.data!.map((p) => (
-                    <ProjectRow
-                      key={p.id}
-                      project={p}
-                      active={p.id === value}
+                  {frequentQ.data!.map((r) => (
+                    <RateRow
+                      key={r.id}
+                      rate={r}
+                      active={r.id === value}
                       onPick={() => {
-                        onChange(p.id, p);
+                        onChange(r.id, r);
                         onClose();
                       }}
                     />
@@ -115,16 +117,16 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
 
             <div className="mb-3">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                Alle prosjekter
+                Alle satser
               </p>
               <div className="space-y-1">
-                {filtered.map((p) => (
-                  <ProjectRow
-                    key={p.id}
-                    project={p}
-                    active={p.id === value}
+                {filtered.map((r) => (
+                  <RateRow
+                    key={r.id}
+                    rate={r}
+                    active={r.id === value}
                     onPick={() => {
-                      onChange(p.id, p);
+                      onChange(r.id, r);
                       onClose();
                     }}
                   />
@@ -140,8 +142,20 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
               className="w-full tap-target border border-dashed border-border text-foreground h-12"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Opprett nytt prosjekt
+              Opprett ny sats
             </button>
+
+            {allowClear && value && (
+              <button
+                onClick={() => {
+                  onChange("", null as unknown as Rate);
+                  onClose();
+                }}
+                className="w-full mt-2 text-xs text-muted-foreground py-2"
+              >
+                Fjern sats
+              </button>
+            )}
           </>
         )}
 
@@ -153,7 +167,19 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Prosjektnavn"
+                placeholder="f.eks. Rigging"
+                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Beløp (kr/t)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={newAmount}
+                onChange={(e) => setNewAmount(e.target.value)}
+                placeholder="f.eks. 210"
                 className="w-full h-11 px-3 rounded-xl bg-input border border-border"
                 required
               />
@@ -168,7 +194,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
               </button>
               <button
                 type="submit"
-                disabled={busy || !newName.trim()}
+                disabled={busy || !newName.trim() || !newAmount}
                 className="flex-1 tap-target bg-primary text-primary-foreground disabled:opacity-60"
               >
                 Opprett
@@ -181,15 +207,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
   );
 }
 
-function ProjectRow({
-  project,
-  active,
-  onPick,
-}: {
-  project: Project;
-  active: boolean;
-  onPick: () => void;
-}) {
+function RateRow({ rate, active, onPick }: { rate: Rate; active: boolean; onPick: () => void }) {
   return (
     <button
       onClick={onPick}
@@ -198,9 +216,14 @@ function ProjectRow({
       }`}
     >
       <div className="min-w-0">
-        <div className="font-medium truncate">{project.name}</div>
-        {project.code && <div className="text-xs text-muted-foreground">{project.code}</div>}
+        <div className="font-medium truncate">{rate.name}</div>
+        {rate.description && (
+          <div className="text-xs text-muted-foreground truncate">{rate.description}</div>
+        )}
       </div>
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {rate.amount} {rate.currency === "NOK" ? "kr/t" : `${rate.currency}/t`}
+      </span>
     </button>
   );
 }

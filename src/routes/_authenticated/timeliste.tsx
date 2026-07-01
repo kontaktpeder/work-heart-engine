@@ -156,11 +156,13 @@ function Timeliste() {
       </div>
 
       <TimeEntrySheet
+        key={editing?.id ?? "new"}
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         entry={editing}
         defaultOrgId={orgFilter || undefined}
       />
+
     </div>
   );
 }
