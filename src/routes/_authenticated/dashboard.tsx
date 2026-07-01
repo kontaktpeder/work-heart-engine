@@ -6,12 +6,14 @@ import { Play, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchActiveSession,
+  fetchDefaultOrgId,
   fetchOrganizations,
   fetchProjects,
   fetchRates,
   fetchTimeEntries,
   formatDuration,
   entryMinutes,
+  setDefaultOrgId,
   type Project,
   type Rate,
 } from "@/lib/work-core";
