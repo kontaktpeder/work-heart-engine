@@ -120,6 +120,50 @@ export type Database = {
           },
         ]
       }
+      rates: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           amount: number | null
@@ -132,9 +176,11 @@ export type Database = {
           ended_at: string | null
           finance_entry_id: string | null
           hourly_rate: number | null
+          hourly_rate_snapshot: number | null
           id: string
           organization_id: string
           project_id: string | null
+          rate_id: string | null
           source: Database["public"]["Enums"]["time_entry_source"]
           start_time: string | null
           started_at: string | null
@@ -154,9 +200,11 @@ export type Database = {
           ended_at?: string | null
           finance_entry_id?: string | null
           hourly_rate?: number | null
+          hourly_rate_snapshot?: number | null
           id?: string
           organization_id: string
           project_id?: string | null
+          rate_id?: string | null
           source?: Database["public"]["Enums"]["time_entry_source"]
           start_time?: string | null
           started_at?: string | null
@@ -176,9 +224,11 @@ export type Database = {
           ended_at?: string | null
           finance_entry_id?: string | null
           hourly_rate?: number | null
+          hourly_rate_snapshot?: number | null
           id?: string
           organization_id?: string
           project_id?: string | null
+          rate_id?: string | null
           source?: Database["public"]["Enums"]["time_entry_source"]
           start_time?: string | null
           started_at?: string | null
@@ -200,6 +250,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_rate_id_fkey"
+            columns: ["rate_id"]
+            isOneToOne: false
+            referencedRelation: "rates"
             referencedColumns: ["id"]
           },
           {
