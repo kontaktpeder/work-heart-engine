@@ -31,6 +31,7 @@ function Dashboard() {
   const qc = useQueryClient();
 
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
+  const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
   const sessionQ = useQuery({ queryKey: ["session"], queryFn: fetchActiveSession });
   const today = startOfDay();
   const entriesQ = useQuery({
@@ -41,8 +42,12 @@ function Dashboard() {
   const orgs = orgsQ.data ?? [];
   const [orgId, setOrgId] = useState<string>("");
   useEffect(() => {
-    if (!orgId && orgs.length) setOrgId(orgs[0].id);
-  }, [orgs, orgId]);
+    if (orgId || !orgs.length) return;
+    const preferred = defaultOrgQ.data && orgs.some((o) => o.id === defaultOrgQ.data)
+      ? defaultOrgQ.data
+      : orgs[0].id;
+    setOrgId(preferred);
+  }, [orgs, orgId, defaultOrgQ.data]);
 
   const projectsQ = useQuery({
     queryKey: ["projects", orgId],
