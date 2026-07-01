@@ -244,11 +244,15 @@ function Dashboard() {
             <select
               value={orgId}
               onChange={(e) => {
-                setOrgId(e.target.value);
+                const newId = e.target.value;
+                setOrgId(newId);
                 setProjectId(null);
                 setProject(null);
                 setRateId(null);
                 setRate(null);
+                setDefaultOrgId(newId).then(() => {
+                  qc.invalidateQueries({ queryKey: ["default-org"] });
+                });
               }}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             >
