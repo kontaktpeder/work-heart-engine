@@ -5,7 +5,7 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
-import { Home, List, FolderKanban, Wallet, BarChart3, ArrowLeftRight } from "lucide-react";
+import { Home, List, BarChart3, Settings, ArrowLeftRight } from "lucide-react";
 import { fetchOrganizations, type Organization } from "@/lib/work-core";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
@@ -19,11 +19,10 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
 });
 
 const tabs = [
-  { to: "/orgs/$orgId/start", label: "Start", icon: Home },
+  { to: "/orgs/$orgId/start", label: "Hjem", icon: Home },
   { to: "/orgs/$orgId/timer", label: "Timer", icon: List },
-  { to: "/orgs/$orgId/projects", label: "Prosjekter", icon: FolderKanban },
-  { to: "/orgs/$orgId/rates", label: "Satser", icon: Wallet },
   { to: "/orgs/$orgId/reports", label: "Rapport", icon: BarChart3 },
+  { to: "/orgs/$orgId/settings", label: "Innstillinger", icon: Settings },
 ] as const;
 
 function OrgLayout() {
@@ -49,7 +48,7 @@ function OrgLayout() {
       <Outlet />
 
       <nav className="fixed bottom-0 inset-x-0 z-10 border-t border-border bg-background/95 backdrop-blur">
-        <div className="max-w-2xl mx-auto grid grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-2xl mx-auto grid grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
           {tabs.map((t) => {
             const resolved = t.to.replace("$orgId", orgId);
             const active = location.pathname === resolved || location.pathname.startsWith(resolved + "/");
