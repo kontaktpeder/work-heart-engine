@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
+import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated/satser'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authenticated/prosjekter'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedTimelisteRoute = AuthenticatedTimelisteRouteImport.update({
   id: '/timeliste',
   path: '/timeliste',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSatserRoute = AuthenticatedSatserRouteImport.update({
+  id: '/satser',
+  path: '/satser',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
+  '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
 }
 export interface FileRoutesByTo {
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
+  '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
 }
 export interface FileRoutesById {
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/prosjekter': typeof AuthenticatedProsjekterRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
+  '/_authenticated/satser': typeof AuthenticatedSatserRoute
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
 }
 export interface FileRouteTypes {
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/prosjekter'
     | '/rapport'
+    | '/satser'
     | '/timeliste'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/prosjekter'
     | '/rapport'
+    | '/satser'
     | '/timeliste'
   id:
     | '__root__'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/prosjekter'
     | '/_authenticated/rapport'
+    | '/_authenticated/satser'
     | '/_authenticated/timeliste'
   fileRoutesById: FileRoutesById
 }
@@ -155,6 +167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTimelisteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/satser': {
+      id: '/_authenticated/satser'
+      path: '/satser'
+      fullPath: '/satser'
+      preLoaderRoute: typeof AuthenticatedSatserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rapport': {
       id: '/_authenticated/rapport'
       path: '/rapport'
@@ -191,6 +210,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProsjekterRoute: typeof AuthenticatedProsjekterRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
+  AuthenticatedSatserRoute: typeof AuthenticatedSatserRoute
   AuthenticatedTimelisteRoute: typeof AuthenticatedTimelisteRoute
 }
 
@@ -199,6 +219,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProsjekterRoute: AuthenticatedProsjekterRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
+  AuthenticatedSatserRoute: AuthenticatedSatserRoute,
   AuthenticatedTimelisteRoute: AuthenticatedTimelisteRoute,
 }
 

@@ -8,13 +8,16 @@ import {
   fetchActiveSession,
   fetchOrganizations,
   fetchProjects,
+  fetchRates,
   fetchTimeEntries,
   formatDuration,
   entryMinutes,
   type Project,
+  type Rate,
 } from "@/lib/work-core";
 import { startOfDay } from "@/lib/time-utils";
 import { ProjectPicker } from "@/components/project-picker";
+import { RatePicker } from "@/components/rate-picker";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -44,6 +47,11 @@ function Dashboard() {
     queryFn: () => fetchProjects(orgId),
     enabled: !!orgId,
   });
+  const ratesQ = useQuery({
+    queryKey: ["rates", orgId],
+    queryFn: () => fetchRates(orgId),
+    enabled: !!orgId,
+  });
 
   const activeSession = sessionQ.data;
 
@@ -65,20 +73,35 @@ function Dashboard() {
 
   const [comment, setComment] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [rateId, setRateId] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [rate, setRate] = useState<Rate | null>(null);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const [ratePickerOpen, setRatePickerOpen] = useState(false);
   const [breakMin, setBreakMin] = useState<number>(0);
   const [busy, setBusy] = useState(false);
 
-  // resolve project name when session active
   useEffect(() => {
     const pid = projectId ?? activeSession?.project_id ?? null;
-    if (!pid) { setProject(null); return; }
+    if (!pid) {
+      setProject(null);
+      return;
+    }
     const p = (projectsQ.data ?? []).find((x) => x.id === pid);
     if (p) setProject(p);
   }, [projectId, activeSession, projectsQ.data]);
 
-  const greeting = user.user_metadata?.full_name?.split(" ")[0] ?? user.email?.split("@")[0] ?? "der";
+  useEffect(() => {
+    if (!rateId) {
+      setRate(null);
+      return;
+    }
+    const r = (ratesQ.data ?? []).find((x) => x.id === rateId);
+    if (r) setRate(r);
+  }, [rateId, ratesQ.data]);
+
+  const greeting =
+    user.user_metadata?.full_name?.split(" ")[0] ?? user.email?.split("@")[0] ?? "der";
 
   async function startWork() {
     if (!orgId) return toast.error("Velg organisasjon");
@@ -106,6 +129,7 @@ function Dashboard() {
       user_id: activeSession.user_id,
       organization_id: activeSession.organization_id,
       project_id: pid,
+      rate_id: rateId,
       date: start.toISOString().slice(0, 10),
       start_time: start.toTimeString().slice(0, 8),
       end_time: end.toTimeString().slice(0, 8),
@@ -113,11 +137,20 @@ function Dashboard() {
       comment: comment || activeSession.comment,
       source: "timer",
     });
-    if (insErr) { setBusy(false); return toast.error(insErr.message); }
-    const { error: delErr } = await supabase.from("work_sessions").delete().eq("id", activeSession.id);
+    if (insErr) {
+      setBusy(false);
+      return toast.error(insErr.message);
+    }
+    const { error: delErr } = await supabase
+      .from("work_sessions")
+      .delete()
+      .eq("id", activeSession.id);
     setBusy(false);
     if (delErr) return toast.error(delErr.message);
-    setComment(""); setBreakMin(0); setProjectId(null);
+    setComment("");
+    setBreakMin(0);
+    setProjectId(null);
+    setRateId(null);
     toast.success("Timeføring lagret");
     qc.invalidateQueries({ queryKey: ["session"] });
     qc.invalidateQueries({ queryKey: ["entries"] });
@@ -136,7 +169,11 @@ function Dashboard() {
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Du jobber</p>
             <p className="mt-2 text-5xl font-bold tabular-nums">{formatDuration(elapsedMin)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {project?.name ?? "—"} · startet kl. {new Date(activeSession.started_at).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
+              {project?.name ?? "—"} · startet kl.{" "}
+              {new Date(activeSession.started_at).toLocaleTimeString("nb-NO", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           </div>
 
@@ -144,24 +181,51 @@ function Dashboard() {
             <label className="text-xs text-muted-foreground">Prosjekt</label>
             <button
               type="button"
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setProjectPickerOpen(true)}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left"
             >
               {project?.name ?? "Velg prosjekt…"}
             </button>
 
+            <label className="text-xs text-muted-foreground mt-2 block">Sats</label>
+            <button
+              type="button"
+              onClick={() => setRatePickerOpen(true)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+            >
+              <span className={rate ? "" : "text-muted-foreground"}>
+                {rate?.name ?? "Velg sats (valgfri)…"}
+              </span>
+              {rate && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {rate.amount} kr/t
+                </span>
+              )}
+            </button>
+
             <label className="text-xs text-muted-foreground mt-2 block">Pause (min)</label>
             <input
-              type="number" min={0} value={breakMin}
+              type="number"
+              min={0}
+              value={breakMin}
               onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             />
 
             <label className="text-xs text-muted-foreground mt-2 block">Kommentar</label>
-            <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Hva gjorde du?" className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Hva gjorde du?"
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            />
           </div>
 
-          <button onClick={stopWork} disabled={busy} className="w-full tap-target bg-destructive text-destructive-foreground text-lg h-16 disabled:opacity-60">
+          <button
+            onClick={stopWork}
+            disabled={busy}
+            className="w-full tap-target bg-destructive text-destructive-foreground text-lg h-16 disabled:opacity-60"
+          >
             <Square className="w-5 h-5 mr-2" fill="currentColor" />
             Stopp arbeid
           </button>
@@ -170,21 +234,64 @@ function Dashboard() {
         <div className="surface-card space-y-4">
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground">Organisasjon</label>
-            <select value={orgId} onChange={(e) => { setOrgId(e.target.value); setProjectId(null); setProject(null); }} className="w-full h-11 px-3 rounded-xl bg-input border border-border">
-              {orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            <select
+              value={orgId}
+              onChange={(e) => {
+                setOrgId(e.target.value);
+                setProjectId(null);
+                setProject(null);
+                setRateId(null);
+                setRate(null);
+              }}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            >
+              {orgs.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
             </select>
 
             <label className="text-xs text-muted-foreground mt-2 block">Prosjekt</label>
-            <button type="button" onClick={() => setPickerOpen(true)} className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between">
-              <span className={project ? "" : "text-muted-foreground"}>{project?.name ?? "Velg prosjekt…"}</span>
-              {project?.hourly_rate != null && <span className="text-xs text-muted-foreground">{project.hourly_rate} kr/t</span>}
+            <button
+              type="button"
+              onClick={() => setProjectPickerOpen(true)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+            >
+              <span className={project ? "" : "text-muted-foreground"}>
+                {project?.name ?? "Velg prosjekt…"}
+              </span>
+            </button>
+
+            <label className="text-xs text-muted-foreground mt-2 block">Sats (valgfri)</label>
+            <button
+              type="button"
+              onClick={() => setRatePickerOpen(true)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+            >
+              <span className={rate ? "" : "text-muted-foreground"}>
+                {rate?.name ?? "Velg sats…"}
+              </span>
+              {rate && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {rate.amount} kr/t
+                </span>
+              )}
             </button>
 
             <label className="text-xs text-muted-foreground mt-2 block">Kommentar (valgfri)</label>
-            <input value={comment} onChange={(e) => setComment(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-input border border-border" />
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            />
           </div>
 
-          <button onClick={startWork} disabled={busy || !orgId || !projectId} className="w-full tap-target bg-primary text-primary-foreground text-lg h-16 disabled:opacity-60">
+          <button
+            onClick={startWork}
+            disabled={busy || !orgId || !projectId}
+            className="w-full tap-target bg-primary text-primary-foreground text-lg h-16 disabled:opacity-60"
+          >
             <Play className="w-6 h-6 mr-2" fill="currentColor" />
             Start arbeid
           </button>
@@ -199,11 +306,30 @@ function Dashboard() {
       </div>
 
       <ProjectPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        open={projectPickerOpen}
+        onClose={() => setProjectPickerOpen(false)}
         orgId={orgId}
         value={projectId ?? activeSession?.project_id ?? null}
-        onChange={(id, p) => { setProjectId(id); setProject(p); }}
+        onChange={(id, p) => {
+          setProjectId(id);
+          setProject(p);
+        }}
+      />
+      <RatePicker
+        open={ratePickerOpen}
+        onClose={() => setRatePickerOpen(false)}
+        orgId={orgId}
+        value={rateId}
+        allowClear
+        onChange={(id, r) => {
+          if (!id) {
+            setRateId(null);
+            setRate(null);
+          } else {
+            setRateId(id);
+            setRate(r);
+          }
+        }}
       />
     </div>
   );
