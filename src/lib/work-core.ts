@@ -58,6 +58,26 @@ export type TimeEntry = {
 const ENTRY_COLUMNS =
   "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at";
 
+export async function fetchDefaultOrgId(): Promise<string | null> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+  const { data, error } = await supabase
+    .from("user_preferences")
+    .select("default_organization_id")
+    .eq("user_id", u.user.id)
+    .maybeSingle();
+  if (error) return null;
+  return data?.default_organization_id ?? null;
+}
+
+export async function setDefaultOrgId(orgId: string): Promise<void> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return;
+  await supabase
+    .from("user_preferences")
+    .upsert({ user_id: u.user.id, default_organization_id: orgId }, { onConflict: "user_id" });
+}
+
 export async function fetchOrganizations(): Promise<Organization[]> {
   const { data, error } = await supabase
     .from("organizations")
