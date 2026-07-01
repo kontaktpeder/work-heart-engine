@@ -1,6 +1,13 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate, useLocation } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  Link,
+  useNavigate,
+  useLocation,
+} from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, List, FolderKanban, BarChart3, LogOut } from "lucide-react";
+import { Home, List, FolderKanban, Wallet, BarChart3, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -17,6 +24,7 @@ const tabs = [
   { to: "/dashboard", label: "Start", icon: Home },
   { to: "/timeliste", label: "Timer", icon: List },
   { to: "/prosjekter", label: "Prosjekter", icon: FolderKanban },
+  { to: "/satser", label: "Satser", icon: Wallet },
   { to: "/rapport", label: "Rapport", icon: BarChart3 },
 ] as const;
 
@@ -37,7 +45,9 @@ function AuthedLayout() {
       <header className="sticky top-0 z-10 backdrop-blur bg-background/80 border-b border-border">
         <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground inline-flex items-center justify-center font-bold">W</div>
+            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground inline-flex items-center justify-center font-bold">
+              W
+            </div>
             <span className="font-semibold">Work Core</span>
           </div>
           <button
@@ -55,7 +65,7 @@ function AuthedLayout() {
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 z-10 border-t border-border bg-background/95 backdrop-blur">
-        <div className="max-w-2xl mx-auto grid grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
           {tabs.map((t) => {
             const active = location.pathname.startsWith(t.to);
             const Icon = t.icon;
@@ -63,7 +73,7 @@ function AuthedLayout() {
               <Link
                 key={t.to}
                 to={t.to}
-                className={`flex flex-col items-center gap-1 py-3 text-xs font-medium transition ${
+                className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
