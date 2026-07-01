@@ -22,10 +22,17 @@ export const Route = createFileRoute("/_authenticated/rapport")({
 });
 
 function Rapport() {
+  const qc = useQueryClient();
   const [from, setFrom] = useState(toDateInput(startOfMonth()));
   const [to, setTo] = useState(toDateInput(endOfMonth()));
   const [orgId, setOrgId] = useState("");
+  const [orgTouched, setOrgTouched] = useState(false);
   const [projectId, setProjectId] = useState("");
+
+  const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+  useEffect(() => {
+    if (!orgTouched && !orgId && defaultOrgQ.data) setOrgId(defaultOrgQ.data);
+  }, [defaultOrgQ.data, orgId, orgTouched]);
 
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
   const projectsQ = useQuery({
