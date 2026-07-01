@@ -12,12 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
-import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated/satser'
-import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
-import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authenticated/prosjekter'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedArbeidstyperRouteImport } from './routes/_authenticated/arbeidstyper'
+import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -33,102 +28,35 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTimelisteRoute = AuthenticatedTimelisteRouteImport.update({
-  id: '/timeliste',
-  path: '/timeliste',
+const AuthenticatedOrgsIndexRoute = AuthenticatedOrgsIndexRouteImport.update({
+  id: '/orgs/',
+  path: '/orgs/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSatserRoute = AuthenticatedSatserRouteImport.update({
-  id: '/satser',
-  path: '/satser',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
-  id: '/rapport',
-  path: '/rapport',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProsjekterRoute = AuthenticatedProsjekterRouteImport.update({
-  id: '/prosjekter',
-  path: '/prosjekter',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedArbeidstyperRoute =
-  AuthenticatedArbeidstyperRouteImport.update({
-    id: '/arbeidstyper',
-    path: '/arbeidstyper',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/prosjekter': typeof AuthenticatedProsjekterRoute
-  '/rapport': typeof AuthenticatedRapportRoute
-  '/satser': typeof AuthenticatedSatserRoute
-  '/timeliste': typeof AuthenticatedTimelisteRoute
+  '/orgs/': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/prosjekter': typeof AuthenticatedProsjekterRoute
-  '/rapport': typeof AuthenticatedRapportRoute
-  '/satser': typeof AuthenticatedSatserRoute
-  '/timeliste': typeof AuthenticatedTimelisteRoute
+  '/orgs': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/prosjekter': typeof AuthenticatedProsjekterRoute
-  '/_authenticated/rapport': typeof AuthenticatedRapportRoute
-  '/_authenticated/satser': typeof AuthenticatedSatserRoute
-  '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
+  '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/arbeidstyper'
-    | '/dashboard'
-    | '/prosjekter'
-    | '/rapport'
-    | '/satser'
-    | '/timeliste'
+  fullPaths: '/' | '/auth' | '/orgs/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/arbeidstyper'
-    | '/dashboard'
-    | '/prosjekter'
-    | '/rapport'
-    | '/satser'
-    | '/timeliste'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/auth'
-    | '/_authenticated/arbeidstyper'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/prosjekter'
-    | '/_authenticated/rapport'
-    | '/_authenticated/satser'
-    | '/_authenticated/timeliste'
+  to: '/' | '/auth' | '/orgs'
+  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/orgs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,67 +88,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/timeliste': {
-      id: '/_authenticated/timeliste'
-      path: '/timeliste'
-      fullPath: '/timeliste'
-      preLoaderRoute: typeof AuthenticatedTimelisteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/satser': {
-      id: '/_authenticated/satser'
-      path: '/satser'
-      fullPath: '/satser'
-      preLoaderRoute: typeof AuthenticatedSatserRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rapport': {
-      id: '/_authenticated/rapport'
-      path: '/rapport'
-      fullPath: '/rapport'
-      preLoaderRoute: typeof AuthenticatedRapportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/prosjekter': {
-      id: '/_authenticated/prosjekter'
-      path: '/prosjekter'
-      fullPath: '/prosjekter'
-      preLoaderRoute: typeof AuthenticatedProsjekterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/arbeidstyper': {
-      id: '/_authenticated/arbeidstyper'
-      path: '/arbeidstyper'
-      fullPath: '/arbeidstyper'
-      preLoaderRoute: typeof AuthenticatedArbeidstyperRouteImport
+    '/_authenticated/orgs/': {
+      id: '/_authenticated/orgs/'
+      path: '/orgs'
+      fullPath: '/orgs/'
+      preLoaderRoute: typeof AuthenticatedOrgsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedArbeidstyperRoute: typeof AuthenticatedArbeidstyperRoute
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedProsjekterRoute: typeof AuthenticatedProsjekterRoute
-  AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
-  AuthenticatedSatserRoute: typeof AuthenticatedSatserRoute
-  AuthenticatedTimelisteRoute: typeof AuthenticatedTimelisteRoute
+  AuthenticatedOrgsIndexRoute: typeof AuthenticatedOrgsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedArbeidstyperRoute: AuthenticatedArbeidstyperRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedProsjekterRoute: AuthenticatedProsjekterRoute,
-  AuthenticatedRapportRoute: AuthenticatedRapportRoute,
-  AuthenticatedSatserRoute: AuthenticatedSatserRoute,
-  AuthenticatedTimelisteRoute: AuthenticatedTimelisteRoute,
+  AuthenticatedOrgsIndexRoute: AuthenticatedOrgsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -234,13 +117,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
