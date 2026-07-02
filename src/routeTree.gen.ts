@@ -32,6 +32,7 @@ import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public
 import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
 import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
 import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
+import { Route as AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.finance-integration'
 import { Route as AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport } from './routes/_authenticated/orgs/$orgId/settings.api-keys'
 import { Route as ApiPublicV1ModuleOrganizationOrgIdRouteImport } from './routes/api/public/v1/module.organization.$orgId'
 
@@ -161,6 +162,12 @@ const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
     path: '/organization',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
+const AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute =
+  AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport.update({
+    id: '/finance-integration',
+    path: '/finance-integration',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
 const AuthenticatedOrgsOrgIdSettingsApiKeysRoute =
   AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport.update({
     id: '/api-keys',
@@ -191,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
   '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
+  '/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
@@ -215,6 +223,7 @@ export interface FileRoutesByTo {
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdIndexRoute
   '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
+  '/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
@@ -243,6 +252,7 @@ export interface FileRoutesById {
   '/_authenticated/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/_authenticated/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
   '/_authenticated/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
+  '/_authenticated/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId/'
     | '/orgs/$orgId/settings/api-keys'
+    | '/orgs/$orgId/settings/finance-integration'
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId'
     | '/orgs/$orgId/settings/api-keys'
+    | '/orgs/$orgId/settings/finance-integration'
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
@@ -322,6 +334,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orgs/$orgId/timer'
     | '/_authenticated/orgs/$orgId/'
     | '/_authenticated/orgs/$orgId/settings/api-keys'
+    | '/_authenticated/orgs/$orgId/settings/finance-integration'
     | '/_authenticated/orgs/$orgId/settings/organization'
     | '/_authenticated/orgs/$orgId/settings/projects'
     | '/_authenticated/orgs/$orgId/settings/rates'
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
+    '/_authenticated/orgs/$orgId/settings/finance-integration': {
+      id: '/_authenticated/orgs/$orgId/settings/finance-integration'
+      path: '/finance-integration'
+      fullPath: '/orgs/$orgId/settings/finance-integration'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
     '/_authenticated/orgs/$orgId/settings/api-keys': {
       id: '/_authenticated/orgs/$orgId/settings/api-keys'
       path: '/api-keys'
@@ -523,6 +543,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
   AuthenticatedOrgsOrgIdSettingsApiKeysRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
+  AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute: typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   AuthenticatedOrgsOrgIdSettingsOrganizationRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
@@ -533,6 +554,8 @@ const AuthenticatedOrgsOrgIdSettingsRouteChildren: AuthenticatedOrgsOrgIdSetting
   {
     AuthenticatedOrgsOrgIdSettingsApiKeysRoute:
       AuthenticatedOrgsOrgIdSettingsApiKeysRoute,
+    AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute:
+      AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute,
     AuthenticatedOrgsOrgIdSettingsOrganizationRoute:
       AuthenticatedOrgsOrgIdSettingsOrganizationRoute,
     AuthenticatedOrgsOrgIdSettingsProjectsRoute:
