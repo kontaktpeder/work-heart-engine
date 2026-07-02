@@ -20,7 +20,22 @@ Wrong `org_id` on verify → **404** (not 403).
 
 ## Deep links
 
-`org_home` → `{base_url}/orgs/{org_id}`
+| key | path |
+|-----|------|
+| org_home | `/orgs/{org_id}` |
+| org_timer | `/orgs/{org_id}/timer` |
+| org_reports | `/orgs/{org_id}/reports` |
+
+## Widgets (Platform dashboard)
+
+`GET /api/public/v1/module/info` includes `widgets[]` per MODULE_CONTRACT.v1.
+
+All widgets are `placeholder: true` in v1 — Platform shows titles only; live data comes later.
+
+| id | title | deep_link |
+|----|-------|-----------|
+| today_hours | Today's hours | org_home |
+| active_projects | Active projects | org_home |
 
 ## Platform verify key
 
