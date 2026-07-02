@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Download, FileText } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Download, FileText, Send } from "lucide-react";
 import {
   fetchProjects,
   fetchRates,
@@ -13,6 +15,10 @@ import {
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import { buildCsv, buildPdf, buildRows } from "@/lib/export";
+import {
+  countExportableEntries,
+  exportTimeEntriesToFinance,
+} from "@/lib/finance-export.functions";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
   head: () => ({ meta: [{ title: "Rapport · Work Core" }] }),
