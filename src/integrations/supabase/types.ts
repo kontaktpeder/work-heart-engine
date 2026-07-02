@@ -90,6 +90,83 @@ export type Database = {
           },
         ]
       }
+      finance_export_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          finance_entry_id: string | null
+          id: string
+          organization_id: string
+          status: string
+          time_entry_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          finance_entry_id?: string | null
+          id?: string
+          organization_id: string
+          status: string
+          time_entry_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          finance_entry_id?: string | null
+          id?: string
+          organization_id?: string
+          status?: string
+          time_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_export_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_export_log_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_integration_secrets: {
+        Row: {
+          created_at: string
+          finance_api_key_ciphertext: string
+          finance_base_url: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finance_api_key_ciphertext: string
+          finance_base_url?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finance_api_key_ciphertext?: string
+          finance_base_url?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_integration_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
