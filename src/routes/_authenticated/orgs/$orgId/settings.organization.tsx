@@ -17,6 +17,17 @@ function OrganizationSettingsPage() {
       </div>
 
       <Link
+        to="/orgs/$orgId/settings/finance-integration"
+        params={{ orgId: org.id }}
+        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+      >
+        <p className="font-medium">Finance integration →</p>
+        <p className="text-sm text-muted-foreground">
+          Connect a Finance API key to export time entries as expenses.
+        </p>
+      </Link>
+
+      <Link
         to="/orgs/$orgId/settings/api-keys"
         params={{ orgId: org.id }}
         className="block rounded-lg border border-border p-4 hover:border-primary transition"
