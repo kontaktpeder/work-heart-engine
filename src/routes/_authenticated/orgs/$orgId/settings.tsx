@@ -6,9 +6,10 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings")({
 });
 
 const subtabs = [
-  { to: "/orgs/$orgId/settings/organization", label: "Organisasjon" },
-  { to: "/orgs/$orgId/settings/projects", label: "Prosjekter" },
-  { to: "/orgs/$orgId/settings/rates", label: "Satser" },
+  { to: "/orgs/$orgId/settings/organization", label: "Organization" },
+  { to: "/orgs/$orgId/settings/projects", label: "Projects" },
+  { to: "/orgs/$orgId/settings/rates", label: "Rates" },
+  { to: "/orgs/$orgId/settings/api-keys", label: "API keys" },
 ] as const;
 
 function SettingsLayout() {

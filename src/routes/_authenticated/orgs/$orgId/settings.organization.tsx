@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { Organization } from "@/lib/work-core";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/organization")({
@@ -16,8 +16,19 @@ function OrganizationSettingsPage() {
         <p className="text-lg font-medium">{org.name}</p>
       </div>
 
+      <Link
+        to="/orgs/$orgId/settings/api-keys"
+        params={{ orgId: org.id }}
+        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+      >
+        <p className="font-medium">Manage API keys →</p>
+        <p className="text-sm text-muted-foreground">
+          Create and revoke keys for Platform verify and external integrations.
+        </p>
+      </Link>
+
       <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-        Medlemmer og API-tilgang kommer snart.
+        Medlemmer og flere innstillinger kommer snart.
       </div>
     </div>
   );
