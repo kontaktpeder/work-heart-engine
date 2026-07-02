@@ -256,6 +256,19 @@ function ReportsPage() {
           PDF
         </button>
       </div>
+
+      <button
+        onClick={() => exportMut.mutate()}
+        disabled={
+          exportMut.isPending || (exportableQ.data?.count ?? 0) === 0
+        }
+        className="tap-target w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
+      >
+        <Send className="w-4 h-4 mr-2" />
+        {exportMut.isPending
+          ? "Exporting…"
+          : `Export to Finance (${exportableQ.data?.count ?? 0})`}
+      </button>
     </div>
   );
 }
