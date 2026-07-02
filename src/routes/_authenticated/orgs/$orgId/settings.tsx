@@ -9,6 +9,7 @@ const subtabs = [
   { to: "/orgs/$orgId/settings/organization", label: "Organization" },
   { to: "/orgs/$orgId/settings/projects", label: "Projects" },
   { to: "/orgs/$orgId/settings/rates", label: "Rates" },
+  { to: "/orgs/$orgId/settings/finance-integration", label: "Finance" },
   { to: "/orgs/$orgId/settings/api-keys", label: "API keys" },
 ] as const;
 

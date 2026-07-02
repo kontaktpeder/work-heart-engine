@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Download, FileText } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Download, FileText, Send } from "lucide-react";
 import {
   fetchProjects,
   fetchRates,
@@ -13,6 +15,10 @@ import {
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import { buildCsv, buildPdf, buildRows } from "@/lib/export";
+import {
+  countExportableEntries,
+  exportTimeEntriesToFinance,
+} from "@/lib/finance-export.functions";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
   head: () => ({ meta: [{ title: "Rapport · Work Core" }] }),
@@ -46,6 +52,33 @@ function ReportsPage() {
         orgId,
         projectId: projectId || undefined,
       }),
+  });
+
+  const qc = useQueryClient();
+  const countFn = useServerFn(countExportableEntries);
+  const exportFn = useServerFn(exportTimeEntriesToFinance);
+
+  const exportableQ = useQuery({
+    queryKey: ["finance-exportable", orgId, from, to],
+    queryFn: () =>
+      countFn({ data: { organizationId: orgId, from, to } }),
+  });
+
+  const exportMut = useMutation({
+    mutationFn: () =>
+      exportFn({ data: { organizationId: orgId, from, to, dryRun: false } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["finance-exportable", orgId] });
+      qc.invalidateQueries({ queryKey: ["entries", orgId] });
+      if (res.errors.length) {
+        toast.error(
+          `Exported ${res.exported}, ${res.errors.length} failed. See finance_export_log.`,
+        );
+      } else {
+        toast.success(`Exported ${res.exported} entries to Finance`);
+      }
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Export failed"),
   });
 
   const entries = entriesQ.data ?? [];
@@ -223,6 +256,19 @@ function ReportsPage() {
           PDF
         </button>
       </div>
+
+      <button
+        onClick={() => exportMut.mutate()}
+        disabled={
+          exportMut.isPending || (exportableQ.data?.count ?? 0) === 0
+        }
+        className="tap-target w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
+      >
+        <Send className="w-4 h-4 mr-2" />
+        {exportMut.isPending
+          ? "Exporting…"
+          : `Export to Finance (${exportableQ.data?.count ?? 0})`}
+      </button>
     </div>
   );
 }
