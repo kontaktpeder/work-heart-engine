@@ -79,7 +79,7 @@ export const testFinanceIntegration = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId, data.organizationId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { decryptSecret } = await import("@/lib/integration-secrets.server");
-    const { pingFinance } = await import("@/lib/finance-export.client.server");
+    const { pingFinance } = await import("@/lib/finance-export-mapper.server");
 
     const { data: row, error } = await (supabaseAdmin as any)
       .from("org_integration_secrets")
