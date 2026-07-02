@@ -60,7 +60,7 @@ export const exportTimeEntriesToFinance = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { decryptSecret } = await import("@/lib/integration-secrets.server");
     const { createFinanceEntry, mapTimeEntryToFinanceEntry } = await import(
-      "@/lib/finance-export.client.server"
+      "@/lib/finance-export-mapper.server"
     );
 
     // 1. Load org — must have external_identity_org_id linked
