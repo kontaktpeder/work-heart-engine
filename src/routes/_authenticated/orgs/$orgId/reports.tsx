@@ -54,6 +54,33 @@ function ReportsPage() {
       }),
   });
 
+  const qc = useQueryClient();
+  const countFn = useServerFn(countExportableEntries);
+  const exportFn = useServerFn(exportTimeEntriesToFinance);
+
+  const exportableQ = useQuery({
+    queryKey: ["finance-exportable", orgId, from, to],
+    queryFn: () =>
+      countFn({ data: { organizationId: orgId, from, to } }),
+  });
+
+  const exportMut = useMutation({
+    mutationFn: () =>
+      exportFn({ data: { organizationId: orgId, from, to, dryRun: false } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["finance-exportable", orgId] });
+      qc.invalidateQueries({ queryKey: ["entries", orgId] });
+      if (res.errors.length) {
+        toast.error(
+          `Exported ${res.exported}, ${res.errors.length} failed. See finance_export_log.`,
+        );
+      } else {
+        toast.success(`Exported ${res.exported} entries to Finance`);
+      }
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Export failed"),
+  });
+
   const entries = entriesQ.data ?? [];
   const projById = useMemo(
     () => new Map((projectsQ.data ?? []).map((p) => [p.id, p])),
