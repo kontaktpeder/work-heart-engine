@@ -47,3 +47,28 @@ export function withContract<T extends Record<string, unknown>>(body: T) {
 export function orgHomeDeepLink(baseUrl: string, orgId: string): string {
   return `${baseUrl}/orgs/${orgId}`;
 }
+
+export const workModuleDeepLinks = {
+  org_home: "/orgs/{org_id}",
+  org_timer: "/orgs/{org_id}/timer",
+  org_reports: "/orgs/{org_id}/reports",
+} as const;
+
+export const workModuleWidgets = [
+  {
+    id: "today_hours",
+    title: "Today's hours",
+    description: "Time logged today across all projects.",
+    deep_link: "org_home",
+    capabilities_required: ["time.read"],
+    placeholder: true,
+  },
+  {
+    id: "active_projects",
+    title: "Active projects",
+    description: "Projects with recent time entries.",
+    deep_link: "org_home",
+    capabilities_required: ["projects.read"],
+    placeholder: true,
+  },
+] as const;
