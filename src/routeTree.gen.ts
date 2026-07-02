@@ -26,9 +26,14 @@ import { Route as AuthenticatedOrgsOrgIdStartRouteImport } from './routes/_authe
 import { Route as AuthenticatedOrgsOrgIdSettingsRouteImport } from './routes/_authenticated/orgs/$orgId/settings'
 import { Route as AuthenticatedOrgsOrgIdReportsRouteImport } from './routes/_authenticated/orgs/$orgId/reports'
 import { Route as AuthenticatedOrgsOrgIdSettingsIndexRouteImport } from './routes/_authenticated/orgs/$orgId/settings.index'
+import { Route as ApiPublicV1ModuleOrganizationRouteImport } from './routes/api/public/v1/module.organization'
+import { Route as ApiPublicV1ModuleInfoRouteImport } from './routes/api/public/v1/module.info'
+import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public/v1/module.health'
 import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
 import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
 import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
+import { Route as AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport } from './routes/_authenticated/orgs/$orgId/settings.api-keys'
+import { Route as ApiPublicV1ModuleOrganizationOrgIdRouteImport } from './routes/api/public/v1/module.organization.$orgId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -122,6 +127,22 @@ const AuthenticatedOrgsOrgIdSettingsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
+const ApiPublicV1ModuleOrganizationRoute =
+  ApiPublicV1ModuleOrganizationRouteImport.update({
+    id: '/api/public/v1/module/organization',
+    path: '/api/public/v1/module/organization',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ModuleInfoRoute = ApiPublicV1ModuleInfoRouteImport.update({
+  id: '/api/public/v1/module/info',
+  path: '/api/public/v1/module/info',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ModuleHealthRoute = ApiPublicV1ModuleHealthRouteImport.update({
+  id: '/api/public/v1/module/health',
+  path: '/api/public/v1/module/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedOrgsOrgIdSettingsRatesRoute =
   AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
     id: '/rates',
@@ -140,6 +161,18 @@ const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
     path: '/organization',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
+const AuthenticatedOrgsOrgIdSettingsApiKeysRoute =
+  AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport.update({
+    id: '/api-keys',
+    path: '/api-keys',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const ApiPublicV1ModuleOrganizationOrgIdRoute =
+  ApiPublicV1ModuleOrganizationOrgIdRouteImport.update({
+    id: '/$orgId',
+    path: '/$orgId',
+    getParentRoute: () => ApiPublicV1ModuleOrganizationRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -157,10 +190,15 @@ export interface FileRoutesByFullPath {
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
+  '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
+  '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
+  '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -176,10 +214,15 @@ export interface FileRoutesByTo {
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
+  '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
+  '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
+  '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -199,10 +242,15 @@ export interface FileRoutesById {
   '/_authenticated/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/_authenticated/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
   '/_authenticated/orgs/$orgId/': typeof AuthenticatedOrgsOrgIdIndexRoute
+  '/_authenticated/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
+  '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
+  '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/_authenticated/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
+  '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -222,10 +270,15 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId/'
+    | '/orgs/$orgId/settings/api-keys'
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/health'
+    | '/api/public/v1/module/info'
+    | '/api/public/v1/module/organization'
     | '/orgs/$orgId/settings/'
+    | '/api/public/v1/module/organization/$orgId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -241,10 +294,15 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
     | '/orgs/$orgId'
+    | '/orgs/$orgId/settings/api-keys'
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/health'
+    | '/api/public/v1/module/info'
+    | '/api/public/v1/module/organization'
     | '/orgs/$orgId/settings'
+    | '/api/public/v1/module/organization/$orgId'
   id:
     | '__root__'
     | '/'
@@ -263,16 +321,24 @@ export interface FileRouteTypes {
     | '/_authenticated/orgs/$orgId/start'
     | '/_authenticated/orgs/$orgId/timer'
     | '/_authenticated/orgs/$orgId/'
+    | '/_authenticated/orgs/$orgId/settings/api-keys'
     | '/_authenticated/orgs/$orgId/settings/organization'
     | '/_authenticated/orgs/$orgId/settings/projects'
     | '/_authenticated/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/health'
+    | '/api/public/v1/module/info'
+    | '/api/public/v1/module/organization'
     | '/_authenticated/orgs/$orgId/settings/'
+    | '/api/public/v1/module/organization/$orgId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicV1ModuleHealthRoute: typeof ApiPublicV1ModuleHealthRoute
+  ApiPublicV1ModuleInfoRoute: typeof ApiPublicV1ModuleInfoRoute
+  ApiPublicV1ModuleOrganizationRoute: typeof ApiPublicV1ModuleOrganizationRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -396,6 +462,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
+    '/api/public/v1/module/organization': {
+      id: '/api/public/v1/module/organization'
+      path: '/api/public/v1/module/organization'
+      fullPath: '/api/public/v1/module/organization'
+      preLoaderRoute: typeof ApiPublicV1ModuleOrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/info': {
+      id: '/api/public/v1/module/info'
+      path: '/api/public/v1/module/info'
+      fullPath: '/api/public/v1/module/info'
+      preLoaderRoute: typeof ApiPublicV1ModuleInfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/health': {
+      id: '/api/public/v1/module/health'
+      path: '/api/public/v1/module/health'
+      fullPath: '/api/public/v1/module/health'
+      preLoaderRoute: typeof ApiPublicV1ModuleHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/orgs/$orgId/settings/rates': {
       id: '/_authenticated/orgs/$orgId/settings/rates'
       path: '/rates'
@@ -417,10 +504,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
+    '/_authenticated/orgs/$orgId/settings/api-keys': {
+      id: '/_authenticated/orgs/$orgId/settings/api-keys'
+      path: '/api-keys'
+      fullPath: '/orgs/$orgId/settings/api-keys'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/api/public/v1/module/organization/$orgId': {
+      id: '/api/public/v1/module/organization/$orgId'
+      path: '/$orgId'
+      fullPath: '/api/public/v1/module/organization/$orgId'
+      preLoaderRoute: typeof ApiPublicV1ModuleOrganizationOrgIdRouteImport
+      parentRoute: typeof ApiPublicV1ModuleOrganizationRoute
+    }
   }
 }
 
 interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
+  AuthenticatedOrgsOrgIdSettingsApiKeysRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   AuthenticatedOrgsOrgIdSettingsOrganizationRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
@@ -429,6 +531,8 @@ interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
 
 const AuthenticatedOrgsOrgIdSettingsRouteChildren: AuthenticatedOrgsOrgIdSettingsRouteChildren =
   {
+    AuthenticatedOrgsOrgIdSettingsApiKeysRoute:
+      AuthenticatedOrgsOrgIdSettingsApiKeysRoute,
     AuthenticatedOrgsOrgIdSettingsOrganizationRoute:
       AuthenticatedOrgsOrgIdSettingsOrganizationRoute,
     AuthenticatedOrgsOrgIdSettingsProjectsRoute:
@@ -493,10 +597,29 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicV1ModuleOrganizationRouteChildren {
+  ApiPublicV1ModuleOrganizationOrgIdRoute: typeof ApiPublicV1ModuleOrganizationOrgIdRoute
+}
+
+const ApiPublicV1ModuleOrganizationRouteChildren: ApiPublicV1ModuleOrganizationRouteChildren =
+  {
+    ApiPublicV1ModuleOrganizationOrgIdRoute:
+      ApiPublicV1ModuleOrganizationOrgIdRoute,
+  }
+
+const ApiPublicV1ModuleOrganizationRouteWithChildren =
+  ApiPublicV1ModuleOrganizationRoute._addFileChildren(
+    ApiPublicV1ModuleOrganizationRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicV1ModuleHealthRoute: ApiPublicV1ModuleHealthRoute,
+  ApiPublicV1ModuleInfoRoute: ApiPublicV1ModuleInfoRoute,
+  ApiPublicV1ModuleOrganizationRoute:
+    ApiPublicV1ModuleOrganizationRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
