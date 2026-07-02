@@ -1,5 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { workModuleInfo, moduleAppBaseUrl, withContract } from "@/lib/module-contract.server";
+import {
+  workModuleInfo,
+  workModuleDeepLinks,
+  workModuleWidgets,
+  moduleAppBaseUrl,
+  withContract,
+} from "@/lib/module-contract.server";
 
 export const Route = createFileRoute("/api/public/v1/module/info")({
   server: {
@@ -23,9 +29,8 @@ export const Route = createFileRoute("/api/public/v1/module/info")({
               organization: ["platform:read"],
               organization_verify: ["platform:verify"],
             },
-            deep_links: {
-              org_home: "/orgs/{org_id}",
-            },
+            deep_links: workModuleDeepLinks,
+            widgets: workModuleWidgets,
           }),
         );
       },
