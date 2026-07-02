@@ -61,7 +61,7 @@ export const workModuleWidgets = [
     description: "Time logged today across all projects.",
     deep_link: "org_home",
     capabilities_required: ["time.read"],
-    placeholder: true,
+    placeholder: false,
   },
   {
     id: "active_projects",
@@ -69,6 +69,6 @@ export const workModuleWidgets = [
     description: "Projects with recent time entries.",
     deep_link: "org_home",
     capabilities_required: ["projects.read"],
-    placeholder: true,
+    placeholder: false,
   },
 ] as const;

@@ -15,8 +15,32 @@ Spec (frozen): `platform-nexus/docs/MODULE_CONTRACT.v1.md`
 | /api/public/v1/module/info | GET | — |
 | /api/public/v1/module/organization | GET | platform:read |
 | /api/public/v1/module/organization/{org_id} | GET | platform:verify |
+| /api/public/v1/module/widgets?ids=... | GET | platform:read |
 
 Wrong `org_id` on verify → **404** (not 403).
+
+## Widgets endpoint
+
+`GET /api/public/v1/module/widgets?ids=today_hours,active_projects`
+
+Auth: `Authorization: Bearer <wc_live_...>` with scope `platform:read`.
+`ids` is optional — omit to return all widgets. Org is resolved from the API key's client.
+
+Response:
+
+```json
+{
+  "contract_version": "1.0",
+  "widgets": [
+    { "id": "today_hours", "value": 2.5, "display": "2.5h", "deep_link": "org_home" },
+    { "id": "active_projects", "value": 3, "display": "3", "deep_link": "org_home" }
+  ]
+}
+```
+
+Computation:
+- `today_hours` — SUM(`total_minutes`) / 60 for the org, `date = today` (Europe/Oslo).
+- `active_projects` — COUNT(DISTINCT `project_id`) from `time_entries` in the last 14 days where `project_id IS NOT NULL`.
 
 ## Deep links
 
@@ -30,7 +54,7 @@ Wrong `org_id` on verify → **404** (not 403).
 
 `GET /api/public/v1/module/info` includes `widgets[]` per MODULE_CONTRACT.v1.
 
-All widgets are `placeholder: true` in v1 — Platform shows titles only; live data comes later.
+Widgets are live (`placeholder: false`) — Platform fetches values via `/module/widgets`.
 
 | id | title | deep_link |
 |----|-------|-----------|
