@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Play, Square } from "lucide-react";
+import { Play, Square, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchActiveSession,
@@ -18,6 +19,8 @@ import {
 import { startOfDay } from "@/lib/time-utils";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatePicker } from "@/components/rate-picker";
+import { Button } from "@/components/ui/button";
+import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -31,6 +34,7 @@ function StartPage() {
     orgId: string;
   };
   const qc = useQueryClient();
+  const seedFn = useServerFn(seedWorkDemoData);
 
   const sessionQ = useQuery({ queryKey: ["session"], queryFn: fetchActiveSession });
   const today = startOfDay();
@@ -45,6 +49,24 @@ function StartPage() {
   const ratesQ = useQuery({
     queryKey: ["rates", orgId],
     queryFn: () => fetchRates(orgId),
+  });
+  const recentEntriesQ = useQuery({
+    queryKey: ["entries", orgId, "recent"],
+    queryFn: () => fetchTimeEntries({ orgId }),
+  });
+
+  const seedMut = useMutation({
+    mutationFn: () => seedFn({ data: { organizationId: orgId } }),
+    onSuccess: (res) => {
+      if (res.seeded) {
+        toast.success(`La til ${res.count} demotimer`);
+        void qc.invalidateQueries({ queryKey: ["entries", orgId] });
+        void qc.invalidateQueries({ queryKey: ["projects", orgId] });
+      } else {
+        toast.message("Demodata er allerede lagt inn");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const activeSession = sessionQ.data;
@@ -151,6 +173,24 @@ function StartPage() {
         <h1 className="text-3xl font-bold capitalize">{greeting}.</h1>
         <p className="text-xs text-muted-foreground mt-1">i {org.name}</p>
       </div>
+
+      {(recentEntriesQ.data?.length ?? 0) === 0 && (
+        <div className="rounded-lg border border-dashed border-border p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <p className="text-sm text-muted-foreground">
+            Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="shrink-0 gap-1"
+            disabled={seedMut.isPending}
+            onClick={() => seedMut.mutate()}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {seedMut.isPending ? "Legger inn…" : "Fyll med demodata"}
+          </Button>
+        </div>
+      )}
 
       {activeSession && !activeInThisOrg && (
         <div className="surface-card border-destructive/40 text-sm">
