@@ -43,7 +43,7 @@ Work Core can push time entries to Finance Core as `expense` entries.
 
 | Symptom                                                        | Cause / fix                                                                       |
 | -------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| "Organization is not linked to Platform"                       | Set `organizations.external_identity_org_id` (Platform verify flow).              |
+| "Organization is not linked to Platform"                       | Settings → Organization → paste Nexus org-ID into **Platform (Nexus) org-ID**.    |
 | "Finance integration not configured"                           | Save the Finance base URL + API key under Settings → Finance integration.         |
 | Test connection: `Finance API 401`                             | Key is wrong or revoked. Issue a new key with scope `entries:write` in Finance.    |
 | Export shows errors on individual entries                      | See `finance_export_log.error_message` for that entry.                            |

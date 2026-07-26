@@ -27,6 +27,7 @@ import { Route as AuthenticatedOrgsOrgIdSettingsRouteImport } from './routes/_au
 import { Route as AuthenticatedOrgsOrgIdReportsRouteImport } from './routes/_authenticated/orgs/$orgId/reports'
 import { Route as AuthenticatedOrgsOrgIdSettingsIndexRouteImport } from './routes/_authenticated/orgs/$orgId/settings.index'
 import { Route as ApiPublicV1ModuleWidgetsRouteImport } from './routes/api/public/v1/module.widgets'
+import { Route as ApiPublicV1ModuleAlertsRouteImport } from './routes/api/public/v1/module.alerts'
 import { Route as ApiPublicV1ModuleOrganizationRouteImport } from './routes/api/public/v1/module.organization'
 import { Route as ApiPublicV1ModuleInfoRouteImport } from './routes/api/public/v1/module.info'
 import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public/v1/module.health'
@@ -135,6 +136,12 @@ const ApiPublicV1ModuleWidgetsRoute =
     path: '/api/public/v1/module/widgets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ModuleAlertsRoute =
+  ApiPublicV1ModuleAlertsRouteImport.update({
+    id: '/api/public/v1/module/alerts',
+    path: '/api/public/v1/module/alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ModuleOrganizationRoute =
   ApiPublicV1ModuleOrganizationRouteImport.update({
     id: '/api/public/v1/module/organization',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
@@ -269,6 +278,7 @@ export interface FileRoutesById {
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/_authenticated/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
+    | '/api/public/v1/module/alerts'
     | '/orgs/$orgId/settings/'
     | '/api/public/v1/module/organization/$orgId'
   fileRoutesByTo: FileRoutesByTo
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
+    | '/api/public/v1/module/alerts'
     | '/orgs/$orgId/settings'
     | '/api/public/v1/module/organization/$orgId'
   id:
@@ -354,6 +366,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
+    | '/api/public/v1/module/alerts'
     | '/_authenticated/orgs/$orgId/settings/'
     | '/api/public/v1/module/organization/$orgId'
   fileRoutesById: FileRoutesById
@@ -366,6 +379,7 @@ export interface RootRouteChildren {
   ApiPublicV1ModuleInfoRoute: typeof ApiPublicV1ModuleInfoRoute
   ApiPublicV1ModuleOrganizationRoute: typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   ApiPublicV1ModuleWidgetsRoute: typeof ApiPublicV1ModuleWidgetsRoute
+  ApiPublicV1ModuleAlertsRoute: typeof ApiPublicV1ModuleAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -494,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/module/widgets'
       fullPath: '/api/public/v1/module/widgets'
       preLoaderRoute: typeof ApiPublicV1ModuleWidgetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/alerts': {
+      id: '/api/public/v1/module/alerts'
+      path: '/api/public/v1/module/alerts'
+      fullPath: '/api/public/v1/module/alerts'
+      preLoaderRoute: typeof ApiPublicV1ModuleAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/module/organization': {
@@ -665,7 +686,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ModuleOrganizationRoute:
     ApiPublicV1ModuleOrganizationRouteWithChildren,
   ApiPublicV1ModuleWidgetsRoute: ApiPublicV1ModuleWidgetsRoute,
+  ApiPublicV1ModuleAlertsRoute: ApiPublicV1ModuleAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+

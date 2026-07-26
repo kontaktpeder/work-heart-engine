@@ -16,6 +16,7 @@ Spec (frozen): `platform-nexus/docs/MODULE_CONTRACT.v1.md`
 | /api/public/v1/module/organization | GET | platform:read |
 | /api/public/v1/module/organization/{org_id} | GET | platform:verify |
 | /api/public/v1/module/widgets?ids=... | GET | platform:read |
+| /api/public/v1/module/alerts | GET | platform:read (v1.1 additive) |
 
 Wrong `org_id` on verify → **404** (not 403).
 
@@ -49,6 +50,17 @@ Computation:
 | org_home | `/orgs/{org_id}` |
 | org_timer | `/orgs/{org_id}/timer` |
 | org_reports | `/orgs/{org_id}/reports` |
+
+## Alerts (Mission — Module Contract v1.1)
+
+`GET /api/public/v1/module/alerts` returns actionable items for Nexus Mission:
+
+| id | When |
+|----|------|
+| `work.open_session` | Active timer session in the org |
+| `work.no_hours_today` | Weekday with zero logged minutes and no open session |
+| `work.unexported_entries` | Billable entries older than 3 days without Finance export |
+| `work.missing_platform_link` | `external_identity_org_id` not set |
 
 ## Widgets (Platform dashboard)
 

@@ -5,10 +5,17 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
+import { z } from "zod";
 import { Home, List, BarChart3, Settings, ArrowLeftRight } from "lucide-react";
 import { fetchOrganizations, type Organization } from "@/lib/work-core";
+import { MissionReturnLink } from "@/components/mission-return-link";
+
+const OrgSearch = z.object({
+  return: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
+  validateSearch: (s) => OrgSearch.parse(s),
   beforeLoad: async ({ params }) => {
     const orgs = await fetchOrganizations();
     const org = orgs.find((o) => o.id === params.orgId);
@@ -28,6 +35,7 @@ const tabs = [
 function OrgLayout() {
   const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
   const location = useLocation();
+  const { return: returnUrl } = Route.useSearch();
 
   return (
     <div>
@@ -35,6 +43,11 @@ function OrgLayout() {
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Arbeidsrom</p>
           <h2 className="text-lg font-semibold truncate">{org.name}</h2>
+          {returnUrl ? (
+            <div className="mt-1">
+              <MissionReturnLink returnUrl={returnUrl} />
+            </div>
+          ) : null}
         </div>
         <Link
           to="/orgs"
