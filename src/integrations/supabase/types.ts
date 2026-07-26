@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_clients: {
+        Row: {
+          allowed_scopes: Database["public"]["Enums"]["api_scope"][]
+          created_at: string
+          created_by: string
+          id: string
+          last_used_at: string | null
+          name: string
+          organization_id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          allowed_scopes?: Database["public"]["Enums"]["api_scope"][]
+          created_at?: string
+          created_by: string
+          id?: string
+          last_used_at?: string | null
+          name: string
+          organization_id: string
+          revoked_at?: string | null
+        }
+        Update: {
+          allowed_scopes?: Database["public"]["Enums"]["api_scope"][]
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          organization_id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          api_client_id: string
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          revoked_at: string | null
+        }
+        Insert: {
+          api_client_id: string
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          revoked_at?: string | null
+        }
+        Update: {
+          api_client_id?: string
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_api_client_id_fkey"
+            columns: ["api_client_id"]
+            isOneToOne: false
+            referencedRelation: "api_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_export_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          finance_entry_id: string | null
+          id: string
+          organization_id: string
+          status: string
+          time_entry_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          finance_entry_id?: string | null
+          id?: string
+          organization_id: string
+          status: string
+          time_entry_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          finance_entry_id?: string | null
+          id?: string
+          organization_id?: string
+          status?: string
+          time_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_export_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_export_log_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_integration_secrets: {
+        Row: {
+          created_at: string
+          finance_api_key_ciphertext: string
+          finance_base_url: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finance_api_key_ciphertext: string
+          finance_base_url?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finance_api_key_ciphertext?: string
+          finance_base_url?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_integration_secrets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -399,6 +552,12 @@ export type Database = {
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
     }
     Enums: {
+      api_scope:
+        | "time:read"
+        | "time:write"
+        | "reports:read"
+        | "platform:read"
+        | "platform:verify"
       org_role: "owner" | "admin" | "editor" | "viewer"
       time_entry_source: "manual" | "timer"
     }
@@ -528,6 +687,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      api_scope: [
+        "time:read",
+        "time:write",
+        "reports:read",
+        "platform:read",
+        "platform:verify",
+      ],
       org_role: ["owner", "admin", "editor", "viewer"],
       time_entry_source: ["manual", "timer"],
     },
