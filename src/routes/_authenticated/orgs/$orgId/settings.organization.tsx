@@ -12,6 +12,18 @@ import {
   getOrganizationPlatformLink,
   saveOrganizationPlatformLink,
 } from "@/lib/organization.functions";
+import {
+  inviteOrganizationMember,
+  listOrganizationMembers,
+} from "@/lib/members.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/organization")({
   head: () => ({ meta: [{ title: "Organisasjon · Work Core" }] }),
@@ -35,13 +47,22 @@ function OrganizationSettingsPage() {
   const qc = useQueryClient();
   const getFn = useServerFn(getOrganizationPlatformLink);
   const saveFn = useServerFn(saveOrganizationPlatformLink);
+  const listMembersFn = useServerFn(listOrganizationMembers);
+  const inviteFn = useServerFn(inviteOrganizationMember);
 
   const linkQ = useQuery({
     queryKey: ["org-platform-link", orgId],
     queryFn: () => getFn({ data: { organizationId: orgId } }),
   });
 
+  const membersQ = useQuery({
+    queryKey: ["org-members", orgId],
+    queryFn: () => listMembersFn({ data: { organizationId: orgId } }),
+  });
+
   const [platformOrgId, setPlatformOrgId] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"admin" | "editor" | "viewer">("editor");
   useEffect(() => {
     setPlatformOrgId(linkQ.data?.externalIdentityOrgId ?? "");
   }, [linkQ.data?.externalIdentityOrgId]);
@@ -59,6 +80,25 @@ function OrganizationSettingsPage() {
       toast.success("Platform-kobling lagret");
     },
     onError: (e: Error) => toast.error(e.message ?? "Kunne ikke lagre"),
+  });
+
+  const inviteMut = useMutation({
+    mutationFn: () =>
+      inviteFn({
+        data: {
+          organizationId: orgId,
+          email: inviteEmail.trim(),
+          role: inviteRole,
+        },
+      }),
+    onSuccess: (res) => {
+      setInviteEmail("");
+      qc.invalidateQueries({ queryKey: ["org-members", orgId] });
+      if (res.alreadyMember) toast.message("Brukeren er allerede medlem");
+      else if (res.invited) toast.success("Invitasjon sendt på e-post");
+      else toast.success("Medlem lagt til");
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Kunne ikke invitere"),
   });
 
   const appBase =
@@ -165,8 +205,66 @@ function OrganizationSettingsPage() {
         </p>
       </Link>
 
-      <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-        Medlemmer og flere innstillinger kommer snart.
+      <div className="rounded-lg border border-border p-4 space-y-4">
+        <div>
+          <h2 className="font-medium">Medlemmer</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Inviter kolleger via e-post.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {(membersQ.data?.members ?? []).map((m) => (
+            <div
+              key={m.id}
+              className="flex items-center justify-between gap-3 border rounded-md px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="text-sm truncate">{m.email ?? "Ukjent e-post"}</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">{m.userId}</p>
+              </div>
+              <Badge variant={m.role === "owner" ? "default" : "secondary"}>{m.role}</Badge>
+            </div>
+          ))}
+        </div>
+
+        {membersQ.data?.canInvite && (
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">E-post</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="navn@firma.no"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Rolle</Label>
+              <Select
+                value={inviteRole}
+                onValueChange={(v) => setInviteRole(v as "admin" | "editor" | "viewer")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="button"
+              disabled={!inviteEmail.trim() || inviteMut.isPending}
+              onClick={() => inviteMut.mutate()}
+            >
+              {inviteMut.isPending ? "Sender…" : "Inviter"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

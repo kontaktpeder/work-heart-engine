@@ -19,6 +19,7 @@ import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedArbeidstyperRouteImport } from './routes/_authenticated/arbeidstyper'
 import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
+import { Route as AuthenticatedOrgsNewRouteImport } from './routes/_authenticated/orgs/new'
 import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authenticated/orgs/$orgId/route'
 import { Route as AuthenticatedOrgsOrgIdIndexRouteImport } from './routes/_authenticated/orgs/$orgId/index'
 import { Route as AuthenticatedOrgsOrgIdTimerRouteImport } from './routes/_authenticated/orgs/$orgId/timer'
@@ -86,6 +87,11 @@ const AuthenticatedArbeidstyperRoute =
 const AuthenticatedOrgsIndexRoute = AuthenticatedOrgsIndexRouteImport.update({
   id: '/orgs/',
   path: '/orgs/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOrgsNewRoute = AuthenticatedOrgsNewRouteImport.update({
+  id: '/orgs/new',
+  path: '/orgs/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOrgsOrgIdRouteRoute =
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/orgs/': typeof AuthenticatedOrgsIndexRoute
+  '/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
+  '/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
+  '/_authenticated/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/_authenticated/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/_authenticated/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/_authenticated/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/timeliste'
     | '/orgs/$orgId'
     | '/orgs/'
+    | '/orgs/new'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/settings'
     | '/orgs/$orgId/start'
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/orgs'
+    | '/orgs/new'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/_authenticated/timeliste'
     | '/_authenticated/orgs/$orgId'
     | '/_authenticated/orgs/'
+    | '/_authenticated/orgs/new'
     | '/_authenticated/orgs/$orgId/reports'
     | '/_authenticated/orgs/$orgId/settings'
     | '/_authenticated/orgs/$orgId/start'
@@ -452,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/orgs'
       fullPath: '/orgs/'
       preLoaderRoute: typeof AuthenticatedOrgsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orgs/new': {
+      id: '/_authenticated/orgs/new'
+      path: '/orgs/new'
+      fullPath: '/orgs/new'
+      preLoaderRoute: typeof AuthenticatedOrgsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/orgs/$orgId': {
@@ -645,6 +664,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTimelisteRoute: typeof AuthenticatedTimelisteRoute
   AuthenticatedOrgsOrgIdRouteRoute: typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   AuthenticatedOrgsIndexRoute: typeof AuthenticatedOrgsIndexRoute
+  AuthenticatedOrgsNewRoute: typeof AuthenticatedOrgsNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -657,6 +677,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrgsOrgIdRouteRoute:
     AuthenticatedOrgsOrgIdRouteRouteWithChildren,
   AuthenticatedOrgsIndexRoute: AuthenticatedOrgsIndexRoute,
+  AuthenticatedOrgsNewRoute: AuthenticatedOrgsNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

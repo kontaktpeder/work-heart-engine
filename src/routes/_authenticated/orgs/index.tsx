@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Building2 } from "lucide-react";
+import { ArrowRight, Building2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { fetchDefaultOrgId, fetchOrganizations, setDefaultOrgId } from "@/lib/work-core";
 
 export const Route = createFileRoute("/_authenticated/orgs/")({
@@ -22,11 +23,18 @@ function OrgsPicker() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Velg organisasjon</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Alt du gjør etter dette skjer inne i det valgte arbeidsrommet.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Velg organisasjon</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Alt du gjør etter dette skjer inne i det valgte arbeidsrommet.
+          </p>
+        </div>
+        <Button asChild size="sm">
+          <Link to="/orgs/new">
+            <Plus className="h-4 w-4 mr-1" /> Ny organisasjon
+          </Link>
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -56,9 +64,12 @@ function OrgsPicker() {
           );
         })}
         {orgsQ.data?.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-8">
-            Ingen organisasjoner ennå.
-          </p>
+          <div className="text-center space-y-3 py-8">
+            <p className="text-sm text-muted-foreground">Ingen organisasjoner ennå.</p>
+            <Button asChild>
+              <Link to="/orgs/new">Opprett første organisasjon</Link>
+            </Button>
+          </div>
         )}
       </div>
     </div>

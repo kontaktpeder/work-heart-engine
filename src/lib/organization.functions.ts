@@ -60,3 +60,44 @@ export const saveOrganizationPlatformLink = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const, externalIdentityOrgId: data.externalIdentityOrgId };
   });
+
+const CreateOrgSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+});
+
+/** Create org + owner membership + default project/rates (admin path — bypasses member RLS chicken-egg). */
+export const createOrganization = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => CreateOrgSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: org, error: orgErr } = await supabaseAdmin
+      .from("organizations")
+      .insert({ name: data.name, owner_id: userId })
+      .select("id, name")
+      .single();
+    if (orgErr || !org) throw new Error(orgErr?.message ?? "Kunne ikke opprette organisasjon");
+
+    const { error: memErr } = await supabaseAdmin.from("organization_members").insert({
+      organization_id: org.id,
+      user_id: userId,
+      role: "owner",
+    });
+    if (memErr) throw new Error(memErr.message);
+
+    await supabaseAdmin.from("projects").insert({
+      organization_id: org.id,
+      name: "Generelt",
+      is_active: true,
+    });
+
+    await supabaseAdmin.from("rates").insert([
+      { organization_id: org.id, name: "Ordinær", amount: 210 },
+      { organization_id: org.id, name: "Rigging", amount: 180 },
+      { organization_id: org.id, name: "Overtid", amount: 210 },
+    ]);
+
+    return { id: org.id as string, name: org.name as string };
+  });
