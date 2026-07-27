@@ -18,6 +18,7 @@ import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authentic
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated/satser'
 import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
 import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authenticated/orgs/$orgId/route'
@@ -84,6 +85,11 @@ const AuthenticatedTimelisteRoute = AuthenticatedTimelisteRouteImport.update({
   id: '/timeliste',
   path: '/timeliste',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/': typeof AuthIndexRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/orgs/': typeof AuthenticatedOrgsIndexRoute
@@ -239,7 +246,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
   '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/prosjekter': typeof AuthenticatedProsjekterRoute
@@ -247,6 +253,7 @@ export interface FileRoutesByTo {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth': typeof AuthIndexRoute
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
@@ -278,6 +285,7 @@ export interface FileRoutesById {
   '/_authenticated/satser': typeof AuthenticatedSatserRoute
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/': typeof AuthIndexRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/_authenticated/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
@@ -311,6 +319,7 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/auth/callback'
+    | '/auth/'
     | '/orgs/$orgId'
     | '/orgs/new'
     | '/orgs/'
@@ -334,7 +343,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/arbeidstyper'
     | '/dashboard'
     | '/prosjekter'
@@ -342,6 +350,7 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/auth/callback'
+    | '/auth'
     | '/orgs/new'
     | '/orgs'
     | '/orgs/$orgId/reports'
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/_authenticated/satser'
     | '/_authenticated/timeliste'
     | '/auth/callback'
+    | '/auth/'
     | '/_authenticated/orgs/$orgId'
     | '/_authenticated/orgs/new'
     | '/_authenticated/orgs/'
@@ -469,6 +479,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/timeliste'
       preLoaderRoute: typeof AuthenticatedTimelisteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -703,10 +720,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthIndexRoute: AuthIndexRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
