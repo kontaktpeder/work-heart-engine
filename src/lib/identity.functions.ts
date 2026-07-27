@@ -21,18 +21,21 @@ function isEmailTakenError(message: string | undefined): boolean {
   );
 }
 
-function parkingEmailFor(oldId: string, realEmail: string): string {
-  const at = realEmail.lastIndexOf("@");
-  const domain = at >= 0 ? realEmail.slice(at + 1) : "example.com";
-  return `migrated.${oldId.replace(/-/g, "")}.${Date.now()}@${domain}`;
+function emailDomain(email: string): string {
+  const at = email.lastIndexOf("@");
+  return at >= 0 ? email.slice(at + 1) : "example.com";
 }
 
-/** Resolve who currently owns this email in local auth (no create side-effect preferred). */
+function pendingEmailFor(nexusUserId: string, realEmail: string): string {
+  return `nexus-pending.${nexusUserId.replace(/-/g, "")}.${Date.now()}@${emailDomain(realEmail)}`;
+}
+
+/** List-scan only — never generateLink here (it can create users). */
 async function findUserIdsByEmail(admin: any, email: string): Promise<string[]> {
   const normalized = email.trim().toLowerCase();
   const ids = new Set<string>();
 
-  for (let page = 1; page <= 25; page++) {
+  for (let page = 1; page <= 50; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
     if (error) break;
     for (const u of data.users ?? []) {
@@ -42,130 +45,23 @@ async function findUserIdsByEmail(admin: any, email: string): Promise<string[]> 
     }
     if ((data.users?.length ?? 0) < 200) break;
   }
-
-  // Last resort: generateLink returns the existing user when email is taken.
-  // (May create a user if none exists — only call when list scan found nothing.)
-  if (ids.size === 0) {
-    const { data: linkData } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email: normalized,
-    });
-    if (linkData?.user?.id) ids.add(linkData.user.id as string);
-  }
-
   return [...ids];
 }
 
-async function parkLegacyEmail(admin: any, oldId: string, realEmail: string) {
-  const parkingEmail = parkingEmailFor(oldId, realEmail);
-  const { error: parkErr } = await admin.auth.admin.updateUserById(oldId, {
-    email: parkingEmail,
-    email_confirm: true,
+/** When list-scan misses, resolve holder via generateLink (email must already be taken). */
+async function resolveEmailHolderId(admin: any, email: string): Promise<string | null> {
+  const { data: linkData, error } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email: email.trim().toLowerCase(),
   });
-  if (parkErr) {
-    throw new Error(`Kunne ikke frigjøre e-post fra lokal bruker: ${parkErr.message}`);
-  }
+  if (error || !linkData?.user?.id) return null;
+  return linkData.user.id as string;
 }
 
 /**
- * Move legacy local auth user → Nexus UUID without violating user_id FKs
- * and without CASCADE-deleting organizations owned by the legacy user.
- *
- * Order: free email → create Nexus user → remap rows → delete legacy user.
+ * Remap Work rows from legacy UUID → Nexus UUID, then delete legacy auth user.
+ * Must run only after Nexus shadow user exists (FK-safe).
  */
-async function replaceLegacyUsersWithNexusId(
-  admin: any,
-  nexusUserId: string,
-  email: string,
-  knownLegacyIds?: string[],
-): Promise<number> {
-  const discovered = await findUserIdsByEmail(admin, email);
-  const legacyIds = [...new Set([...(knownLegacyIds ?? []), ...discovered])].filter(
-    (id) => id !== nexusUserId,
-  );
-
-  const recovered: string[] = [];
-  if (legacyIds.length) {
-    for (const oldId of legacyIds) {
-      await parkLegacyEmail(admin, oldId, email);
-    }
-  }
-
-  recovered.push(...(await createNexusUserOrThrow(admin, nexusUserId, email)));
-
-  const toRemap = [...new Set([...legacyIds, ...recovered])];
-  let remapped = 0;
-  for (const oldId of toRemap) {
-    remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
-  }
-
-  return remapped;
-}
-
-/** Create/update Nexus shadow user. Returns any newly discovered legacy ids that were parked. */
-async function createNexusUserOrThrow(
-  admin: any,
-  nexusUserId: string,
-  email: string,
-): Promise<string[]> {
-  const parked: string[] = [];
-  const { data: existing } = await admin.auth.admin.getUserById(nexusUserId);
-  if (existing.user) {
-    const current = (existing.user.email ?? "").trim().toLowerCase();
-    if (current !== email) {
-      const { error } = await admin.auth.admin.updateUserById(nexusUserId, {
-        email,
-        email_confirm: true,
-      });
-      if (error) {
-        if (!isEmailTakenError(error.message)) throw new Error(error.message);
-        const holders = (await findUserIdsByEmail(admin, email)).filter((id) => id !== nexusUserId);
-        for (const oldId of holders) {
-          await parkLegacyEmail(admin, oldId, email);
-          parked.push(oldId);
-        }
-        const { error: retryErr } = await admin.auth.admin.updateUserById(nexusUserId, {
-          email,
-          email_confirm: true,
-        });
-        if (retryErr) throw new Error(retryErr.message);
-      }
-    }
-    return parked;
-  }
-
-  const { error: createErr } = await admin.auth.admin.createUser({
-    id: nexusUserId,
-    email,
-    email_confirm: true,
-  });
-  if (!createErr) return parked;
-
-  if (!isEmailTakenError(createErr.message)) {
-    throw new Error(createErr.message);
-  }
-
-  // Authoritative holder lookup when email is taken.
-  const { data: linkData } = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-  });
-  const holderId = linkData?.user?.id as string | undefined;
-  if (holderId && holderId === nexusUserId) return parked;
-  if (!holderId) throw new Error(createErr.message);
-
-  await parkLegacyEmail(admin, holderId, email);
-  parked.push(holderId);
-
-  const { error: retryCreate } = await admin.auth.admin.createUser({
-    id: nexusUserId,
-    email,
-    email_confirm: true,
-  });
-  if (retryCreate) throw new Error(retryCreate.message);
-  return parked;
-}
-
 async function remapAndDeleteLegacy(
   admin: any,
   nexusUserId: string,
@@ -201,6 +97,7 @@ async function remapAndDeleteLegacy(
     remapped += 1;
   }
 
+  // Move ownership BEFORE deleteUser — organizations.owner_id is ON DELETE CASCADE.
   const { error: ownerErr } = await admin
     .from("organizations")
     .update({ owner_id: nexusUserId })
@@ -229,6 +126,7 @@ async function remapAndDeleteLegacy(
     .eq("user_id", oldId);
   if (timeErr) throw new Error(timeErr.message);
 
+  // api_clients.created_by is ON DELETE RESTRICT — must reassign first.
   const { error: apiErr } = await admin
     .from("api_clients")
     .update({ created_by: nexusUserId })
@@ -242,40 +140,121 @@ async function remapAndDeleteLegacy(
   return remapped;
 }
 
+async function absorbHoldersOfEmail(
+  admin: any,
+  nexusUserId: string,
+  email: string,
+): Promise<number> {
+  const holders = new Set(
+    (await findUserIdsByEmail(admin, email)).filter((id) => id !== nexusUserId),
+  );
+
+  let remapped = 0;
+  for (const oldId of holders) {
+    remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
+  }
+  return remapped;
+}
+
+async function claimRealEmail(admin: any, nexusUserId: string, email: string): Promise<number> {
+  const normalized = email.trim().toLowerCase();
+  const { data: me } = await admin.auth.admin.getUserById(nexusUserId);
+  if ((me.user?.email ?? "").trim().toLowerCase() === normalized) return 0;
+
+  const { error } = await admin.auth.admin.updateUserById(nexusUserId, {
+    email: normalized,
+    email_confirm: true,
+  });
+  if (!error) return 0;
+  if (!isEmailTakenError(error.message)) throw new Error(error.message);
+
+  // Email still held — find holder (list, then generateLink) and absorb.
+  let holders = (await findUserIdsByEmail(admin, normalized)).filter((id) => id !== nexusUserId);
+  if (!holders.length) {
+    const holderId = await resolveEmailHolderId(admin, normalized);
+    if (holderId && holderId !== nexusUserId) holders = [holderId];
+  }
+  if (!holders.length) {
+    throw new Error(error.message);
+  }
+
+  let remapped = 0;
+  for (const oldId of holders) {
+    remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
+  }
+
+  const { error: retry } = await admin.auth.admin.updateUserById(nexusUserId, {
+    email: normalized,
+    email_confirm: true,
+  });
+  if (retry) throw new Error(retry.message);
+  return remapped;
+}
+
+async function ensureNexusShadowExists(admin: any, nexusUserId: string, email: string) {
+  const { data: existing } = await admin.auth.admin.getUserById(nexusUserId);
+  if (existing.user) return { created: false };
+
+  const pending = pendingEmailFor(nexusUserId, email);
+  const { error: createErr } = await admin.auth.admin.createUser({
+    id: nexusUserId,
+    email: pending,
+    email_confirm: true,
+    user_metadata: { identity_core: true, pending_email: email },
+  });
+  if (!createErr) return { created: true };
+
+  // Rare: pending email collision — retry once with new timestamp.
+  if (isEmailTakenError(createErr.message)) {
+    const pending2 = pendingEmailFor(nexusUserId, email);
+    const { error: retryErr } = await admin.auth.admin.createUser({
+      id: nexusUserId,
+      email: pending2,
+      email_confirm: true,
+      user_metadata: { identity_core: true, pending_email: email },
+    });
+    if (retryErr) throw new Error(retryErr.message);
+    return { created: true };
+  }
+
+  // Id already exists race
+  const { data: again } = await admin.auth.admin.getUserById(nexusUserId);
+  if (again.user) return { created: false };
+  throw new Error(createErr.message);
+}
+
 /**
- * Ensure auth.users contains Nexus user id. If the email is already taken by a
- * legacy local UUID, migrate memberships then recreate with Nexus id (FK-safe).
+ * Ensure auth.users contains Nexus user id with the real email.
+ * Strategy (Work-safe): create shadow with temp email → remap/delete legacy → claim real email.
+ * Avoids "A user with this email address has already been registered" on createUser.
  */
 async function ensureShadowAndRemap(
   admin: any,
   userId: string,
   email: string | null,
 ): Promise<{ remapped: number; shadowCreated: boolean; email: string | null }> {
-  const { data: existing } = await admin.auth.admin.getUserById(userId);
-  if (existing.user) {
-    const resolvedEmail =
-      email?.trim().toLowerCase() || existing.user.email?.trim().toLowerCase() || null;
-    let remapped = 0;
-    if (resolvedEmail) {
-      const others = (await findUserIdsByEmail(admin, resolvedEmail)).filter((id) => id !== userId);
-      if (others.length) {
-        remapped += await replaceLegacyUsersWithNexusId(admin, userId, resolvedEmail, others);
-      } else {
-        const parked = await createNexusUserOrThrow(admin, userId, resolvedEmail);
-        for (const oldId of parked) {
-          remapped += await remapAndDeleteLegacy(admin, userId, oldId);
-        }
-      }
-    }
-    return { remapped, shadowCreated: false, email: resolvedEmail };
-  }
-
   if (!email) {
+    const { data: existing } = await admin.auth.admin.getUserById(userId);
+    if (existing.user) {
+      return {
+        remapped: 0,
+        shadowCreated: false,
+        email: existing.user.email?.trim().toLowerCase() ?? null,
+      };
+    }
     throw new Error("Kan ikke opprette shadow-bruker uten e-post.");
   }
+
   const normalized = email.trim().toLowerCase();
-  const remapped = await replaceLegacyUsersWithNexusId(admin, userId, normalized);
-  return { remapped, shadowCreated: true, email: normalized };
+  const ensured = await ensureNexusShadowExists(admin, userId, normalized);
+  let remapped = await absorbHoldersOfEmail(admin, userId, normalized);
+  remapped += await claimRealEmail(admin, userId, normalized);
+
+  return {
+    remapped,
+    shadowCreated: ensured.created,
+    email: normalized,
+  };
 }
 
 async function mintModuleSession(email: string): Promise<{
@@ -373,7 +352,6 @@ export const completeNexusSsoLogin = createServerFn({ method: "POST" })
     }
 
     const session = await mintModuleSession(ensured.email);
-    // Guard: session must be the Nexus UUID, not a leftover local account.
     const sessionSub = JSON.parse(
       Buffer.from(session.access_token.split(".")[1] ?? "", "base64url").toString("utf8"),
     ) as { sub?: string };
