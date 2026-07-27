@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef } from "react";
 import { ArrowRight, Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { repairWorkIdentityWorkspace } from "@/lib/identity.functions";
 import { fetchDefaultOrgId, fetchOrganizations, setDefaultOrgId } from "@/lib/work-core";
 
 export const Route = createFileRoute("/_authenticated/orgs/")({
@@ -12,8 +15,23 @@ export const Route = createFileRoute("/_authenticated/orgs/")({
 function OrgsPicker() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const repairIdentity = useServerFn(repairWorkIdentityWorkspace);
+  const repairedRef = useRef(false);
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
   const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+
+  useEffect(() => {
+    if (repairedRef.current) return;
+    repairedRef.current = true;
+    void (async () => {
+      try {
+        await repairIdentity();
+        await qc.invalidateQueries({ queryKey: ["orgs"] });
+      } catch {
+        // Non-blocking: picker still works with current data.
+      }
+    })();
+  }, [repairIdentity, qc]);
 
   async function choose(orgId: string) {
     await setDefaultOrgId(orgId);
