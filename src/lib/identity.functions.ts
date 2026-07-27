@@ -191,16 +191,37 @@ async function claimRealEmail(admin: any, nexusUserId: string, email: string): P
   return remapped;
 }
 
-async function ensureNexusShadowExists(admin: any, nexusUserId: string, email: string) {
+function displayNameFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "Min organisasjon";
+  return local.replace(/^nexus-pending\.[^.]+(?:\.\d+)?$/i, "Min organisasjon") || "Min organisasjon";
+}
+
+function shadowUserMetadata(email: string, fullName?: string | null) {
+  const name = (fullName ?? "").trim() || displayNameFromEmail(email);
+  return {
+    identity_core: true,
+    pending_email: email,
+    full_name: name,
+    name,
+  };
+}
+
+async function ensureNexusShadowExists(
+  admin: any,
+  nexusUserId: string,
+  email: string,
+  fullName?: string | null,
+) {
   const { data: existing } = await admin.auth.admin.getUserById(nexusUserId);
   if (existing.user) return { created: false };
 
+  const meta = shadowUserMetadata(email, fullName);
   const pending = pendingEmailFor(nexusUserId, email);
   const { error: createErr } = await admin.auth.admin.createUser({
     id: nexusUserId,
     email: pending,
     email_confirm: true,
-    user_metadata: { identity_core: true, pending_email: email },
+    user_metadata: meta,
   });
   if (!createErr) return { created: true };
 
@@ -211,7 +232,7 @@ async function ensureNexusShadowExists(admin: any, nexusUserId: string, email: s
       id: nexusUserId,
       email: pending2,
       email_confirm: true,
-      user_metadata: { identity_core: true, pending_email: email },
+      user_metadata: meta,
     });
     if (retryErr) throw new Error(retryErr.message);
     return { created: true };
@@ -223,6 +244,108 @@ async function ensureNexusShadowExists(admin: any, nexusUserId: string, email: s
   throw new Error(createErr.message);
 }
 
+/** Rename trigger-created orgs that used the temporary nexus-pending email as name. */
+async function repairPendingOrgNames(admin: any, userId: string, email: string) {
+  const nice = `${displayNameFromEmail(email)} (personlig)`;
+  const { data: orgs, error } = await admin
+    .from("organizations")
+    .select("id, name")
+    .eq("owner_id", userId);
+  if (error) throw new Error(error.message);
+  for (const org of orgs ?? []) {
+    const name = String(org.name ?? "");
+    if (/^nexus-pending\./i.test(name) || /^migrated\./i.test(name)) {
+      const { error: updErr } = await admin
+        .from("organizations")
+        .update({ name: nice })
+        .eq("id", org.id);
+      if (updErr) throw new Error(updErr.message);
+    }
+  }
+}
+
+/** Absorb leftover parked auth users from earlier SSO migration attempts. */
+async function absorbParkedMigrationUsers(
+  admin: any,
+  nexusUserId: string,
+  email: string,
+): Promise<number> {
+  const domain = emailDomain(email);
+  const ids: string[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) break;
+    for (const u of data.users ?? []) {
+      if (!u.id || u.id === nexusUserId) continue;
+      const e = (u.email ?? "").trim().toLowerCase();
+      if (!e.endsWith(`@${domain}`)) continue;
+      if (e.startsWith("migrated.") || e.startsWith("nexus-pending.")) ids.push(u.id as string);
+    }
+    if ((data.users?.length ?? 0) < 200) break;
+  }
+  let remapped = 0;
+  for (const oldId of ids) {
+    remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
+  }
+  return remapped;
+}
+
+/**
+ * If earlier CASCADE deletes left orgs with a dead owner_id, reclaim them for this user
+ * when the user only has pending/empty workspace memberships (solo-dev recovery).
+ */
+async function reclaimOrphanOrgsIfNeeded(admin: any, nexusUserId: string): Promise<number> {
+  const { data: memberships, error: memErr } = await admin
+    .from("organization_members")
+    .select("organization_id, organizations(id, name)")
+    .eq("user_id", nexusUserId);
+  if (memErr) throw new Error(memErr.message);
+
+  const myNames = (memberships ?? []).map((m: any) =>
+    String(m.organizations?.name ?? ""),
+  );
+  const onlyJunk =
+    myNames.length === 0 ||
+    myNames.every((n) => /^nexus-pending\./i.test(n) || /^migrated\./i.test(n) || !n);
+
+  if (!onlyJunk) return 0;
+
+  const { data: allOrgs, error: orgErr } = await admin
+    .from("organizations")
+    .select("id, name, owner_id");
+  if (orgErr) throw new Error(orgErr.message);
+
+  let reclaimed = 0;
+  for (const org of allOrgs ?? []) {
+    if (org.owner_id === nexusUserId) continue;
+    const { data: owner } = await admin.auth.admin.getUserById(org.owner_id);
+    if (owner.user) continue;
+
+    const { error: ownErr } = await admin
+      .from("organizations")
+      .update({ owner_id: nexusUserId })
+      .eq("id", org.id);
+    if (ownErr) throw new Error(ownErr.message);
+
+    const { data: clash } = await admin
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", org.id)
+      .eq("user_id", nexusUserId)
+      .maybeSingle();
+    if (!clash) {
+      const { error: insErr } = await admin.from("organization_members").insert({
+        organization_id: org.id,
+        user_id: nexusUserId,
+        role: "owner",
+      });
+      if (insErr) throw new Error(insErr.message);
+    }
+    reclaimed += 1;
+  }
+  return reclaimed;
+}
+
 /**
  * Ensure auth.users contains Nexus user id with the real email.
  * Strategy (Work-safe): create shadow with temp email → remap/delete legacy → claim real email.
@@ -232,6 +355,7 @@ async function ensureShadowAndRemap(
   admin: any,
   userId: string,
   email: string | null,
+  fullName?: string | null,
 ): Promise<{ remapped: number; shadowCreated: boolean; email: string | null }> {
   if (!email) {
     const { data: existing } = await admin.auth.admin.getUserById(userId);
@@ -246,9 +370,12 @@ async function ensureShadowAndRemap(
   }
 
   const normalized = email.trim().toLowerCase();
-  const ensured = await ensureNexusShadowExists(admin, userId, normalized);
+  const ensured = await ensureNexusShadowExists(admin, userId, normalized, fullName);
   let remapped = await absorbHoldersOfEmail(admin, userId, normalized);
   remapped += await claimRealEmail(admin, userId, normalized);
+  remapped += await absorbParkedMigrationUsers(admin, userId, normalized);
+  remapped += await reclaimOrphanOrgsIfNeeded(admin, userId);
+  await repairPendingOrgNames(admin, userId, normalized);
 
   return {
     remapped,
@@ -344,9 +471,17 @@ export const completeNexusSsoLogin = createServerFn({ method: "POST" })
     const email =
       (typeof claimsData.claims.email === "string" && claimsData.claims.email) ||
       emailFromAccessToken(body.access_token);
+    const fullName =
+      (typeof claimsData.claims.user_metadata === "object" &&
+        claimsData.claims.user_metadata &&
+        typeof (claimsData.claims.user_metadata as { full_name?: unknown }).full_name ===
+          "string" &&
+        (claimsData.claims.user_metadata as { full_name: string }).full_name) ||
+      (typeof claimsData.claims.name === "string" && claimsData.claims.name) ||
+      null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, email);
+    const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, email, fullName);
     if (!ensured.email) {
       throw new Error("Mangler e-post for å lage lokal sesjon");
     }
@@ -389,4 +524,24 @@ export const ensureModuleIdentity = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, email);
     return { ok: true as const, ...ensured, userId };
+  });
+
+/** Repair pending org names / reclaim orphans after Identity Core SSO (safe to call on /orgs). */
+export const repairWorkIdentityWorkspace = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = context.userId as string;
+    const email =
+      (typeof context.claims?.email === "string" && context.claims.email) || null;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!email) {
+      // Still try rename using auth user email
+      const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const resolved = data.user?.email?.trim().toLowerCase() ?? null;
+      if (!resolved) return { ok: true as const, remapped: 0 };
+      const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, resolved);
+      return { ok: true as const, remapped: ensured.remapped };
+    }
+    const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, email);
+    return { ok: true as const, remapped: ensured.remapped };
   });
