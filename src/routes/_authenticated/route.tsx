@@ -1,12 +1,12 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { authSupabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await authSupabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
@@ -20,7 +20,7 @@ function AuthedLayout() {
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    await authSupabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

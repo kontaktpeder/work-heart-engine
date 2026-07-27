@@ -9,74 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
-import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated/satser'
-import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
-import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authenticated/prosjekter'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedArbeidstyperRouteImport } from './routes/_authenticated/arbeidstyper'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedProsjekterRouteImport } from './routes/_authenticated/prosjekter'
+import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
+import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated/satser'
+import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
-import { Route as AuthenticatedOrgsNewRouteImport } from './routes/_authenticated/orgs/new'
 import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authenticated/orgs/$orgId/route'
+import { Route as AuthenticatedOrgsNewRouteImport } from './routes/_authenticated/orgs/new'
 import { Route as AuthenticatedOrgsOrgIdIndexRouteImport } from './routes/_authenticated/orgs/$orgId/index'
-import { Route as AuthenticatedOrgsOrgIdTimerRouteImport } from './routes/_authenticated/orgs/$orgId/timer'
-import { Route as AuthenticatedOrgsOrgIdStartRouteImport } from './routes/_authenticated/orgs/$orgId/start'
-import { Route as AuthenticatedOrgsOrgIdSettingsRouteImport } from './routes/_authenticated/orgs/$orgId/settings'
 import { Route as AuthenticatedOrgsOrgIdReportsRouteImport } from './routes/_authenticated/orgs/$orgId/reports'
+import { Route as AuthenticatedOrgsOrgIdSettingsRouteImport } from './routes/_authenticated/orgs/$orgId/settings'
+import { Route as AuthenticatedOrgsOrgIdStartRouteImport } from './routes/_authenticated/orgs/$orgId/start'
+import { Route as AuthenticatedOrgsOrgIdTimerRouteImport } from './routes/_authenticated/orgs/$orgId/timer'
 import { Route as AuthenticatedOrgsOrgIdSettingsIndexRouteImport } from './routes/_authenticated/orgs/$orgId/settings.index'
-import { Route as ApiPublicV1ModuleWidgetsRouteImport } from './routes/api/public/v1/module.widgets'
-import { Route as ApiPublicV1ModuleAlertsRouteImport } from './routes/api/public/v1/module.alerts'
-import { Route as ApiPublicV1ModuleOrganizationRouteImport } from './routes/api/public/v1/module.organization'
-import { Route as ApiPublicV1ModuleInfoRouteImport } from './routes/api/public/v1/module.info'
-import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public/v1/module.health'
-import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
-import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
-import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
-import { Route as AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.finance-integration'
 import { Route as AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport } from './routes/_authenticated/orgs/$orgId/settings.api-keys'
+import { Route as AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.finance-integration'
+import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
+import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
+import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
+import { Route as ApiPublicV1ModuleAlertsRouteImport } from './routes/api/public/v1/module.alerts'
+import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public/v1/module.health'
+import { Route as ApiPublicV1ModuleInfoRouteImport } from './routes/api/public/v1/module.info'
+import { Route as ApiPublicV1ModuleOrganizationRouteImport } from './routes/api/public/v1/module.organization'
+import { Route as ApiPublicV1ModuleWidgetsRouteImport } from './routes/api/public/v1/module.widgets'
 import { Route as ApiPublicV1ModuleOrganizationOrgIdRouteImport } from './routes/api/public/v1/module.organization.$orgId'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTimelisteRoute = AuthenticatedTimelisteRouteImport.update({
-  id: '/timeliste',
-  path: '/timeliste',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSatserRoute = AuthenticatedSatserRouteImport.update({
-  id: '/satser',
-  path: '/satser',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
-  id: '/rapport',
-  path: '/rapport',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProsjekterRoute = AuthenticatedProsjekterRouteImport.update({
-  id: '/prosjekter',
-  path: '/prosjekter',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedArbeidstyperRoute =
   AuthenticatedArbeidstyperRouteImport.update({
@@ -84,14 +60,39 @@ const AuthenticatedArbeidstyperRoute =
     path: '/arbeidstyper',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProsjekterRoute = AuthenticatedProsjekterRouteImport.update({
+  id: '/prosjekter',
+  path: '/prosjekter',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
+  id: '/rapport',
+  path: '/rapport',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSatserRoute = AuthenticatedSatserRouteImport.update({
+  id: '/satser',
+  path: '/satser',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTimelisteRoute = AuthenticatedTimelisteRouteImport.update({
+  id: '/timeliste',
+  path: '/timeliste',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthenticatedOrgsIndexRoute = AuthenticatedOrgsIndexRouteImport.update({
   id: '/orgs/',
   path: '/orgs/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOrgsNewRoute = AuthenticatedOrgsNewRouteImport.update({
-  id: '/orgs/new',
-  path: '/orgs/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOrgsOrgIdRouteRoute =
@@ -100,28 +101,15 @@ const AuthenticatedOrgsOrgIdRouteRoute =
     path: '/orgs/$orgId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOrgsNewRoute = AuthenticatedOrgsNewRouteImport.update({
+  id: '/orgs/new',
+  path: '/orgs/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrgsOrgIdIndexRoute =
   AuthenticatedOrgsOrgIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
-  } as any)
-const AuthenticatedOrgsOrgIdTimerRoute =
-  AuthenticatedOrgsOrgIdTimerRouteImport.update({
-    id: '/timer',
-    path: '/timer',
-    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
-  } as any)
-const AuthenticatedOrgsOrgIdStartRoute =
-  AuthenticatedOrgsOrgIdStartRouteImport.update({
-    id: '/start',
-    path: '/start',
-    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
-  } as any)
-const AuthenticatedOrgsOrgIdSettingsRoute =
-  AuthenticatedOrgsOrgIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
 const AuthenticatedOrgsOrgIdReportsRoute =
@@ -130,56 +118,34 @@ const AuthenticatedOrgsOrgIdReportsRoute =
     path: '/reports',
     getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
   } as any)
+const AuthenticatedOrgsOrgIdSettingsRoute =
+  AuthenticatedOrgsOrgIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdStartRoute =
+  AuthenticatedOrgsOrgIdStartRouteImport.update({
+    id: '/start',
+    path: '/start',
+    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdTimerRoute =
+  AuthenticatedOrgsOrgIdTimerRouteImport.update({
+    id: '/timer',
+    path: '/timer',
+    getParentRoute: () => AuthenticatedOrgsOrgIdRouteRoute,
+  } as any)
 const AuthenticatedOrgsOrgIdSettingsIndexRoute =
   AuthenticatedOrgsOrgIdSettingsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
-const ApiPublicV1ModuleWidgetsRoute =
-  ApiPublicV1ModuleWidgetsRouteImport.update({
-    id: '/api/public/v1/module/widgets',
-    path: '/api/public/v1/module/widgets',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1ModuleAlertsRoute =
-  ApiPublicV1ModuleAlertsRouteImport.update({
-    id: '/api/public/v1/module/alerts',
-    path: '/api/public/v1/module/alerts',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1ModuleOrganizationRoute =
-  ApiPublicV1ModuleOrganizationRouteImport.update({
-    id: '/api/public/v1/module/organization',
-    path: '/api/public/v1/module/organization',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1ModuleInfoRoute = ApiPublicV1ModuleInfoRouteImport.update({
-  id: '/api/public/v1/module/info',
-  path: '/api/public/v1/module/info',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1ModuleHealthRoute = ApiPublicV1ModuleHealthRouteImport.update({
-  id: '/api/public/v1/module/health',
-  path: '/api/public/v1/module/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedOrgsOrgIdSettingsRatesRoute =
-  AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
-    id: '/rates',
-    path: '/rates',
-    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
-  } as any)
-const AuthenticatedOrgsOrgIdSettingsProjectsRoute =
-  AuthenticatedOrgsOrgIdSettingsProjectsRouteImport.update({
-    id: '/projects',
-    path: '/projects',
-    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
-  } as any)
-const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
-  AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport.update({
-    id: '/organization',
-    path: '/organization',
+const AuthenticatedOrgsOrgIdSettingsApiKeysRoute =
+  AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport.update({
+    id: '/api-keys',
+    path: '/api-keys',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
 const AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute =
@@ -188,11 +154,50 @@ const AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute =
     path: '/finance-integration',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
-const AuthenticatedOrgsOrgIdSettingsApiKeysRoute =
-  AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport.update({
-    id: '/api-keys',
-    path: '/api-keys',
+const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
+  AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport.update({
+    id: '/organization',
+    path: '/organization',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdSettingsProjectsRoute =
+  AuthenticatedOrgsOrgIdSettingsProjectsRouteImport.update({
+    id: '/projects',
+    path: '/projects',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const AuthenticatedOrgsOrgIdSettingsRatesRoute =
+  AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
+    id: '/rates',
+    path: '/rates',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
+const ApiPublicV1ModuleAlertsRoute = ApiPublicV1ModuleAlertsRouteImport.update({
+  id: '/api/public/v1/module/alerts',
+  path: '/api/public/v1/module/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ModuleHealthRoute = ApiPublicV1ModuleHealthRouteImport.update({
+  id: '/api/public/v1/module/health',
+  path: '/api/public/v1/module/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ModuleInfoRoute = ApiPublicV1ModuleInfoRouteImport.update({
+  id: '/api/public/v1/module/info',
+  path: '/api/public/v1/module/info',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ModuleOrganizationRoute =
+  ApiPublicV1ModuleOrganizationRouteImport.update({
+    id: '/api/public/v1/module/organization',
+    path: '/api/public/v1/module/organization',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ModuleWidgetsRoute =
+  ApiPublicV1ModuleWidgetsRouteImport.update({
+    id: '/api/public/v1/module/widgets',
+    path: '/api/public/v1/module/widgets',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ModuleOrganizationOrgIdRoute =
   ApiPublicV1ModuleOrganizationOrgIdRouteImport.update({
@@ -203,16 +208,17 @@ const ApiPublicV1ModuleOrganizationOrgIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
-  '/orgs/': typeof AuthenticatedOrgsIndexRoute
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
+  '/orgs/': typeof AuthenticatedOrgsIndexRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
@@ -223,25 +229,26 @@ export interface FileRoutesByFullPath {
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
-  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/prosjekter': typeof AuthenticatedProsjekterRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
-  '/orgs': typeof AuthenticatedOrgsIndexRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
+  '/orgs': typeof AuthenticatedOrgsIndexRoute
   '/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
   '/orgs/$orgId/timer': typeof AuthenticatedOrgsOrgIdTimerRoute
@@ -251,11 +258,11 @@ export interface FileRoutesByTo {
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
-  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
@@ -263,16 +270,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/_authenticated/arbeidstyper': typeof AuthenticatedArbeidstyperRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/prosjekter': typeof AuthenticatedProsjekterRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
   '/_authenticated/satser': typeof AuthenticatedSatserRoute
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
-  '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
   '/_authenticated/orgs/new': typeof AuthenticatedOrgsNewRoute
+  '/_authenticated/orgs/': typeof AuthenticatedOrgsIndexRoute
   '/_authenticated/orgs/$orgId/reports': typeof AuthenticatedOrgsOrgIdReportsRoute
   '/_authenticated/orgs/$orgId/settings': typeof AuthenticatedOrgsOrgIdSettingsRouteWithChildren
   '/_authenticated/orgs/$orgId/start': typeof AuthenticatedOrgsOrgIdStartRoute
@@ -283,11 +291,11 @@ export interface FileRoutesById {
   '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
   '/api/public/v1/module/organization': typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   '/api/public/v1/module/widgets': typeof ApiPublicV1ModuleWidgetsRoute
-  '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/_authenticated/orgs/$orgId/settings/': typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
   '/api/public/v1/module/organization/$orgId': typeof ApiPublicV1ModuleOrganizationOrgIdRoute
 }
@@ -302,9 +310,10 @@ export interface FileRouteTypes {
     | '/rapport'
     | '/satser'
     | '/timeliste'
+    | '/auth/callback'
     | '/orgs/$orgId'
-    | '/orgs/'
     | '/orgs/new'
+    | '/orgs/'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/settings'
     | '/orgs/$orgId/start'
@@ -315,11 +324,11 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
-    | '/api/public/v1/module/alerts'
     | '/orgs/$orgId/settings/'
     | '/api/public/v1/module/organization/$orgId'
   fileRoutesByTo: FileRoutesByTo
@@ -332,8 +341,9 @@ export interface FileRouteTypes {
     | '/rapport'
     | '/satser'
     | '/timeliste'
-    | '/orgs'
+    | '/auth/callback'
     | '/orgs/new'
+    | '/orgs'
     | '/orgs/$orgId/reports'
     | '/orgs/$orgId/start'
     | '/orgs/$orgId/timer'
@@ -343,11 +353,11 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
-    | '/api/public/v1/module/alerts'
     | '/orgs/$orgId/settings'
     | '/api/public/v1/module/organization/$orgId'
   id:
@@ -361,9 +371,10 @@ export interface FileRouteTypes {
     | '/_authenticated/rapport'
     | '/_authenticated/satser'
     | '/_authenticated/timeliste'
+    | '/auth/callback'
     | '/_authenticated/orgs/$orgId'
-    | '/_authenticated/orgs/'
     | '/_authenticated/orgs/new'
+    | '/_authenticated/orgs/'
     | '/_authenticated/orgs/$orgId/reports'
     | '/_authenticated/orgs/$orgId/settings'
     | '/_authenticated/orgs/$orgId/start'
@@ -374,11 +385,11 @@ export interface FileRouteTypes {
     | '/_authenticated/orgs/$orgId/settings/organization'
     | '/_authenticated/orgs/$orgId/settings/projects'
     | '/_authenticated/orgs/$orgId/settings/rates'
+    | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
     | '/api/public/v1/module/organization'
     | '/api/public/v1/module/widgets'
-    | '/api/public/v1/module/alerts'
     | '/_authenticated/orgs/$orgId/settings/'
     | '/api/public/v1/module/organization/$orgId'
   fileRoutesById: FileRoutesById
@@ -386,21 +397,21 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  ApiPublicV1ModuleAlertsRoute: typeof ApiPublicV1ModuleAlertsRoute
   ApiPublicV1ModuleHealthRoute: typeof ApiPublicV1ModuleHealthRoute
   ApiPublicV1ModuleInfoRoute: typeof ApiPublicV1ModuleInfoRoute
   ApiPublicV1ModuleOrganizationRoute: typeof ApiPublicV1ModuleOrganizationRouteWithChildren
   ApiPublicV1ModuleWidgetsRoute: typeof ApiPublicV1ModuleWidgetsRoute
-  ApiPublicV1ModuleAlertsRoute: typeof ApiPublicV1ModuleAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -410,39 +421,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/timeliste': {
-      id: '/_authenticated/timeliste'
-      path: '/timeliste'
-      fullPath: '/timeliste'
-      preLoaderRoute: typeof AuthenticatedTimelisteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/satser': {
-      id: '/_authenticated/satser'
-      path: '/satser'
-      fullPath: '/satser'
-      preLoaderRoute: typeof AuthenticatedSatserRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rapport': {
-      id: '/_authenticated/rapport'
-      path: '/rapport'
-      fullPath: '/rapport'
-      preLoaderRoute: typeof AuthenticatedRapportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/prosjekter': {
-      id: '/_authenticated/prosjekter'
-      path: '/prosjekter'
-      fullPath: '/prosjekter'
-      preLoaderRoute: typeof AuthenticatedProsjekterRouteImport
+    '/_authenticated/arbeidstyper': {
+      id: '/_authenticated/arbeidstyper'
+      path: '/arbeidstyper'
+      fullPath: '/arbeidstyper'
+      preLoaderRoute: typeof AuthenticatedArbeidstyperRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -452,25 +442,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/arbeidstyper': {
-      id: '/_authenticated/arbeidstyper'
-      path: '/arbeidstyper'
-      fullPath: '/arbeidstyper'
-      preLoaderRoute: typeof AuthenticatedArbeidstyperRouteImport
+    '/_authenticated/prosjekter': {
+      id: '/_authenticated/prosjekter'
+      path: '/prosjekter'
+      fullPath: '/prosjekter'
+      preLoaderRoute: typeof AuthenticatedProsjekterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapport': {
+      id: '/_authenticated/rapport'
+      path: '/rapport'
+      fullPath: '/rapport'
+      preLoaderRoute: typeof AuthenticatedRapportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/satser': {
+      id: '/_authenticated/satser'
+      path: '/satser'
+      fullPath: '/satser'
+      preLoaderRoute: typeof AuthenticatedSatserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/timeliste': {
+      id: '/_authenticated/timeliste'
+      path: '/timeliste'
+      fullPath: '/timeliste'
+      preLoaderRoute: typeof AuthenticatedTimelisteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/orgs/': {
       id: '/_authenticated/orgs/'
       path: '/orgs'
       fullPath: '/orgs/'
       preLoaderRoute: typeof AuthenticatedOrgsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/orgs/new': {
-      id: '/_authenticated/orgs/new'
-      path: '/orgs/new'
-      fullPath: '/orgs/new'
-      preLoaderRoute: typeof AuthenticatedOrgsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/orgs/$orgId': {
@@ -480,32 +491,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/orgs/new': {
+      id: '/_authenticated/orgs/new'
+      path: '/orgs/new'
+      fullPath: '/orgs/new'
+      preLoaderRoute: typeof AuthenticatedOrgsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orgs/$orgId/': {
       id: '/_authenticated/orgs/$orgId/'
       path: '/'
       fullPath: '/orgs/$orgId/'
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdIndexRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
-    }
-    '/_authenticated/orgs/$orgId/timer': {
-      id: '/_authenticated/orgs/$orgId/timer'
-      path: '/timer'
-      fullPath: '/orgs/$orgId/timer'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdTimerRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
-    }
-    '/_authenticated/orgs/$orgId/start': {
-      id: '/_authenticated/orgs/$orgId/start'
-      path: '/start'
-      fullPath: '/orgs/$orgId/start'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdStartRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
-    }
-    '/_authenticated/orgs/$orgId/settings': {
-      id: '/_authenticated/orgs/$orgId/settings'
-      path: '/settings'
-      fullPath: '/orgs/$orgId/settings'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
     '/_authenticated/orgs/$orgId/reports': {
@@ -515,6 +512,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdReportsRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
     }
+    '/_authenticated/orgs/$orgId/settings': {
+      id: '/_authenticated/orgs/$orgId/settings'
+      path: '/settings'
+      fullPath: '/orgs/$orgId/settings'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+    }
+    '/_authenticated/orgs/$orgId/start': {
+      id: '/_authenticated/orgs/$orgId/start'
+      path: '/start'
+      fullPath: '/orgs/$orgId/start'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdStartRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+    }
+    '/_authenticated/orgs/$orgId/timer': {
+      id: '/_authenticated/orgs/$orgId/timer'
+      path: '/timer'
+      fullPath: '/orgs/$orgId/timer'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdTimerRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdRouteRoute
+    }
     '/_authenticated/orgs/$orgId/settings/': {
       id: '/_authenticated/orgs/$orgId/settings/'
       path: '/'
@@ -522,60 +540,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
-    '/api/public/v1/module/widgets': {
-      id: '/api/public/v1/module/widgets'
-      path: '/api/public/v1/module/widgets'
-      fullPath: '/api/public/v1/module/widgets'
-      preLoaderRoute: typeof ApiPublicV1ModuleWidgetsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/module/alerts': {
-      id: '/api/public/v1/module/alerts'
-      path: '/api/public/v1/module/alerts'
-      fullPath: '/api/public/v1/module/alerts'
-      preLoaderRoute: typeof ApiPublicV1ModuleAlertsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/module/organization': {
-      id: '/api/public/v1/module/organization'
-      path: '/api/public/v1/module/organization'
-      fullPath: '/api/public/v1/module/organization'
-      preLoaderRoute: typeof ApiPublicV1ModuleOrganizationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/module/info': {
-      id: '/api/public/v1/module/info'
-      path: '/api/public/v1/module/info'
-      fullPath: '/api/public/v1/module/info'
-      preLoaderRoute: typeof ApiPublicV1ModuleInfoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/module/health': {
-      id: '/api/public/v1/module/health'
-      path: '/api/public/v1/module/health'
-      fullPath: '/api/public/v1/module/health'
-      preLoaderRoute: typeof ApiPublicV1ModuleHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/orgs/$orgId/settings/rates': {
-      id: '/_authenticated/orgs/$orgId/settings/rates'
-      path: '/rates'
-      fullPath: '/orgs/$orgId/settings/rates'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
-    }
-    '/_authenticated/orgs/$orgId/settings/projects': {
-      id: '/_authenticated/orgs/$orgId/settings/projects'
-      path: '/projects'
-      fullPath: '/orgs/$orgId/settings/projects'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRouteImport
-      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
-    }
-    '/_authenticated/orgs/$orgId/settings/organization': {
-      id: '/_authenticated/orgs/$orgId/settings/organization'
-      path: '/organization'
-      fullPath: '/orgs/$orgId/settings/organization'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
+    '/_authenticated/orgs/$orgId/settings/api-keys': {
+      id: '/_authenticated/orgs/$orgId/settings/api-keys'
+      path: '/api-keys'
+      fullPath: '/orgs/$orgId/settings/api-keys'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
     '/_authenticated/orgs/$orgId/settings/finance-integration': {
@@ -585,12 +554,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
-    '/_authenticated/orgs/$orgId/settings/api-keys': {
-      id: '/_authenticated/orgs/$orgId/settings/api-keys'
-      path: '/api-keys'
-      fullPath: '/orgs/$orgId/settings/api-keys'
-      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport
+    '/_authenticated/orgs/$orgId/settings/organization': {
+      id: '/_authenticated/orgs/$orgId/settings/organization'
+      path: '/organization'
+      fullPath: '/orgs/$orgId/settings/organization'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/_authenticated/orgs/$orgId/settings/projects': {
+      id: '/_authenticated/orgs/$orgId/settings/projects'
+      path: '/projects'
+      fullPath: '/orgs/$orgId/settings/projects'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/_authenticated/orgs/$orgId/settings/rates': {
+      id: '/_authenticated/orgs/$orgId/settings/rates'
+      path: '/rates'
+      fullPath: '/orgs/$orgId/settings/rates'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
+    '/api/public/v1/module/alerts': {
+      id: '/api/public/v1/module/alerts'
+      path: '/api/public/v1/module/alerts'
+      fullPath: '/api/public/v1/module/alerts'
+      preLoaderRoute: typeof ApiPublicV1ModuleAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/health': {
+      id: '/api/public/v1/module/health'
+      path: '/api/public/v1/module/health'
+      fullPath: '/api/public/v1/module/health'
+      preLoaderRoute: typeof ApiPublicV1ModuleHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/info': {
+      id: '/api/public/v1/module/info'
+      path: '/api/public/v1/module/info'
+      fullPath: '/api/public/v1/module/info'
+      preLoaderRoute: typeof ApiPublicV1ModuleInfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/organization': {
+      id: '/api/public/v1/module/organization'
+      path: '/api/public/v1/module/organization'
+      fullPath: '/api/public/v1/module/organization'
+      preLoaderRoute: typeof ApiPublicV1ModuleOrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/module/widgets': {
+      id: '/api/public/v1/module/widgets'
+      path: '/api/public/v1/module/widgets'
+      fullPath: '/api/public/v1/module/widgets'
+      preLoaderRoute: typeof ApiPublicV1ModuleWidgetsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/module/organization/$orgId': {
       id: '/api/public/v1/module/organization/$orgId'
@@ -663,8 +681,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSatserRoute: typeof AuthenticatedSatserRoute
   AuthenticatedTimelisteRoute: typeof AuthenticatedTimelisteRoute
   AuthenticatedOrgsOrgIdRouteRoute: typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
-  AuthenticatedOrgsIndexRoute: typeof AuthenticatedOrgsIndexRoute
   AuthenticatedOrgsNewRoute: typeof AuthenticatedOrgsNewRoute
+  AuthenticatedOrgsIndexRoute: typeof AuthenticatedOrgsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -676,12 +694,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTimelisteRoute: AuthenticatedTimelisteRoute,
   AuthenticatedOrgsOrgIdRouteRoute:
     AuthenticatedOrgsOrgIdRouteRouteWithChildren,
-  AuthenticatedOrgsIndexRoute: AuthenticatedOrgsIndexRoute,
   AuthenticatedOrgsNewRoute: AuthenticatedOrgsNewRoute,
+  AuthenticatedOrgsIndexRoute: AuthenticatedOrgsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface ApiPublicV1ModuleOrganizationRouteChildren {
   ApiPublicV1ModuleOrganizationOrgIdRoute: typeof ApiPublicV1ModuleOrganizationOrgIdRoute
@@ -701,15 +729,14 @@ const ApiPublicV1ModuleOrganizationRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
+  ApiPublicV1ModuleAlertsRoute: ApiPublicV1ModuleAlertsRoute,
   ApiPublicV1ModuleHealthRoute: ApiPublicV1ModuleHealthRoute,
   ApiPublicV1ModuleInfoRoute: ApiPublicV1ModuleInfoRoute,
   ApiPublicV1ModuleOrganizationRoute:
     ApiPublicV1ModuleOrganizationRouteWithChildren,
   ApiPublicV1ModuleWidgetsRoute: ApiPublicV1ModuleWidgetsRoute,
-  ApiPublicV1ModuleAlertsRoute: ApiPublicV1ModuleAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
