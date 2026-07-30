@@ -454,6 +454,7 @@ export type Database = {
           id: string
           organization_id: string
           project_id: string | null
+          rate_id: string | null
           started_at: string
           user_id: string
           work_type_id: string | null
@@ -464,6 +465,7 @@ export type Database = {
           id?: string
           organization_id: string
           project_id?: string | null
+          rate_id?: string | null
           started_at?: string
           user_id: string
           work_type_id?: string | null
@@ -474,6 +476,7 @@ export type Database = {
           id?: string
           organization_id?: string
           project_id?: string | null
+          rate_id?: string | null
           started_at?: string
           user_id?: string
           work_type_id?: string | null
@@ -491,6 +494,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_sessions_rate_id_fkey"
+            columns: ["rate_id"]
+            isOneToOne: false
+            referencedRelation: "rates"
             referencedColumns: ["id"]
           },
           {

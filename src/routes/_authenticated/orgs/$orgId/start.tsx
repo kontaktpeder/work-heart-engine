@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -97,6 +97,19 @@ function StartPage() {
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
   const [breakMin, setBreakMin] = useState(0);
   const [busy, setBusy] = useState(false);
+  const hydratedSessionId = useRef<string | null>(null);
+
+  // Restore project/rate from active session once after refresh / navigation
+  useEffect(() => {
+    if (!activeInThisOrg || !activeSession) {
+      hydratedSessionId.current = null;
+      return;
+    }
+    if (hydratedSessionId.current === activeSession.id) return;
+    hydratedSessionId.current = activeSession.id;
+    if (activeSession.project_id) setProjectId(activeSession.project_id);
+    if (activeSession.rate_id) setRateId(activeSession.rate_id);
+  }, [activeInThisOrg, activeSession?.id, activeSession?.project_id, activeSession?.rate_id]);
 
   useEffect(() => {
     const pid = projectId ?? (activeInThisOrg ? activeSession!.project_id : null);
@@ -121,6 +134,7 @@ function StartPage() {
       user_id: user.id,
       organization_id: orgId,
       project_id: projectId,
+      rate_id: rateId,
       comment: comment || null,
     });
     setBusy(false);
@@ -135,11 +149,12 @@ function StartPage() {
     const start = new Date(activeSession!.started_at);
     const end = new Date();
     const pid = projectId ?? activeSession!.project_id;
+    const rid = rateId ?? activeSession!.rate_id;
     const { error: insErr } = await supabase.from("time_entries").insert({
       user_id: activeSession!.user_id,
       organization_id: orgId,
       project_id: pid,
-      rate_id: rateId,
+      rate_id: rid,
       date: start.toISOString().slice(0, 10),
       start_time: start.toTimeString().slice(0, 8),
       end_time: end.toTimeString().slice(0, 8),
@@ -344,6 +359,16 @@ function StartPage() {
           } else {
             setRateId(id);
             setRate(r);
+          }
+          if (activeInThisOrg && activeSession) {
+            void supabase
+              .from("work_sessions")
+              .update({ rate_id: id })
+              .eq("id", activeSession.id)
+              .then(({ error }) => {
+                if (error) toast.error(error.message);
+                else void qc.invalidateQueries({ queryKey: ["session"] });
+              });
           }
         }}
       />

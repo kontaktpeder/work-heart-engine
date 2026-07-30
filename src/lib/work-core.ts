@@ -31,6 +31,7 @@ export type WorkSession = {
   user_id: string;
   organization_id: string;
   project_id: string | null;
+  rate_id: string | null;
   started_at: string;
   comment: string | null;
 };
@@ -224,7 +225,7 @@ export async function fetchActiveSession(): Promise<WorkSession | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("work_sessions")
-    .select("id, user_id, organization_id, project_id, started_at, comment")
+    .select("id, user_id, organization_id, project_id, rate_id, started_at, comment")
     .eq("user_id", u.user.id)
     .maybeSingle();
   if (error) throw error;
