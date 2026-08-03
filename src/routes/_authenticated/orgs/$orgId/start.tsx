@@ -159,7 +159,10 @@ function StartPage() {
       start_time: start.toTimeString().slice(0, 8),
       end_time: end.toTimeString().slice(0, 8),
       break_minutes: breakMin,
-      comment: comment || activeSession!.comment,
+      comment: (comment || activeSession!.comment || "")
+        .replace(/\[nexus:[0-9a-f-]{36}\]/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .trim() || null,
       source: "timer",
     });
     if (insErr) {

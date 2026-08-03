@@ -12,7 +12,7 @@ import {
 } from "@/lib/work-core";
 import { ProjectPicker } from "./project-picker";
 import { RatePicker } from "./rate-picker";
-import { entryFormDefaults } from "@/lib/time-utils";
+import { entryFormDefaults, stripNexusCommentTag } from "@/lib/time-utils";
 
 type Props = {
   open: boolean;
@@ -95,7 +95,7 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
       start_time: start + ":00",
       end_time: end + ":00",
       break_minutes: breakMin,
-      comment: comment || null,
+      comment: stripNexusCommentTag(comment) || null,
       source: entry?.source ?? ("manual" as const),
     };
     const res = entry
@@ -194,8 +194,13 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
             onClick={() => setProjectPickerOpen(true)}
             className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
           >
-            <span className={project ? "" : "text-muted-foreground"}>
-              {project?.name ?? "Velg prosjekt…"}
+            <span className={project || projectId ? "" : "text-muted-foreground"}>
+              {project?.name ??
+                (projectId
+                  ? projectsQ.isLoading
+                    ? "Laster prosjekt…"
+                    : "Ukjent prosjekt — velg på nytt"
+                  : "Velg prosjekt…")}
             </span>
           </button>
         </div>
@@ -207,8 +212,13 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
             onClick={() => setRatePickerOpen(true)}
             className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
           >
-            <span className={rate ? "" : "text-muted-foreground"}>
-              {rate?.name ?? "Velg sats (valgfri)…"}
+            <span className={rate || rateId ? "" : "text-muted-foreground"}>
+              {rate?.name ??
+                (rateId
+                  ? ratesQ.isLoading
+                    ? "Laster sats…"
+                    : "Ukjent sats — velg på nytt"
+                  : "Velg sats (valgfri)…")}
             </span>
             {rate && (
               <span className="text-xs text-muted-foreground tabular-nums">

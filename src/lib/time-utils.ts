@@ -65,6 +65,15 @@ export function toTimeInput(value: string | null | undefined, fallbackIso?: stri
   return "09:00";
 }
 
+/** Strip legacy Nexus sync markers from comments (not user-facing). */
+export function stripNexusCommentTag(comment: string | null | undefined): string {
+  if (!comment) return "";
+  return comment
+    .replace(/\[nexus:[0-9a-f-]{36}\]/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export function entryFormDefaults(entry: TimeEntry | null | undefined, defaultOrgId?: string) {
   if (!entry) {
     return {
@@ -88,6 +97,6 @@ export function entryFormDefaults(entry: TimeEntry | null | undefined, defaultOr
     breakMin: entry.break_minutes ?? 0,
     projectId: entry.project_id ?? null,
     rateId: entry.rate_id ?? null,
-    comment: entry.comment ?? "",
+    comment: stripNexusCommentTag(entry.comment),
   };
 }
