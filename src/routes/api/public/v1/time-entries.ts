@@ -119,30 +119,48 @@ export const Route = createFileRoute("/api/public/v1/time-entries")({
           }
         }
 
-        // Soft idempotency via comment/source metadata — Work has no source_ref column.
-        // Deduplicate by matching recent timer entry with same project+times if source_ref given.
+        // Soft idempotency — Work has no source_ref column.
+        // Prefer legacy [nexus:ref] in comment; else same project+slot (timer retry).
+        // Do NOT append [nexus:…] into the visible comment — users write that themselves.
         if (v.source_app === "nexus" && v.source_ref) {
-          const { data: recent } = await supabaseAdmin
+          const selectCols =
+            "id, organization_id, project_id, rate_id, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at";
+          const startNorm = normalizeTime(v.start_time);
+          const endNorm = normalizeTime(v.end_time);
+
+          const { data: byTag } = await supabaseAdmin
             .from("time_entries")
-            .select("id, organization_id, project_id, rate_id, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at")
+            .select(selectCols)
             .eq("organization_id", orgId)
             .eq("project_id", v.project_id)
             .eq("date", v.date)
-            .eq("start_time", normalizeTime(v.start_time))
-            .eq("end_time", normalizeTime(v.end_time))
+            .eq("start_time", startNorm)
+            .eq("end_time", endNorm)
             .ilike("comment", `%[nexus:${v.source_ref}]%`)
             .limit(1)
             .maybeSingle();
-          if (recent) {
-            return Response.json(withContract({ data: recent, duplicate: true }), { status: 200 });
+          if (byTag) {
+            return Response.json(withContract({ data: byTag, duplicate: true }), { status: 200 });
+          }
+
+          const { data: bySlot } = await supabaseAdmin
+            .from("time_entries")
+            .select(selectCols)
+            .eq("organization_id", orgId)
+            .eq("project_id", v.project_id)
+            .eq("date", v.date)
+            .eq("start_time", startNorm)
+            .eq("end_time", endNorm)
+            .eq("break_minutes", v.break_minutes ?? 0)
+            .eq("source", v.source ?? "timer")
+            .limit(1)
+            .maybeSingle();
+          if (bySlot) {
+            return Response.json(withContract({ data: bySlot, duplicate: true }), { status: 200 });
           }
         }
 
-        const commentParts = [v.comment?.trim() || null];
-        if (v.source_app === "nexus" && v.source_ref) {
-          commentParts.push(`[nexus:${v.source_ref}]`);
-        }
-        const comment = commentParts.filter(Boolean).join(" ") || null;
+        const comment = v.comment?.trim() || null;
 
         const { data, error } = await supabaseAdmin
           .from("time_entries")
