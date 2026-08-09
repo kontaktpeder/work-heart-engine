@@ -16,6 +16,7 @@ import {
   entryMinutes,
   type Project,
   type Rate,
+  type TimeEntry,
   type TimeEntryMark,
 } from "@/lib/work-core";
 import { startOfDay } from "@/lib/time-utils";
@@ -23,10 +24,10 @@ import { formatMarkTime } from "@/lib/marks";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatePicker } from "@/components/rate-picker";
 import { MarkSheet } from "@/components/mark-sheet";
+import { TimeEntrySheet } from "@/components/time-entry-sheet";
 import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 import { tryOpenSheet } from "@/lib/sheetGate";
-import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -35,6 +36,9 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
 
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 const authRoute = getRouteApi("/_authenticated");
+
+const ENTRY_SELECT =
+  "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at";
 
 type StartPaneProps = {
   onOpenTimer?: () => void;
@@ -101,17 +105,17 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     [entriesQ.data],
   );
 
-  const [comment, setComment] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
   const [rateId, setRateId] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [rate, setRate] = useState<Rate | null>(null);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
-  const [breakMin, setBreakMin] = useState(0);
   const [busy, setBusy] = useState(false);
   const [markSheetOpen, setMarkSheetOpen] = useState(false);
   const [editingMark, setEditingMark] = useState<TimeEntryMark | null>(null);
+  const [reviewEntry, setReviewEntry] = useState<TimeEntry | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const hydratedSessionId = useRef<string | null>(null);
 
   const marksQ = useQuery({
@@ -120,7 +124,6 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     enabled: !!activeInThisOrg && !!activeSession?.id,
   });
 
-  // Restore project/rate from active session once after refresh / navigation
   useEffect(() => {
     if (!activeInThisOrg || !activeSession) {
       hydratedSessionId.current = null;
@@ -153,11 +156,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       organization_id: orgId,
       project_id: projectId,
       rate_id: rateId,
-      comment: comment || null,
+      comment: null,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    setComment("");
     qc.invalidateQueries({ queryKey: ["session"] });
   }
 
@@ -178,14 +180,11 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         date: start.toISOString().slice(0, 10),
         start_time: start.toTimeString().slice(0, 8),
         end_time: end.toTimeString().slice(0, 8),
-        break_minutes: breakMin,
-        comment: (comment || activeSession!.comment || "")
-          .replace(/\[nexus:[0-9a-f-]{36}\]/gi, "")
-          .replace(/\s{2,}/g, " ")
-          .trim() || null,
+        break_minutes: 0,
+        comment: null,
         source: "timer",
       })
-      .select("id")
+      .select(ENTRY_SELECT)
       .single();
     if (insErr || !inserted) {
       setBusy(false);
@@ -203,37 +202,36 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       .eq("id", activeSession!.id);
     setBusy(false);
     if (delErr) return toast.error(delErr.message);
-    setComment("");
-    setBreakMin(0);
     setProjectId(null);
     setRateId(null);
-    toast.success("Timeføring lagret");
-    qc.invalidateQueries({ queryKey: ["session"] });
-    qc.invalidateQueries({ queryKey: ["entries"] });
-    qc.invalidateQueries({ queryKey: ["marks"] });
+    void qc.invalidateQueries({ queryKey: ["session"] });
+    void qc.invalidateQueries({ queryKey: ["entries"] });
+    void qc.invalidateQueries({ queryKey: ["marks"] });
+    setReviewEntry(inserted as TimeEntry);
+    tryOpenSheet(() => setReviewOpen(true));
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onOpenTimer?.()}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
         >
           <List className="h-4 w-4 text-primary" /> Timer
         </button>
         <button
           type="button"
           onClick={() => onOpenReports?.()}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
         >
           <BarChart3 className="h-4 w-4 text-primary" /> Rapport
         </button>
       </div>
 
       {(recentEntriesQ.data?.length ?? 0) === 0 && (
-        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-lg border border-dashed border-border p-4 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-lg border border-dashed border-border p-3 sm:flex-row sm:items-center">
           <p className="text-sm text-muted-foreground">
             Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
           </p>
@@ -250,20 +248,22 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         </div>
       )}
 
-      <div className="scroll-touch min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
-      {activeSession && !activeInThisOrg && (
-        <div className="surface-card border-destructive/40 text-sm">
+      {activeSession && !activeInThisOrg ? (
+        <div className="surface-card shrink-0 border-destructive/40 text-sm">
           Du har en aktiv økt i en annen organisasjon. Bytt org for å stoppe den.
         </div>
-      )}
+      ) : null}
 
       {activeInThisOrg ? (
-        <div className="surface-card text-center space-y-5 border-primary/40">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Du jobber</p>
-            <p className="mt-2 text-5xl font-bold tabular-nums">{formatDuration(elapsedMin)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {project?.name ?? "—"} · startet kl.{" "}
+        <div className="surface-card flex min-h-0 flex-1 flex-col gap-3 overflow-hidden border-primary/40 !p-4">
+          <div className="shrink-0 text-center">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Du jobber</p>
+            <p className="mt-1 text-4xl font-bold tabular-nums leading-none">
+              {formatDuration(elapsedMin)}
+            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {project?.name ?? "—"}
+              {rate ? ` · ${rate.name}` : ""} · start{" "}
               {new Date(activeSession!.started_at).toLocaleTimeString("nb-NO", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -271,160 +271,123 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             </p>
           </div>
 
-          <div className="space-y-2 text-left">
-            <label className="text-xs text-muted-foreground">Prosjekt</label>
+          <div className="grid shrink-0 grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left"
+              className="h-10 truncate rounded-xl border border-border bg-input px-2.5 text-left text-sm"
             >
-              {project?.name ?? "Velg prosjekt…"}
+              <span className={project ? "" : "text-muted-foreground"}>
+                {project?.name ?? "Prosjekt…"}
+              </span>
             </button>
-
-            <label className="text-xs text-muted-foreground mt-2 block">Sats</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+              className="h-10 truncate rounded-xl border border-border bg-input px-2.5 text-left text-sm"
             >
               <span className={rate ? "" : "text-muted-foreground"}>
-                {rate?.name ?? "Velg sats (valgfri)…"}
+                {rate?.name ?? "Sats…"}
               </span>
-              {rate && (
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {rate.amount} kr/t
-                </span>
-              )}
             </button>
+          </div>
 
-            <label className="text-xs text-muted-foreground mt-2 block">Pause (min)</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={breakMin}
-              onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
-              className={sheetFieldClass}
-            />
-
-            <label className="text-xs text-muted-foreground mt-2 block">Kort oppsummering (valgfri)</label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Valgfri oversikt — bruk merker for detaljer underveis"
-              rows={2}
-              className={sheetTextareaClass}
-            />
-
-            <div className="pt-2">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <label className="text-xs text-muted-foreground">Logg underveis</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingMark(null);
-                    tryOpenSheet(() => setMarkSheetOpen(true));
-                  }}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-sm font-medium"
-                >
-                  <BookmarkPlus className="h-4 w-4 text-primary" />
-                  Merke
-                </button>
-              </div>
-              {(marksQ.data?.length ?? 0) === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Sett merker med tidspunkt mens du jobber — de følger med i rapporten.
-                </p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {(marksQ.data ?? []).map((m) => (
-                    <li key={m.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingMark(m);
-                          tryOpenSheet(() => setMarkSheetOpen(true));
-                        }}
-                        className="flex w-full gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-left text-sm"
-                      >
-                        <span className="shrink-0 font-semibold tabular-nums">
-                          {formatMarkTime(m.marked_at)}
-                        </span>
-                        <span className="min-w-0 flex-1 text-muted-foreground">{m.note}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+            <div className="flex shrink-0 items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">Logg</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingMark(null);
+                  tryOpenSheet(() => setMarkSheetOpen(true));
+                }}
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
+              >
+                <BookmarkPlus className="h-3.5 w-3.5 text-primary" />
+                Merke
+              </button>
             </div>
+            {(marksQ.data?.length ?? 0) === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Trykk Merke for pause, ankomst, osv.
+              </p>
+            ) : (
+              <ul className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
+                {(marksQ.data ?? []).map((m) => (
+                  <li key={m.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMark(m);
+                        tryOpenSheet(() => setMarkSheetOpen(true));
+                      }}
+                      className="flex w-full gap-2 rounded-lg px-1 py-1 text-left text-sm"
+                    >
+                      <span className="shrink-0 font-semibold tabular-nums">
+                        {formatMarkTime(m.marked_at)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground">{m.note}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <button
             onClick={stopWork}
             disabled={busy}
-            className="w-full tap-target bg-destructive text-destructive-foreground text-lg h-16 disabled:opacity-60"
+            className="tap-target h-14 w-full shrink-0 bg-destructive text-base text-destructive-foreground disabled:opacity-60"
           >
-            <Square className="w-5 h-5 mr-2" fill="currentColor" />
-            Stopp arbeid
+            <Square className="mr-2 h-4 w-4" fill="currentColor" />
+            {busy ? "Stopper…" : "Stopp arbeid"}
           </button>
         </div>
       ) : (
-        <div className="surface-card space-y-4">
+        <div className="surface-card shrink-0 space-y-3 !p-4">
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground">Prosjekt</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+              className="flex h-11 w-full items-center justify-between rounded-xl border border-border bg-input px-3 text-left"
             >
               <span className={project ? "" : "text-muted-foreground"}>
                 {project?.name ?? "Velg prosjekt…"}
               </span>
             </button>
 
-            <label className="text-xs text-muted-foreground mt-2 block">Sats (valgfri)</label>
+            <label className="mt-2 block text-xs text-muted-foreground">Sats (valgfri)</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+              className="flex h-11 w-full items-center justify-between rounded-xl border border-border bg-input px-3 text-left"
             >
               <span className={rate ? "" : "text-muted-foreground"}>
                 {rate?.name ?? "Velg sats…"}
               </span>
-              {rate && (
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {rate.amount} kr/t
-                </span>
-              )}
+              {rate ? (
+                <span className="text-xs tabular-nums text-muted-foreground">{rate.amount} kr/t</span>
+              ) : null}
             </button>
-
-            <label className="text-xs text-muted-foreground mt-2 block">Notat (valgfri)</label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Hva skal du gjøre?"
-              rows={4}
-              className={sheetTextareaClass}
-            />
           </div>
 
           <button
             onClick={startWork}
             disabled={busy || !projectId || !!activeSession}
-            className="w-full tap-target bg-primary text-primary-foreground text-lg h-16 disabled:opacity-60"
+            className="tap-target h-14 w-full bg-primary text-base text-primary-foreground disabled:opacity-60"
           >
-            <Play className="w-6 h-6 mr-2" fill="currentColor" />
+            <Play className="mr-2 h-5 w-5" fill="currentColor" />
             Start arbeid
           </button>
         </div>
       )}
 
-      <div className="surface-card">
+      <div className="surface-card shrink-0 !py-3">
         <div className="flex items-baseline justify-between">
           <span className="text-sm text-muted-foreground">I dag ({org.name})</span>
-          <span className="text-2xl font-bold tabular-nums">{formatDuration(todayMin)}</span>
+          <span className="text-xl font-bold tabular-nums">{formatDuration(todayMin)}</span>
         </div>
-      </div>
       </div>
 
       <ProjectPicker
@@ -472,6 +435,16 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         orgId={orgId}
         sessionId={activeInThisOrg ? activeSession!.id : null}
         mark={editingMark}
+      />
+      <TimeEntrySheet
+        key={reviewEntry?.id ?? "review"}
+        open={reviewOpen}
+        onClose={() => {
+          setReviewOpen(false);
+          setReviewEntry(null);
+        }}
+        entry={reviewEntry}
+        orgId={orgId}
       />
     </div>
   );

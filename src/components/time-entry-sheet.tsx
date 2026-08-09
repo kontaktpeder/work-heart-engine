@@ -35,7 +35,6 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
   const [date, setDate] = useState(initial.date);
   const [start, setStart] = useState(initial.start);
   const [end, setEnd] = useState(initial.end);
-  const [breakMin, setBreakMin] = useState(initial.breakMin);
   const [projectId, setProjectId] = useState<string | null>(initial.projectId);
   const [rateId, setRateId] = useState<string | null>(initial.rateId);
   const [comment, setComment] = useState(initial.comment);
@@ -53,7 +52,6 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
     setDate(d.date);
     setStart(d.start);
     setEnd(d.end);
-    setBreakMin(d.breakMin);
     setProjectId(d.projectId);
     setRateId(d.rateId);
     setComment(d.comment);
@@ -108,7 +106,7 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
       date,
       start_time: start + ":00",
       end_time: end + ":00",
-      break_minutes: breakMin,
+      break_minutes: entry?.break_minutes ?? 0,
       comment: stripNexusCommentTag(comment) || null,
       source: entry?.source ?? ("manual" as const),
     };
@@ -178,18 +176,6 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
                   className={`${sheetFieldClass} mt-1`}
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-muted-foreground">Pause (min)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                value={breakMin}
-                onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
-                className={`${sheetFieldClass} mt-1`}
-              />
             </div>
 
             <div>

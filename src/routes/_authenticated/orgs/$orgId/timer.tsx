@@ -188,7 +188,7 @@ export function TimerPane() {
                   {start?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
                   {" – "}
                   {end?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
-                  {e.break_minutes ? (
+                {e.break_minutes ? (
                     <span className="text-muted-foreground text-sm">
                       {" "}
                       · {e.break_minutes} min pause
