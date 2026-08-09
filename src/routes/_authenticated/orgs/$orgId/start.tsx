@@ -132,9 +132,6 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     if (r) setRate(r);
   }, [rateId, ratesQ.data]);
 
-  const greeting =
-    user.user_metadata?.full_name?.split(" ")[0] ?? user.email?.split("@")[0] ?? "der";
-
   async function startWork() {
     if (!projectId) return toast.error("Velg prosjekt");
     setBusy(true);
@@ -193,13 +190,8 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Hei,</p>
-        <h1 className="text-3xl font-bold capitalize">{greeting}.</h1>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+      <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onOpenTimer?.()}
@@ -217,7 +209,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       </div>
 
       {(recentEntriesQ.data?.length ?? 0) === 0 && (
-        <div className="rounded-lg border border-dashed border-border p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-lg border border-dashed border-border p-4 sm:flex-row sm:items-center">
           <p className="text-sm text-muted-foreground">
             Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
           </p>
@@ -234,6 +226,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         </div>
       )}
 
+      <div className="scroll-touch min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
       {activeSession && !activeInThisOrg && (
         <div className="surface-card border-destructive/40 text-sm">
           Du har en aktiv økt i en annen organisasjon. Bytt org for å stoppe den.
@@ -365,6 +358,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <span className="text-sm text-muted-foreground">I dag ({org.name})</span>
           <span className="text-2xl font-bold tabular-nums">{formatDuration(todayMin)}</span>
         </div>
+      </div>
       </div>
 
       <ProjectPicker

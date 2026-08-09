@@ -10,8 +10,6 @@ import {
   Settings,
   ArrowLeftRight,
   LogOut,
-  List,
-  BarChart3,
   ChevronRight,
 } from "lucide-react";
 import { fetchOrganizations, type Organization } from "@/lib/work-core";
@@ -131,7 +129,7 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <StartPane
           onOpenTimer={() => openSheet("timer")}
           onOpenReports={() => openSheet("reports")}
@@ -209,26 +207,6 @@ function OrgLayout() {
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                openSheet("timer");
-              }}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium"
-            >
-              <List className="h-5 w-5 text-primary" /> Timer
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                openSheet("reports");
-              }}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium"
-            >
-              <BarChart3 className="h-5 w-5 text-primary" /> Rapport
-            </button>
             <button
               type="button"
               onClick={() => {

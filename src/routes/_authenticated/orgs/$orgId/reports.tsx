@@ -19,6 +19,16 @@ import {
   exportTimeEntriesToFinance,
 } from "@/lib/finance-export.functions";
 import { sheetFieldClass } from "@/lib/sheetField";
+import {
+  formatPeriodLabel,
+  getPayCycleAnchorDay,
+  payCycleContaining,
+  periodToInputs,
+  previousPayCycle,
+  setPayCycleAnchorDay,
+} from "@/lib/pay-cycle";
+import { ExportApprovalSheet } from "@/components/export-approval-sheet";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
   beforeLoad: ({ params, search }) => {
@@ -33,11 +43,19 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
 
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
+type PeriodPreset = "current" | "previous" | "month" | "custom";
+type PendingExport = "csv" | "pdf" | "finance" | null;
+
 export function ReportsPane() {
   const { org, orgId } = orgRoute.useRouteContext();
-  const [from, setFrom] = useState(toDateInput(startOfMonth()));
-  const [to, setTo] = useState(toDateInput(endOfMonth()));
+  const [anchorDay, setAnchorDay] = useState(() => getPayCycleAnchorDay(orgId));
+  const initialCycle = payCycleContaining(new Date(), getPayCycleAnchorDay(orgId));
+  const initial = periodToInputs(initialCycle.from, initialCycle.to);
+  const [from, setFrom] = useState(initial.from);
+  const [to, setTo] = useState(initial.to);
+  const [preset, setPreset] = useState<PeriodPreset>("current");
   const [projectId, setProjectId] = useState("");
+  const [pendingExport, setPendingExport] = useState<PendingExport>(null);
 
   const projectsQ = useQuery({
     queryKey: ["projects", orgId, "include-inactive"],
@@ -76,6 +94,7 @@ export function ReportsPane() {
     mutationFn: () =>
       exportFn({ data: { organizationId: orgId, from, to, dryRun: false } }),
     onSuccess: (res) => {
+      setPendingExport(null);
       qc.invalidateQueries({ queryKey: ["finance-exportable", orgId] });
       qc.invalidateQueries({ queryKey: ["entries", orgId] });
       if (res.errors.length) {
@@ -129,9 +148,41 @@ export function ReportsPane() {
     return [...m.values()].sort((a, b) => b.min - a.min);
   }, [entries, rateById]);
 
+  function applyPeriod(next: PeriodPreset, day = anchorDay) {
+    setPreset(next);
+    if (next === "current") {
+      const cycle = payCycleContaining(new Date(), day);
+      const inputs = periodToInputs(cycle.from, cycle.to);
+      setFrom(inputs.from);
+      setTo(inputs.to);
+      return;
+    }
+    if (next === "previous") {
+      const cycle = previousPayCycle(new Date(), day);
+      const inputs = periodToInputs(cycle.from, cycle.to);
+      setFrom(inputs.from);
+      setTo(inputs.to);
+      return;
+    }
+    if (next === "month") {
+      setFrom(toDateInput(startOfMonth()));
+      setTo(toDateInput(endOfMonth()));
+    }
+  }
+
+  function onAnchorChange(raw: string) {
+    const day = Math.min(28, Math.max(1, parseInt(raw, 10) || 5));
+    setAnchorDay(day);
+    setPayCycleAnchorDay(orgId, day);
+    if (preset === "current" || preset === "previous") {
+      applyPeriod(preset, day);
+    }
+  }
+
   function exportCsv() {
     const rows = buildRows(entries, projById, rateById);
     buildCsv(rows, `${org.name}_${from}_${to}.csv`);
+    setPendingExport(null);
   }
   function exportPdf() {
     const rows = buildRows(entries, projById, rateById);
@@ -140,18 +191,87 @@ export function ReportsPane() {
       periodLabel: `${org.name} · ${from} – ${to}`,
       filename: `${org.name}_${from}_${to}.pdf`,
     });
+    setPendingExport(null);
   }
+
+  function requestExport(kind: NonNullable<PendingExport>) {
+    tryOpenSheet(() => setPendingExport(kind));
+  }
+
+  const currentLabel = formatPeriodLabel(
+    payCycleContaining(new Date(), anchorDay).from,
+    payCycleContaining(new Date(), anchorDay).to,
+  );
+  const previousLabel = formatPeriodLabel(
+    previousPayCycle(new Date(), anchorDay).from,
+    previousPayCycle(new Date(), anchorDay).to,
+  );
+
+  const confirmLabel =
+    pendingExport === "csv"
+      ? "Bekreft og last ned CSV"
+      : pendingExport === "pdf"
+        ? "Bekreft og last ned PDF"
+        : "Bekreft og eksporter til Finance";
 
   return (
     <div className="space-y-4">
       <div className="surface-card space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground">Lønnssyklus (fra dag)</label>
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={28}
+              value={anchorDay}
+              onChange={(e) => onAnchorChange(e.target.value)}
+              className={`${sheetFieldClass} w-20`}
+            />
+            <span className="text-sm text-muted-foreground">
+              f.eks. 5. → 5. (som e-skjenk)
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["current", "Denne syklus", currentLabel],
+              ["previous", "Forrige syklus", previousLabel],
+              ["month", "Denne måned", null],
+              ["custom", "Egendefinert", null],
+            ] as const
+          ).map(([key, label, hint]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => applyPeriod(key)}
+              className={`rounded-xl border px-3 py-2 text-left text-sm ${
+                preset === key
+                  ? "border-primary bg-primary/10 font-semibold"
+                  : "border-border bg-card"
+              }`}
+            >
+              <span className="block">{label}</span>
+              {hint ? (
+                <span className="block text-[11px] font-normal text-muted-foreground">{hint}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="min-w-0">
             <label className="text-xs text-muted-foreground">Fra</label>
             <input
               type="date"
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => {
+                setPreset("custom");
+                setFrom(e.target.value);
+              }}
               className={`${sheetFieldClass} mt-1`}
             />
           </div>
@@ -160,7 +280,10 @@ export function ReportsPane() {
             <input
               type="date"
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => {
+                setPreset("custom");
+                setTo(e.target.value);
+              }}
               className={`${sheetFieldClass} mt-1`}
             />
           </div>
@@ -243,7 +366,7 @@ export function ReportsPane() {
 
       <div className="grid grid-cols-2 gap-2">
         <button
-          onClick={exportCsv}
+          onClick={() => requestExport("csv")}
           disabled={!entries.length}
           className="tap-target bg-secondary text-secondary-foreground h-12 disabled:opacity-50"
         >
@@ -251,7 +374,7 @@ export function ReportsPane() {
           CSV
         </button>
         <button
-          onClick={exportPdf}
+          onClick={() => requestExport("pdf")}
           disabled={!entries.length}
           className="tap-target bg-primary text-primary-foreground h-12 disabled:opacity-50"
         >
@@ -261,17 +384,43 @@ export function ReportsPane() {
       </div>
 
       <button
-        onClick={() => exportMut.mutate()}
-        disabled={
-          exportMut.isPending || (exportableQ.data?.count ?? 0) === 0
-        }
+        onClick={() => requestExport("finance")}
+        disabled={(exportableQ.data?.count ?? 0) === 0}
         className="tap-target w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
       >
         <Send className="w-4 h-4 mr-2" />
-        {exportMut.isPending
-          ? "Exporting…"
-          : `Export to Finance (${exportableQ.data?.count ?? 0})`}
+        {`Export to Finance (${exportableQ.data?.count ?? 0})`}
       </button>
+
+      <ExportApprovalSheet
+        open={pendingExport != null}
+        onClose={() => setPendingExport(null)}
+        title={
+          pendingExport === "finance"
+            ? "Godkjenn Finance-eksport"
+            : pendingExport === "pdf"
+              ? "Godkjenn PDF"
+              : "Godkjenn CSV"
+        }
+        from={from}
+        to={to}
+        onChangePeriod={(nextFrom, nextTo) => {
+          setPreset("custom");
+          setFrom(nextFrom);
+          setTo(nextTo);
+        }}
+        entries={entries}
+        totalMin={totalMin}
+        totalAmount={totalAmount}
+        anyAmount={anyAmount}
+        confirmLabel={confirmLabel}
+        busy={pendingExport === "finance" && exportMut.isPending}
+        onConfirm={() => {
+          if (pendingExport === "csv") exportCsv();
+          else if (pendingExport === "pdf") exportPdf();
+          else if (pendingExport === "finance") exportMut.mutate();
+        }}
+      />
     </div>
   );
 }
