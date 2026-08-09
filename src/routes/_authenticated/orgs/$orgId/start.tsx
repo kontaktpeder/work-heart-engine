@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,7 +12,6 @@ import {
   fetchTimeEntries,
   formatDuration,
   entryMinutes,
-  type Organization,
   type Project,
   type Rate,
 } from "@/lib/work-core";
@@ -25,14 +24,16 @@ import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
-  component: StartPage,
+  component: () => null,
 });
 
-function StartPage() {
-  const { user, org, orgId } = Route.useRouteContext() as {
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+const authRoute = getRouteApi("/_authenticated");
+
+export function StartPane() {
+  const { org, orgId } = orgRoute.useRouteContext();
+  const { user } = authRoute.useRouteContext() as {
     user: { id: string; email?: string; user_metadata?: { full_name?: string } };
-    org: Organization;
-    orgId: string;
   };
   const qc = useQueryClient();
   const seedFn = useServerFn(seedWorkDemoData);

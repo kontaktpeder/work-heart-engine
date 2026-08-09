@@ -40,7 +40,7 @@ function OrgsPicker() {
   }
 
   return (
-    <div className="scroll-touch mx-auto h-full max-w-2xl space-y-4 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+    <div className="scroll-touch mx-auto h-full max-w-2xl space-y-4 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]" style={{ height: "var(--app-height, 100dvh)" }}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Velg organisasjon</h1>

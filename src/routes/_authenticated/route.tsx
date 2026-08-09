@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { authSupabase } from "@/integrations/supabase/client";
+import { useAppFrame } from "@/hooks/useAppFrame";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -12,8 +13,12 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthedLayout() {
+  useAppFrame();
   return (
-    <main className="h-[100dvh] overflow-hidden bg-background">
+    <main
+      className="overflow-hidden bg-background"
+      style={{ height: "var(--app-height, 100dvh)" }}
+    >
       <Outlet />
     </main>
   );

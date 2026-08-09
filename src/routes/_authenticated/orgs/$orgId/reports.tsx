@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,7 +11,6 @@ import {
   entryMinutes,
   formatDuration,
   formatNok,
-  type Organization,
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import { buildCsv, buildPdf, buildRows } from "@/lib/export";
@@ -22,11 +21,13 @@ import {
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
   head: () => ({ meta: [{ title: "Rapport · Work Core" }] }),
-  component: ReportsPage,
+  component: () => null,
 });
 
-function ReportsPage() {
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+
+export function ReportsPane() {
+  const { org, orgId } = orgRoute.useRouteContext();
   const [from, setFrom] = useState(toDateInput(startOfMonth()));
   const [to, setTo] = useState(toDateInput(endOfMonth()));
   const [projectId, setProjectId] = useState("");

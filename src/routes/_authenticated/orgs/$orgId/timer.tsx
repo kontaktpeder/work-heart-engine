@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -8,7 +8,6 @@ import {
   entryMinutes,
   formatDuration,
   formatNok,
-  type Organization,
   type TimeEntry,
 } from "@/lib/work-core";
 import {
@@ -24,13 +23,15 @@ import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/timer")({
   head: () => ({ meta: [{ title: "Timer · Work Core" }] }),
-  component: TimerPage,
+  component: () => null,
 });
+
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
 type Period = "week" | "lastweek" | "month" | "lastmonth" | "all";
 
-function TimerPage() {
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+export function TimerPane() {
+  const { org, orgId } = orgRoute.useRouteContext();
   const [period, setPeriod] = useState<Period>("week");
   const [projectFilter, setProjectFilter] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);

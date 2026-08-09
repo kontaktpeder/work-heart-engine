@@ -1,0 +1,11 @@
+{
+  "name": "Work Core",
+  "short_name": "Work",
+  "description": "Work Core – verdens enkleste arbeids- og timemotor.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1d24",
+  "theme_color": "#1a1d24",
+  "lang": "nb",
+  "icons": []
+}
