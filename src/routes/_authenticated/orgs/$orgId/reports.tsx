@@ -1,4 +1,4 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,9 +18,16 @@ import {
   countExportableEntries,
   exportTimeEntriesToFinance,
 } from "@/lib/finance-export.functions";
+import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
-  head: () => ({ meta: [{ title: "Rapport · Work Core" }] }),
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "reports" },
+    });
+  },
   component: () => null,
 });
 
@@ -137,29 +144,24 @@ export function ReportsPane() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Rapport</h1>
-        <p className="text-xs text-muted-foreground">i {org.name}</p>
-      </div>
-
       <div className="surface-card space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
             <label className="text-xs text-muted-foreground">Fra</label>
             <input
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              className={`${sheetFieldClass} mt-1`}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs text-muted-foreground">Til</label>
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              className={`${sheetFieldClass} mt-1`}
             />
           </div>
         </div>
@@ -168,7 +170,7 @@ export function ReportsPane() {
           <select
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            className={`${sheetFieldClass} mt-1`}
           >
             <option value="">Alle</option>
             {(projectsQ.data ?? []).map((p) => (

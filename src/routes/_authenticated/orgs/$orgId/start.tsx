@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Play, Square, Sparkles } from "lucide-react";
+import { Play, Square, Sparkles, List, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchActiveSession,
@@ -21,6 +21,7 @@ import { RatePicker } from "@/components/rate-picker";
 import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -30,7 +31,12 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 const authRoute = getRouteApi("/_authenticated");
 
-export function StartPane() {
+type StartPaneProps = {
+  onOpenTimer?: () => void;
+  onOpenReports?: () => void;
+};
+
+export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   const { org, orgId } = orgRoute.useRouteContext();
   const { user } = authRoute.useRouteContext() as {
     user: { id: string; email?: string; user_metadata?: { full_name?: string } };
@@ -191,7 +197,23 @@ export function StartPane() {
       <div>
         <p className="text-sm text-muted-foreground">Hei,</p>
         <h1 className="text-3xl font-bold capitalize">{greeting}.</h1>
-        <p className="text-xs text-muted-foreground mt-1">i {org.name}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => onOpenTimer?.()}
+          className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+        >
+          <List className="h-4 w-4 text-primary" /> Timer
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpenReports?.()}
+          className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+        >
+          <BarChart3 className="h-4 w-4 text-primary" /> Rapport
+        </button>
       </div>
 
       {(recentEntriesQ.data?.length ?? 0) === 0 && (
@@ -261,10 +283,11 @@ export function StartPane() {
             <label className="text-xs text-muted-foreground mt-2 block">Pause (min)</label>
             <input
               type="number"
+              inputMode="numeric"
               min={0}
               value={breakMin}
               onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              className={sheetFieldClass}
             />
 
             <label className="text-xs text-muted-foreground mt-2 block">Notat</label>
@@ -273,7 +296,7 @@ export function StartPane() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Hva gjorde du?"
               rows={4}
-              className="w-full min-h-28 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
+              className={sheetTextareaClass}
             />
           </div>
 
@@ -322,7 +345,7 @@ export function StartPane() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Hva skal du gjøre?"
               rows={4}
-              className="w-full min-h-28 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
+              className={sheetTextareaClass}
             />
           </div>
 

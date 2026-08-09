@@ -16,6 +16,7 @@ import {
   nestPush,
   subscribeNest,
 } from "@/lib/sheetNest";
+import { blurSheetField } from "@/lib/focusSheetField";
 import {
   BODY_ACTIVATE_PX,
   COMMIT_PROJECT_SEC,
@@ -86,11 +87,6 @@ function resistDragY(raw: number, frameH: number): number {
   if (raw < 0) return rubber(raw);
   if (raw > frameH) return frameH + rubber(raw - frameH, 160, 0.4);
   return raw;
-}
-
-function blurSheetField() {
-  const ae = document.activeElement;
-  if (ae instanceof HTMLElement) ae.blur();
 }
 
 type GestureState = {

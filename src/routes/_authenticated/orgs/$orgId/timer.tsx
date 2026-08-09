@@ -1,4 +1,4 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -20,9 +20,16 @@ import {
 } from "@/lib/time-utils";
 import { TimeEntrySheet } from "@/components/time-entry-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/timer")({
-  head: () => ({ meta: [{ title: "Timer · Work Core" }] }),
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "timer" },
+    });
+  },
   component: () => null,
 });
 
@@ -84,8 +91,7 @@ export function TimerPane() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Timer</h1>
+      <div className="flex items-center justify-end">
         <button
           onClick={openNew}
           className="tap-target bg-primary text-primary-foreground h-11 px-4"
@@ -118,7 +124,7 @@ export function TimerPane() {
       <select
         value={projectFilter}
         onChange={(e) => setProjectFilter(e.target.value)}
-        className="w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+        className={sheetFieldClass}
       >
         <option value="">Alle prosjekter</option>
         {(projectsQ.data ?? []).map((p) => (

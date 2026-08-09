@@ -1,20 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchRates, type Organization, type Rate } from "@/lib/work-core";
+import { fetchRates, type Rate } from "@/lib/work-core";
 import { ContentSheet } from "@/components/content-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/rates")({
-  head: () => ({ meta: [{ title: "Satser · Work Core" }] }),
-  component: RatesPage,
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "settings", section: "rates" },
+    });
+  },
+  component: () => null,
 });
 
-function RatesPage() {
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+
+export function RatesPane() {
+  const { org, orgId } = orgRoute.useRouteContext();
   const qc = useQueryClient();
   const ratesQ = useQuery({
     queryKey: ["rates", orgId, "all"],
@@ -43,10 +52,7 @@ function RatesPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Satser</h1>
-          <p className="text-xs text-muted-foreground">i {org.name}</p>
-        </div>
+        <p className="text-xs text-muted-foreground">i {org.name}</p>
         <button
           onClick={() =>
             tryOpenSheet(() => {
@@ -174,33 +180,33 @@ function RateSheet({
         <div>
           <label className="text-xs text-muted-foreground">Navn</label>
           <input
-            autoFocus
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="f.eks. Rigging"
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            className={sheetFieldClass}
           />
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="col-span-2">
+          <div className="col-span-2 min-w-0">
             <label className="text-xs text-muted-foreground">Beløp per time</label>
             <input
               required
               type="number"
+              inputMode="decimal"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="f.eks. 210"
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              className={sheetFieldClass}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs text-muted-foreground">Valuta</label>
             <input
               value={currency}
               onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              className={sheetFieldClass}
             />
           </div>
         </div>
@@ -210,7 +216,7 @@ function RateSheet({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 rounded-xl bg-input border border-border"
+            className={sheetTextareaClass}
           />
         </div>
         <button

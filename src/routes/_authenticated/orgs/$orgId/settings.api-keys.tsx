@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -15,9 +15,17 @@ import {
 } from "@/lib/api-keys.functions";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/api-keys")({
-  head: () => ({ meta: [{ title: "API keys · Work Core" }] }),
-  component: ApiKeysPage,
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "settings", section: "api-keys" },
+    });
+  },
+  component: () => null,
 });
+
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
 const ALL_SCOPES = [
   "time:read",
@@ -29,8 +37,8 @@ const ALL_SCOPES = [
 
 type Scope = (typeof ALL_SCOPES)[number];
 
-function ApiKeysPage() {
-  const { orgId } = Route.useRouteContext() as { orgId: string };
+export function ApiKeysPane() {
+  const { orgId } = orgRoute.useRouteContext() as { orgId: string };
   const qc = useQueryClient();
 
   const listFn = useServerFn(listApiClients);

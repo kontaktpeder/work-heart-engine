@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, getRouteApi } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -26,9 +26,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/organization")({
-  head: () => ({ meta: [{ title: "Organisasjon · Work Core" }] }),
-  component: OrganizationSettingsPage,
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "settings", section: "organization" },
+    });
+  },
+  component: () => null,
 });
+
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
 async function copyText(value: string, label: string) {
   try {
@@ -39,8 +47,8 @@ async function copyText(value: string, label: string) {
   }
 }
 
-function OrganizationSettingsPage() {
-  const { org, orgId } = Route.useRouteContext() as {
+export function OrganizationSettingsPane() {
+  const { org, orgId } = orgRoute.useRouteContext() as {
     org: Organization;
     orgId: string;
   };

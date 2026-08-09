@@ -1,20 +1,29 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchProjects, type Organization, type Project } from "@/lib/work-core";
+import { fetchProjects, type Project } from "@/lib/work-core";
 import { ContentSheet } from "@/components/content-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/projects")({
-  head: () => ({ meta: [{ title: "Prosjekter · Work Core" }] }),
-  component: ProjectsPage,
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "settings", section: "projects" },
+    });
+  },
+  component: () => null,
 });
 
-function ProjectsPage() {
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+
+export function ProjectsPane() {
+  const { org, orgId } = orgRoute.useRouteContext();
   const qc = useQueryClient();
   const projectsQ = useQuery({
     queryKey: ["projects", orgId, "all"],
@@ -44,10 +53,7 @@ function ProjectsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Prosjekter</h1>
-          <p className="text-xs text-muted-foreground">i {org.name}</p>
-        </div>
+        <p className="text-xs text-muted-foreground">i {org.name}</p>
         <button
           onClick={() =>
             tryOpenSheet(() => {
@@ -176,11 +182,10 @@ function ProjectSheet({
         <div>
           <label className="text-xs text-muted-foreground">Navn</label>
           <input
-            autoFocus
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            className={sheetFieldClass}
           />
         </div>
         <div>
@@ -188,7 +193,7 @@ function ProjectSheet({
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            className={sheetFieldClass}
           />
         </div>
         <div>
@@ -197,7 +202,7 @@ function ProjectSheet({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 rounded-xl bg-input border border-border"
+            className={sheetTextareaClass}
           />
         </div>
         <button

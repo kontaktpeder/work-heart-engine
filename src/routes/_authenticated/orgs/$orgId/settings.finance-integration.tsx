@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, getRouteApi } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -15,12 +15,20 @@ import {
 export const Route = createFileRoute(
   "/_authenticated/orgs/$orgId/settings/finance-integration",
 )({
-  head: () => ({ meta: [{ title: "Finance integration · Work Core" }] }),
-  component: FinanceIntegrationPage,
+  beforeLoad: ({ params, search }) => {
+    throw redirect({
+      to: "/orgs/$orgId/start",
+      params: { orgId: params.orgId },
+      search: { ...(search as object), sheet: "settings", section: "finance" },
+    });
+  },
+  component: () => null,
 });
 
-function FinanceIntegrationPage() {
-  const { orgId } = Route.useRouteContext() as { orgId: string };
+const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+
+export function FinanceIntegrationPane() {
+  const { orgId } = orgRoute.useRouteContext() as { orgId: string };
   const qc = useQueryClient();
 
   const getFn = useServerFn(getFinanceIntegration);

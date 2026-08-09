@@ -13,8 +13,10 @@ import {
 import { ProjectPicker } from "./project-picker";
 import { RatePicker } from "./rate-picker";
 import { ContentSheet } from "./content-sheet";
+import { SheetStickyFooter } from "./sheet-sticky-footer";
 import { entryFormDefaults, stripNexusCommentTag } from "@/lib/time-utils";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
 type Props = {
   open: boolean;
@@ -126,129 +128,133 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
       <ContentSheet
         onClose={onClose}
         title={entry ? "Rediger timeføring" : "Ny timeføring"}
-        zClassName="z-40"
+        zClassName="z-[70]"
       >
-        <form
-          onSubmit={save}
-          data-sheet-scroll
-          className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-        >
-          <div>
-            <label className="text-xs text-muted-foreground">Dato</label>
-            <input
-              type="date"
-              required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs text-muted-foreground">Start</label>
+        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+          <div
+            data-sheet-scroll
+            className="scroll-touch min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5"
+          >
+            <div className="min-w-0">
+              <label className="text-xs text-muted-foreground">Dato</label>
               <input
-                type="time"
+                type="date"
                 required
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={`${sheetFieldClass} mt-1`}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="min-w-0">
+                <label className="text-xs text-muted-foreground">Start</label>
+                <input
+                  type="time"
+                  required
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                  className={`${sheetFieldClass} mt-1`}
+                />
+              </div>
+              <div className="min-w-0">
+                <label className="text-xs text-muted-foreground">Slutt</label>
+                <input
+                  type="time"
+                  required
+                  value={end}
+                  onChange={(e) => setEnd(e.target.value)}
+                  className={`${sheetFieldClass} mt-1`}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs text-muted-foreground">Slutt</label>
+              <label className="text-xs text-muted-foreground">Pause (min)</label>
               <input
-                type="time"
-                required
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={breakMin}
+                onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
+                className={`${sheetFieldClass} mt-1`}
               />
             </div>
-          </div>
 
-          <div>
-            <label className="text-xs text-muted-foreground">Pause (min)</label>
-            <input
-              type="number"
-              min={0}
-              value={breakMin}
-              onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">Prosjekt</label>
-            <button
-              type="button"
-              onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
-            >
-              <span className={project || projectId ? "" : "text-muted-foreground"}>
-                {project?.name ??
-                  (projectId
-                    ? projectsQ.isLoading
-                      ? "Laster prosjekt…"
-                      : "Ukjent prosjekt — velg på nytt"
-                    : "Velg prosjekt…")}
-              </span>
-            </button>
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">Sats</label>
-            <button
-              type="button"
-              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
-            >
-              <span className={rate || rateId ? "" : "text-muted-foreground"}>
-                {rate?.name ??
-                  (rateId
-                    ? ratesQ.isLoading
-                      ? "Laster sats…"
-                      : "Ukjent sats — velg på nytt"
-                    : "Velg sats (valgfri)…")}
-              </span>
-              {rate && (
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {entry?.hourly_rate_snapshot ?? rate.amount} kr/t
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">Notat</label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Hva gjorde du?"
-              rows={5}
-              className="w-full min-h-32 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            {entry && (
+            <div>
+              <label className="text-xs text-muted-foreground">Prosjekt</label>
               <button
                 type="button"
-                onClick={remove}
-                className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
-                aria-label="Slett"
+                onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
+                className={`${sheetFieldClass} mt-1 text-left flex items-center justify-between`}
               >
-                <Trash2 className="w-4 h-4" />
+                <span className={project || projectId ? "" : "text-muted-foreground"}>
+                  {project?.name ??
+                    (projectId
+                      ? projectsQ.isLoading
+                        ? "Laster prosjekt…"
+                        : "Ukjent prosjekt — velg på nytt"
+                      : "Velg prosjekt…")}
+                </span>
               </button>
-            )}
-            <button
-              type="submit"
-              disabled={busy}
-              className="flex-1 tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
-            >
-              {entry ? "Lagre endringer" : "Lagre"}
-            </button>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground">Sats</label>
+              <button
+                type="button"
+                onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
+                className={`${sheetFieldClass} mt-1 text-left flex items-center justify-between`}
+              >
+                <span className={rate || rateId ? "" : "text-muted-foreground"}>
+                  {rate?.name ??
+                    (rateId
+                      ? ratesQ.isLoading
+                        ? "Laster sats…"
+                        : "Ukjent sats — velg på nytt"
+                      : "Velg sats (valgfri)…")}
+                </span>
+                {rate && (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {entry?.hourly_rate_snapshot ?? rate.amount} kr/t
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground">Notat</label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Hva gjorde du?"
+                rows={5}
+                className={`${sheetTextareaClass} mt-1 min-h-32`}
+              />
+            </div>
           </div>
+
+          <SheetStickyFooter>
+            <div className="flex gap-2">
+              {entry && (
+                <button
+                  type="button"
+                  onClick={remove}
+                  className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
+                  aria-label="Slett"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex-1 tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
+              >
+                {entry ? "Lagre endringer" : "Lagre"}
+              </button>
+            </div>
+          </SheetStickyFooter>
         </form>
       </ContentSheet>
 

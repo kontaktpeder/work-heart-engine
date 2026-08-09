@@ -77,11 +77,10 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
-                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Søk i satser…"
-                className="w-full h-11 pl-9 pr-3 rounded-xl bg-input border border-border"
+                className="w-full h-11 pl-9 pr-3 rounded-xl bg-input border border-border text-base"
               />
             </div>
 
@@ -155,11 +154,10 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
             <div>
               <label className="text-xs text-muted-foreground">Navn</label>
               <input
-                autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="f.eks. Rigging"
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+                className="w-full h-11 px-3 rounded-xl bg-input border border-border text-base"
                 required
               />
             </div>
