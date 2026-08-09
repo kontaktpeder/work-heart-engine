@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchProjects,
@@ -12,7 +12,9 @@ import {
 } from "@/lib/work-core";
 import { ProjectPicker } from "./project-picker";
 import { RatePicker } from "./rate-picker";
+import { ContentSheet } from "./content-sheet";
 import { entryFormDefaults, stripNexusCommentTag } from "@/lib/time-utils";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 type Props = {
   open: boolean;
@@ -51,7 +53,6 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
     setRate(null);
   }, [open, entry?.id, orgId]);
 
-  // Use entry's own org for edit (read-only), else the passed orgId
   const activeOrgId = entry?.organization_id ?? orgId;
 
   const projectsQ = useQuery({
@@ -121,169 +122,160 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-40 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center"
-      onClick={onClose}
-    >
-      <form
-        onSubmit={save}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto"
+    <>
+      <ContentSheet
+        onClose={onClose}
+        title={entry ? "Rediger timeføring" : "Ny timeføring"}
+        zClassName="z-40"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">{entry ? "Rediger timeføring" : "Ny timeføring"}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 -mr-2 text-muted-foreground"
-            aria-label="Lukk"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">Dato</label>
-          <input
-            type="date"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
+        <form
+          onSubmit={save}
+          data-sheet-scroll
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+        >
           <div>
-            <label className="text-xs text-muted-foreground">Start</label>
+            <label className="text-xs text-muted-foreground">Dato</label>
             <input
-              type="time"
+              type="date"
               required
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground">Start</label>
+              <input
+                type="time"
+                required
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Slutt</label>
+              <input
+                type="time"
+                required
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-xs text-muted-foreground">Slutt</label>
+            <label className="text-xs text-muted-foreground">Pause (min)</label>
             <input
-              type="time"
-              required
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
+              type="number"
+              min={0}
+              value={breakMin}
+              onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             />
           </div>
-        </div>
 
-        <div>
-          <label className="text-xs text-muted-foreground">Pause (min)</label>
-          <input
-            type="number"
-            min={0}
-            value={breakMin}
-            onChange={(e) => setBreakMin(Math.max(0, parseInt(e.target.value) || 0))}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-          />
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">Prosjekt</label>
-          <button
-            type="button"
-            onClick={() => setProjectPickerOpen(true)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
-          >
-            <span className={project || projectId ? "" : "text-muted-foreground"}>
-              {project?.name ??
-                (projectId
-                  ? projectsQ.isLoading
-                    ? "Laster prosjekt…"
-                    : "Ukjent prosjekt — velg på nytt"
-                  : "Velg prosjekt…")}
-            </span>
-          </button>
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">Sats</label>
-          <button
-            type="button"
-            onClick={() => setRatePickerOpen(true)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
-          >
-            <span className={rate || rateId ? "" : "text-muted-foreground"}>
-              {rate?.name ??
-                (rateId
-                  ? ratesQ.isLoading
-                    ? "Laster sats…"
-                    : "Ukjent sats — velg på nytt"
-                  : "Velg sats (valgfri)…")}
-            </span>
-            {rate && (
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {entry?.hourly_rate_snapshot ?? rate.amount} kr/t
-              </span>
-            )}
-          </button>
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">Kommentar</label>
-          <input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="w-full h-11 px-3 rounded-xl bg-input border border-border"
-          />
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          {entry && (
+          <div>
+            <label className="text-xs text-muted-foreground">Prosjekt</label>
             <button
               type="button"
-              onClick={remove}
-              className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
-              aria-label="Slett"
+              onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
             >
-              <Trash2 className="w-4 h-4" />
+              <span className={project || projectId ? "" : "text-muted-foreground"}>
+                {project?.name ??
+                  (projectId
+                    ? projectsQ.isLoading
+                      ? "Laster prosjekt…"
+                      : "Ukjent prosjekt — velg på nytt"
+                    : "Velg prosjekt…")}
+              </span>
             </button>
-          )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="flex-1 tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
-          >
-            {entry ? "Lagre endringer" : "Lagre"}
-          </button>
-        </div>
+          </div>
 
-        <ProjectPicker
-          open={projectPickerOpen}
-          onClose={() => setProjectPickerOpen(false)}
-          orgId={activeOrgId}
-          value={projectId}
-          onChange={(id, p) => {
-            setProjectId(id);
-            setProject(p);
-          }}
-        />
-        <RatePicker
-          open={ratePickerOpen}
-          onClose={() => setRatePickerOpen(false)}
-          orgId={activeOrgId}
-          value={rateId}
-          allowClear
-          onChange={(id, r) => {
-            if (!id) {
-              setRateId(null);
-              setRate(null);
-            } else {
-              setRateId(id);
-              setRate(r);
-            }
-          }}
-        />
-      </form>
-    </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Sats</label>
+            <button
+              type="button"
+              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
+            >
+              <span className={rate || rateId ? "" : "text-muted-foreground"}>
+                {rate?.name ??
+                  (rateId
+                    ? ratesQ.isLoading
+                      ? "Laster sats…"
+                      : "Ukjent sats — velg på nytt"
+                    : "Velg sats (valgfri)…")}
+              </span>
+              {rate && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {entry?.hourly_rate_snapshot ?? rate.amount} kr/t
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">Kommentar</label>
+            <input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            {entry && (
+              <button
+                type="button"
+                onClick={remove}
+                className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
+                aria-label="Slett"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="flex-1 tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
+            >
+              {entry ? "Lagre endringer" : "Lagre"}
+            </button>
+          </div>
+        </form>
+      </ContentSheet>
+
+      <ProjectPicker
+        open={projectPickerOpen}
+        onClose={() => setProjectPickerOpen(false)}
+        orgId={activeOrgId}
+        value={projectId}
+        onChange={(id, p) => {
+          setProjectId(id);
+          setProject(p);
+        }}
+      />
+      <RatePicker
+        open={ratePickerOpen}
+        onClose={() => setRatePickerOpen(false)}
+        orgId={activeOrgId}
+        value={rateId}
+        allowClear
+        onChange={(id, r) => {
+          if (!id) {
+            setRateId(null);
+            setRate(null);
+          } else {
+            setRateId(id);
+            setRate(r);
+          }
+        }}
+      />
+    </>
   );
 }

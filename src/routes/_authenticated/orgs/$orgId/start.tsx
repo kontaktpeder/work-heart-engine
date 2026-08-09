@@ -21,6 +21,7 @@ import { ProjectPicker } from "@/components/project-picker";
 import { RatePicker } from "@/components/rate-picker";
 import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -234,7 +235,7 @@ function StartPage() {
             <label className="text-xs text-muted-foreground">Prosjekt</label>
             <button
               type="button"
-              onClick={() => setProjectPickerOpen(true)}
+              onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left"
             >
               {project?.name ?? "Velg prosjekt…"}
@@ -243,7 +244,7 @@ function StartPage() {
             <label className="text-xs text-muted-foreground mt-2 block">Sats</label>
             <button
               type="button"
-              onClick={() => setRatePickerOpen(true)}
+              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
             >
               <span className={rate ? "" : "text-muted-foreground"}>
@@ -289,7 +290,7 @@ function StartPage() {
             <label className="text-xs text-muted-foreground">Prosjekt</label>
             <button
               type="button"
-              onClick={() => setProjectPickerOpen(true)}
+              onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
             >
               <span className={project ? "" : "text-muted-foreground"}>
@@ -300,7 +301,7 @@ function StartPage() {
             <label className="text-xs text-muted-foreground mt-2 block">Sats (valgfri)</label>
             <button
               type="button"
-              onClick={() => setRatePickerOpen(true)}
+              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
               className="w-full h-11 px-3 rounded-xl bg-input border border-border text-left flex items-center justify-between"
             >
               <span className={rate ? "" : "text-muted-foreground"}>

@@ -1,12 +1,13 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { Home, List, BarChart3, Settings, ArrowLeftRight, LogOut, Menu } from "lucide-react";
+import { Home, List, BarChart3, Settings, ArrowLeftRight, LogOut } from "lucide-react";
 import { fetchOrganizations, type Organization } from "@/lib/work-core";
 import { MissionReturnLink } from "@/components/mission-return-link";
 import { ContentSheet } from "@/components/content-sheet";
 import { authSupabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 const OrgSearch = z.object({
   return: z.string().optional(),
@@ -45,62 +46,74 @@ function OrgLayout() {
   }
 
   return (
-    <div className="mx-auto min-h-[100dvh] max-w-2xl px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))]">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <button type="button" onClick={() => setMenuOpen(true)} className="min-w-0 text-left">
+    <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col px-5 pb-8 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => tryOpenSheet(() => setMenuOpen(true))}
+          className="min-w-0 text-left"
+        >
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Arbeidsrom</p>
           <h2 className="truncate text-lg font-semibold">{org.name}</h2>
         </button>
         <button
           type="button"
-          onClick={() => setMenuOpen(true)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
-          aria-label="Åpne arbeidsrommeny"
+          onClick={() => tryOpenSheet(() => setMenuOpen(true))}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm"
+          aria-label="Åpne meny"
         >
-          <Menu className="h-5 w-5" />
+          {org.name.charAt(0).toUpperCase()}
         </button>
-      </div>
+      </header>
+
       {returnUrl ? (
-        <div className="-mt-3 mb-4">
+        <div className="mb-4">
           <MissionReturnLink returnUrl={returnUrl} />
         </div>
       ) : null}
 
-      <Outlet />
+      <div className="min-h-0 flex-1">
+        <Outlet />
+      </div>
 
-      <ContentSheet open={menuOpen} onClose={() => setMenuOpen(false)} title={org.name}>
-        <div className="space-y-2 pb-3">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Link
-                key={t.to}
-                to={t.to}
-                params={{ orgId }}
-                onClick={() => setMenuOpen(false)}
-                className="flex min-h-14 items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium transition hover:bg-accent"
-              >
-                <Icon className="h-5 w-5 text-primary" />
-                {t.label}
-              </Link>
-            );
-          })}
-          <Link
-            to="/orgs"
-            onClick={() => setMenuOpen(false)}
-            className="flex min-h-14 items-center gap-3 rounded-2xl border border-border px-4 font-medium"
+      {menuOpen ? (
+        <ContentSheet onClose={() => setMenuOpen(false)} title={org.name} detents={["half", "full"]}>
+          <div
+            data-sheet-scroll
+            className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
-            <ArrowLeftRight className="h-5 w-5" /> Bytt arbeidsrom
-          </Link>
-          <button
-            type="button"
-            onClick={signOut}
-            className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left font-medium text-destructive"
-          >
-            <LogOut className="h-5 w-5" /> Logg ut
-          </button>
-        </div>
-      </ContentSheet>
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              return (
+                <Link
+                  key={t.to}
+                  to={t.to}
+                  params={{ orgId }}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex min-h-14 items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium transition hover:bg-accent"
+                >
+                  <Icon className="h-5 w-5 text-primary" />
+                  {t.label}
+                </Link>
+              );
+            })}
+            <Link
+              to="/orgs"
+              onClick={() => setMenuOpen(false)}
+              className="flex min-h-14 items-center gap-3 rounded-2xl border border-border px-4 font-medium"
+            >
+              <ArrowLeftRight className="h-5 w-5" /> Bytt arbeidsrom
+            </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left font-medium text-destructive"
+            >
+              <LogOut className="h-5 w-5" /> Logg ut
+            </button>
+          </div>
+        </ContentSheet>
+      ) : null}
     </div>
   );
 }

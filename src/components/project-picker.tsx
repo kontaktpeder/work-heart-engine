@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Plus, X, Star } from "lucide-react";
+import { Search, Plus, Star } from "lucide-react";
 import { createProject, fetchFrequentProjects, fetchProjects, type Project } from "@/lib/work-core";
+import { ContentSheet } from "./content-sheet";
 
 type Props = {
   open: boolean;
@@ -64,24 +65,19 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center"
-      onClick={onClose}
+    <ContentSheet
+      onClose={onClose}
+      title="Velg prosjekt"
+      zClassName="z-[60]"
+      detents={["half", "full"]}
     >
       <div
-        className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-4 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        data-sheet-scroll
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold">Velg prosjekt</h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-muted-foreground" aria-label="Lukk">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
         {!creating && (
           <>
-            <div className="relative mb-3">
+            <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 autoFocus
@@ -93,7 +89,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
             </div>
 
             {!query && (frequentQ.data?.length ?? 0) > 0 && (
-              <div className="mb-3">
+              <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
                   <Star className="w-3 h-3" /> Ofte brukt
                 </p>
@@ -113,7 +109,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
               </div>
             )}
 
-            <div className="mb-3">
+            <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
                 Alle prosjekter
               </p>
@@ -177,7 +173,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
           </form>
         )}
       </div>
-    </div>
+    </ContentSheet>
   );
 }
 

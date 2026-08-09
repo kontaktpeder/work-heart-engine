@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, X } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchRates, type Organization, type Rate } from "@/lib/work-core";
+import { ContentSheet } from "@/components/content-sheet";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/rates")({
   head: () => ({ meta: [{ title: "Satser · Work Core" }] }),
@@ -46,10 +48,12 @@ function RatesPage() {
           <p className="text-xs text-muted-foreground">i {org.name}</p>
         </div>
         <button
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
+          onClick={() =>
+            tryOpenSheet(() => {
+              setEditing(null);
+              setOpen(true);
+            })
+          }
           className="tap-target bg-primary text-primary-foreground h-11 px-4"
         >
           <Plus className="w-5 h-5 mr-1" />
@@ -85,10 +89,12 @@ function RatesPage() {
                 {r.is_active ? "Arkiver" : "Aktiver"}
               </button>
               <button
-                onClick={() => {
-                  setEditing(r);
-                  setOpen(true);
-                }}
+                onClick={() =>
+                  tryOpenSheet(() => {
+                    setEditing(r);
+                    setOpen(true);
+                  })
+                }
                 className="p-2 text-muted-foreground hover:text-foreground"
                 aria-label="Rediger"
               >
@@ -159,26 +165,12 @@ function RateSheet({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center"
-      onClick={onClose}
-    >
+    <ContentSheet onClose={onClose} title={rate ? "Rediger sats" : "Ny sats"}>
       <form
         onSubmit={save}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-4 space-y-3"
+        data-sheet-scroll
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">{rate ? "Rediger sats" : "Ny sats"}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 -mr-2 text-muted-foreground"
-            aria-label="Lukk"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
         <div>
           <label className="text-xs text-muted-foreground">Navn</label>
           <input
@@ -229,6 +221,6 @@ function RateSheet({
           {rate ? "Lagre" : "Opprett"}
         </button>
       </form>
-    </div>
+    </ContentSheet>
   );
 }

@@ -20,6 +20,7 @@ import {
   previousMonth,
 } from "@/lib/time-utils";
 import { TimeEntrySheet } from "@/components/time-entry-sheet";
+import { tryOpenSheet } from "@/lib/sheetGate";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/timer")({
   head: () => ({ meta: [{ title: "Timer · Work Core" }] }),
@@ -68,12 +69,16 @@ function TimerPage() {
   const anyAmount = entries.some((e) => e.amount != null);
 
   function openNew() {
-    setEditing(null);
-    setSheetOpen(true);
+    tryOpenSheet(() => {
+      setEditing(null);
+      setSheetOpen(true);
+    });
   }
   function openEdit(e: TimeEntry) {
-    setEditing(e);
-    setSheetOpen(true);
+    tryOpenSheet(() => {
+      setEditing(e);
+      setSheetOpen(true);
+    });
   }
 
   return (
