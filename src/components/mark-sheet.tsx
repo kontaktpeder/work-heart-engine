@@ -103,8 +103,9 @@ export function MarkSheet({
     <ContentSheet
       onClose={onClose}
       title={mark ? "Rediger merke" : "Nytt merke"}
-      zClassName="z-[80]"
-      detents={["half", "full"]}
+      zClassName="z-[95]"
+      detents={["full"]}
+      initialDetent="full"
     >
       <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
         <div
@@ -140,8 +141,15 @@ export function MarkSheet({
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              onFocus={(e) => {
+                const el = e.currentTarget;
+                window.setTimeout(() => {
+                  el.scrollIntoView({ block: "center", behavior: "smooth" });
+                }, 80);
+              }}
               placeholder="F.eks. Ankomst Hellbillies"
               rows={3}
+              enterKeyHint="done"
               className={`${sheetTextareaClass} mt-1`}
             />
           </div>

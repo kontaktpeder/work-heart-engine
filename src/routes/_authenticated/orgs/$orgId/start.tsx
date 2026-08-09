@@ -255,7 +255,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       ) : null}
 
       {activeInThisOrg ? (
-        <div className="surface-card flex min-h-0 flex-1 flex-col gap-3 overflow-hidden border-primary/40 !p-4">
+        <div className="work-card-soft-land surface-card flex min-h-0 flex-1 flex-col gap-3 overflow-hidden border-primary/40 !p-4">
           <div className="shrink-0 text-center">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Du jobber</p>
             <p className="mt-1 text-4xl font-bold tabular-nums leading-none">

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Plus, Star } from "lucide-react";
-import { createProject, fetchFrequentProjects, fetchProjects, type Project } from "@/lib/work-core";
+import { Search, Plus } from "lucide-react";
+import { createProject, fetchProjects, type Project } from "@/lib/work-core";
 import { ContentSheet } from "./content-sheet";
 
 type Props = {
@@ -23,11 +23,6 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
   const projectsQ = useQuery({
     queryKey: ["projects", orgId],
     queryFn: () => fetchProjects(orgId),
-    enabled: !!orgId && open,
-  });
-  const frequentQ = useQuery({
-    queryKey: ["projects-frequent", orgId],
-    queryFn: () => fetchFrequentProjects(orgId),
     enabled: !!orgId && open,
   });
 
@@ -68,7 +63,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
     <ContentSheet
       onClose={onClose}
       title="Velg prosjekt"
-      zClassName="z-[60]"
+      zClassName="z-[90]"
       detents={["half", "full"]}
     >
       <div
@@ -87,47 +82,21 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
               />
             </div>
 
-            {!query && (frequentQ.data?.length ?? 0) > 0 && (
-              <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
-                  <Star className="w-3 h-3" /> Ofte brukt
-                </p>
-                <div className="space-y-1">
-                  {frequentQ.data!.map((p) => (
-                    <ProjectRow
-                      key={p.id}
-                      project={p}
-                      active={p.id === value}
-                      onPick={() => {
-                        onChange(p.id, p);
-                        onClose();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                Alle prosjekter
-              </p>
-              <div className="space-y-1">
-                {filtered.map((p) => (
-                  <ProjectRow
-                    key={p.id}
-                    project={p}
-                    active={p.id === value}
-                    onPick={() => {
-                      onChange(p.id, p);
-                      onClose();
-                    }}
-                  />
-                ))}
-                {filtered.length === 0 && (
-                  <p className="text-sm text-muted-foreground py-4 text-center">Ingen treff.</p>
-                )}
-              </div>
+            <div className="space-y-1">
+              {filtered.map((p) => (
+                <ProjectRow
+                  key={p.id}
+                  project={p}
+                  active={p.id === value}
+                  onPick={() => {
+                    onChange(p.id, p);
+                    onClose();
+                  }}
+                />
+              ))}
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4 text-center">Ingen treff.</p>
+              )}
             </div>
 
             <button

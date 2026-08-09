@@ -123,3 +123,19 @@ body {
   transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
 }
 .tap-target:active { transform: scale(0.98); }
+
+@keyframes work-card-soft-land {
+  from {
+    opacity: 0.4;
+    transform: translate3d(0, 36px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.work-card-soft-land {
+  animation: work-card-soft-land 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  will-change: transform, opacity;
+}

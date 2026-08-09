@@ -12,14 +12,13 @@ import {
   formatNok,
   type TimeEntry,
 } from "@/lib/work-core";
+import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
 import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  previousWeek,
-  previousMonth,
-} from "@/lib/time-utils";
+  formatPeriodLabel,
+  getPayCycleAnchorDay,
+  payCycleContaining,
+  previousPayCycle,
+} from "@/lib/pay-cycle";
 import { formatMarkTime } from "@/lib/marks";
 import { TimeEntrySheet } from "@/components/time-entry-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
@@ -38,25 +37,37 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/timer")({
 
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
-type Period = "week" | "lastweek" | "month" | "lastmonth" | "all";
+type Period = "current" | "previous" | "month" | "all";
 
 export function TimerPane() {
   const { org, orgId } = orgRoute.useRouteContext();
-  const [period, setPeriod] = useState<Period>("week");
+  const anchorDay = getPayCycleAnchorDay(orgId);
+  const [period, setPeriod] = useState<Period>("current");
   const [projectFilter, setProjectFilter] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TimeEntry | null>(null);
 
   const range = useMemo<{ from?: Date; to?: Date }>(() => {
-    if (period === "week") return { from: startOfWeek(), to: endOfWeek() };
-    if (period === "lastweek") return previousWeek();
+    if (period === "current") return payCycleContaining(new Date(), anchorDay);
+    if (period === "previous") return previousPayCycle(new Date(), anchorDay);
     if (period === "month") return { from: startOfMonth(), to: endOfMonth() };
-    if (period === "lastmonth") return previousMonth();
     return {};
-  }, [period]);
+  }, [period, anchorDay]);
+
+  const periodHint = useMemo(() => {
+    if (!range.from || !range.to) return null;
+    return formatPeriodLabel(range.from, range.to);
+  }, [range.from, range.to]);
 
   const entriesQ = useQuery({
-    queryKey: ["entries", orgId, period, projectFilter],
+    queryKey: [
+      "entries",
+      orgId,
+      period,
+      projectFilter,
+      range.from ? toDateInput(range.from) : "all",
+      range.to ? toDateInput(range.to) : "all",
+    ],
     queryFn: () =>
       fetchTimeEntries({
         from: range.from,
@@ -115,25 +126,29 @@ export function TimerPane() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-muted text-xs">
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted text-xs sm:grid-cols-4">
         {(
           [
-            ["week", "Denne uka"],
-            ["lastweek", "Forrige uke"],
-            ["month", "Måned"],
-            ["lastmonth", "Forr. måned"],
+            ["current", "Denne syklus"],
+            ["previous", "Forrige syklus"],
+            ["month", "Denne måned"],
             ["all", "Alle"],
           ] as const
         ).map(([k, label]) => (
           <button
             key={k}
             onClick={() => setPeriod(k)}
-            className={`py-2 font-medium rounded-lg ${period === k ? "bg-card" : "text-muted-foreground"}`}
+            className={`rounded-lg py-2 font-medium ${
+              period === k ? "bg-card" : "text-muted-foreground"
+            }`}
           >
             {label}
           </button>
         ))}
       </div>
+      {periodHint ? (
+        <p className="-mt-2 text-center text-[11px] text-muted-foreground">{periodHint}</p>
+      ) : null}
 
       <select
         value={projectFilter}
@@ -188,7 +203,7 @@ export function TimerPane() {
                   {start?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
                   {" – "}
                   {end?.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}
-                {e.break_minutes ? (
+                  {e.break_minutes ? (
                     <span className="text-muted-foreground text-sm">
                       {" "}
                       · {e.break_minutes} min pause

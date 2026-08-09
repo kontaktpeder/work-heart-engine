@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Plus, Star } from "lucide-react";
-import { createRate, fetchFrequentRates, fetchRates, type Rate } from "@/lib/work-core";
+import { Search, Plus } from "lucide-react";
+import { createRate, fetchRates, type Rate } from "@/lib/work-core";
 import { ContentSheet } from "./content-sheet";
 
 type Props = {
@@ -25,11 +25,6 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
   const ratesQ = useQuery({
     queryKey: ["rates", orgId],
     queryFn: () => fetchRates(orgId),
-    enabled: !!orgId && open,
-  });
-  const frequentQ = useQuery({
-    queryKey: ["rates-frequent", orgId],
-    queryFn: () => fetchFrequentRates(orgId),
     enabled: !!orgId && open,
   });
 
@@ -67,7 +62,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
   if (!open) return null;
 
   return (
-    <ContentSheet onClose={onClose} title="Velg sats" zClassName="z-[60]" detents={["half", "full"]}>
+    <ContentSheet onClose={onClose} title="Velg sats" zClassName="z-[90]" detents={["half", "full"]}>
       <div
         data-sheet-scroll
         className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
@@ -84,47 +79,21 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
               />
             </div>
 
-            {!query && (frequentQ.data?.length ?? 0) > 0 && (
-              <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
-                  <Star className="w-3 h-3" /> Ofte brukt
-                </p>
-                <div className="space-y-1">
-                  {frequentQ.data!.map((r) => (
-                    <RateRow
-                      key={r.id}
-                      rate={r}
-                      active={r.id === value}
-                      onPick={() => {
-                        onChange(r.id, r);
-                        onClose();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                Alle satser
-              </p>
-              <div className="space-y-1">
-                {filtered.map((r) => (
-                  <RateRow
-                    key={r.id}
-                    rate={r}
-                    active={r.id === value}
-                    onPick={() => {
-                      onChange(r.id, r);
-                      onClose();
-                    }}
-                  />
-                ))}
-                {filtered.length === 0 && (
-                  <p className="text-sm text-muted-foreground py-4 text-center">Ingen treff.</p>
-                )}
-              </div>
+            <div className="space-y-1">
+              {filtered.map((r) => (
+                <RateRow
+                  key={r.id}
+                  rate={r}
+                  active={r.id === value}
+                  onPick={() => {
+                    onChange(r.id, r);
+                    onClose();
+                  }}
+                />
+              ))}
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4 text-center">Ingen treff.</p>
+              )}
             </div>
 
             <button

@@ -307,6 +307,7 @@ export function ContentSheet({
   useEffect(() => {
     if (flyingOut || !enteredRef.current) return;
     if (!keyboardOpen) return;
+    if (detentRef.current === "full") return;
     snapTo("full", { spring: SETTLE_SPRING, keepCompositor: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyboardOpen, flyingOut]);
