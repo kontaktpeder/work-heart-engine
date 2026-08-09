@@ -61,7 +61,38 @@
   --ring: oklch(0.78 0.16 145 / 60%);
 }
 
-html, body { background-color: var(--color-background); color: var(--color-foreground); }
+/* Document lock — only inner containers scroll (keeps Safari chrome from bouncing). */
+html {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+#root,
+#app {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-background);
+}
+
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 
 @layer base {
   * { border-color: var(--color-border); }

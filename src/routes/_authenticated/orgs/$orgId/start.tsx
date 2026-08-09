@@ -266,12 +266,13 @@ function StartPage() {
               className="w-full h-11 px-3 rounded-xl bg-input border border-border"
             />
 
-            <label className="text-xs text-muted-foreground mt-2 block">Kommentar</label>
-            <input
+            <label className="text-xs text-muted-foreground mt-2 block">Notat</label>
+            <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Hva gjorde du?"
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              rows={4}
+              className="w-full min-h-28 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
             />
           </div>
 
@@ -314,11 +315,13 @@ function StartPage() {
               )}
             </button>
 
-            <label className="text-xs text-muted-foreground mt-2 block">Kommentar (valgfri)</label>
-            <input
+            <label className="text-xs text-muted-foreground mt-2 block">Notat (valgfri)</label>
+            <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              placeholder="Hva skal du gjøre?"
+              rows={4}
+              className="w-full min-h-28 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
             />
           </div>
 

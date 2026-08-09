@@ -220,11 +220,13 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">Kommentar</label>
-            <input
+            <label className="text-xs text-muted-foreground">Notat</label>
+            <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+              placeholder="Hva gjorde du?"
+              rows={5}
+              className="w-full min-h-32 resize-y px-3 py-2.5 rounded-xl bg-input border border-border"
             />
           </div>
 
