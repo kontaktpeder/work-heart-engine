@@ -421,6 +421,64 @@ export type Database = {
           },
         ]
       }
+      time_entry_marks: {
+        Row: {
+          created_at: string
+          id: string
+          marked_at: string
+          note: string
+          organization_id: string
+          time_entry_id: string | null
+          updated_at: string
+          user_id: string
+          work_session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marked_at: string
+          note?: string
+          organization_id: string
+          time_entry_id?: string | null
+          updated_at?: string
+          user_id: string
+          work_session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marked_at?: string
+          note?: string
+          organization_id?: string
+          time_entry_id?: string | null
+          updated_at?: string
+          user_id?: string
+          work_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entry_marks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entry_marks_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entry_marks_work_session_id_fkey"
+            columns: ["work_session_id"]
+            isOneToOne: false
+            referencedRelation: "work_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           default_organization_id: string | null

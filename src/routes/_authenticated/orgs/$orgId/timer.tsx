@@ -5,6 +5,8 @@ import { Plus } from "lucide-react";
 import {
   fetchProjects,
   fetchTimeEntries,
+  fetchMarksForEntries,
+  groupMarksByEntryId,
   entryMinutes,
   formatDuration,
   formatNok,
@@ -18,6 +20,7 @@ import {
   previousWeek,
   previousMonth,
 } from "@/lib/time-utils";
+import { formatMarkTime } from "@/lib/marks";
 import { TimeEntrySheet } from "@/components/time-entry-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { sheetFieldClass } from "@/lib/sheetField";
@@ -72,6 +75,17 @@ export function TimerPane() {
   );
 
   const entries = entriesQ.data ?? [];
+  const entryIds = useMemo(() => entries.map((e) => e.id), [entries]);
+  const marksQ = useQuery({
+    queryKey: ["marks", "entries", orgId, period, projectFilter, entryIds.join(",")],
+    queryFn: () => fetchMarksForEntries(entryIds),
+    enabled: entryIds.length > 0,
+  });
+  const marksByEntry = useMemo(
+    () => groupMarksByEntryId(marksQ.data ?? []),
+    [marksQ.data],
+  );
+
   const totalMin = entries.reduce((s, e) => s + entryMinutes(e), 0);
   const totalAmount = entries.reduce((s, e) => s + (e.amount ?? 0), 0);
   const anyAmount = entries.some((e) => e.amount != null);
@@ -195,6 +209,18 @@ export function TimerPane() {
                   )}
                 </div>
                 {e.comment && <p className="mt-1 text-sm text-muted-foreground">{e.comment}</p>}
+                {(marksByEntry.get(e.id)?.length ?? 0) > 0 ? (
+                  <ul className="mt-2 space-y-1 border-t border-border/50 pt-2">
+                    {(marksByEntry.get(e.id) ?? []).map((m) => (
+                      <li key={m.id} className="flex gap-2 text-sm text-muted-foreground">
+                        <span className="shrink-0 font-medium tabular-nums text-foreground/80">
+                          {formatMarkTime(m.marked_at)}
+                        </span>
+                        <span className="min-w-0">{m.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
             </button>
           );

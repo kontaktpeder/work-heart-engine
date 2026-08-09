@@ -8,6 +8,8 @@ import {
   fetchProjects,
   fetchRates,
   fetchTimeEntries,
+  fetchMarksForEntries,
+  groupMarksByEntryId,
   entryMinutes,
   formatDuration,
   formatNok,
@@ -80,6 +82,18 @@ export function ReportsPane() {
       }),
   });
 
+  const entries = entriesQ.data ?? [];
+  const entryIds = useMemo(() => entries.map((e) => e.id), [entries]);
+  const marksQ = useQuery({
+    queryKey: ["marks", "report", orgId, from, to, projectId, entryIds.join(",")],
+    queryFn: () => fetchMarksForEntries(entryIds),
+    enabled: entryIds.length > 0,
+  });
+  const marksByEntry = useMemo(
+    () => groupMarksByEntryId(marksQ.data ?? []),
+    [marksQ.data],
+  );
+
   const qc = useQueryClient();
   const countFn = useServerFn(countExportableEntries);
   const exportFn = useServerFn(exportTimeEntriesToFinance);
@@ -108,7 +122,6 @@ export function ReportsPane() {
     onError: (e: any) => toast.error(e?.message ?? "Export failed"),
   });
 
-  const entries = entriesQ.data ?? [];
   const projById = useMemo(
     () => new Map((projectsQ.data ?? []).map((p) => [p.id, p])),
     [projectsQ.data],
@@ -180,12 +193,12 @@ export function ReportsPane() {
   }
 
   function exportCsv() {
-    const rows = buildRows(entries, projById, rateById);
+    const rows = buildRows(entries, projById, rateById, marksByEntry);
     buildCsv(rows, `${org.name}_${from}_${to}.csv`);
     setPendingExport(null);
   }
   function exportPdf() {
-    const rows = buildRows(entries, projById, rateById);
+    const rows = buildRows(entries, projById, rateById, marksByEntry);
     buildPdf(rows, {
       title: "Timeoppgave",
       periodLabel: `${org.name} · ${from} – ${to}`,

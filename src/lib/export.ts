@@ -1,7 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { TimeEntry, Project, Rate } from "./work-core";
+import type { TimeEntry, Project, Rate, TimeEntryMark } from "./work-core";
 import { entryMinutes, formatNok } from "./work-core";
+import { combineCommentAndMarks } from "./marks";
 
 export type ExportRow = {
   date: string;
@@ -14,6 +15,7 @@ export type ExportRow = {
   rateAmount: number | null;
   comment: string;
   amount: number | null;
+  log: string;
 };
 
 function fmtHours(min: number): string {
@@ -27,6 +29,7 @@ export function buildRows(
   entries: TimeEntry[],
   projectsById: Map<string, Project>,
   ratesById: Map<string, Rate> = new Map(),
+  marksByEntry: Map<string, TimeEntryMark[]> = new Map(),
 ): ExportRow[] {
   return entries.map((e) => {
     const min = entryMinutes(e);
@@ -41,6 +44,7 @@ export function buildRows(
       : snapshot != null
         ? String(snapshot)
         : "";
+    const marks = marksByEntry.get(e.id) ?? [];
     return {
       date: start ? start.toLocaleDateString("nb-NO") : (e.date ?? ""),
       start: start
@@ -54,8 +58,9 @@ export function buildRows(
       project: e.project_id ? (projectsById.get(e.project_id)?.name ?? "—") : "—",
       rate: rateLabel,
       rateAmount: snapshot,
-      comment: e.comment ?? "",
+      comment: combineCommentAndMarks(e.comment, marks),
       amount: e.amount,
+      log: combineCommentAndMarks(e.comment, marks),
     };
   });
 }
@@ -82,7 +87,7 @@ function csvEscape(v: string | number | null | undefined): string {
 
 export function buildCsv(rows: ExportRow[], filename = "timer.csv") {
   const anyRate = rows.some((r) => r.amount != null || r.rateAmount != null);
-  const header = ["Dato", "Fra", "Til", "Pause (min)", "Timer", "Prosjekt", "Sats", "Kommentar"];
+  const header = ["Dato", "Fra", "Til", "Pause (min)", "Timer", "Prosjekt", "Sats", "Logg"];
   if (anyRate) header.push("Timepris", "Beløp");
   const lines = [header.join(";")];
   for (const r of rows) {
@@ -94,7 +99,7 @@ export function buildCsv(rows: ExportRow[], filename = "timer.csv") {
       fmtHours(Math.round(r.hours * 60)),
       r.project,
       r.rate,
-      r.comment,
+      r.log,
     ].map(csvEscape);
     if (anyRate) {
       base.push(csvEscape(r.rateAmount ?? ""), csvEscape(r.amount ?? ""));
@@ -129,7 +134,7 @@ export function buildPdf(
   doc.text(opts.periodLabel, 40, 58);
   doc.setTextColor(0);
 
-  const head = [["Dato", "Fra", "Til", "Pause", "Timer", "Prosjekt", "Sats", "Kommentar"]];
+  const head = [["Dato", "Fra", "Til", "Pause", "Timer", "Prosjekt", "Sats", "Logg"]];
   if (anyRate) head[0].push("Timepris", "Beløp");
 
   const body = rows.map((r) => {
@@ -141,7 +146,7 @@ export function buildPdf(
       fmtHours(Math.round(r.hours * 60)),
       r.project,
       r.rate,
-      r.comment,
+      r.log,
     ];
     if (anyRate)
       base.push(
@@ -161,7 +166,8 @@ export function buildPdf(
     body,
     foot,
     startY: 75,
-    styles: { fontSize: 9, cellPadding: 5 },
+    styles: { fontSize: 9, cellPadding: 5, valign: "top" },
+    columnStyles: { 7: { cellWidth: 180 } },
     headStyles: { fillColor: [30, 30, 30] },
     footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
   });

@@ -3,10 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Play, Square, Sparkles, List, BarChart3 } from "lucide-react";
+import { Play, Square, Sparkles, List, BarChart3, BookmarkPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  attachMarksToEntry,
   fetchActiveSession,
+  fetchMarksForSession,
   fetchProjects,
   fetchRates,
   fetchTimeEntries,
@@ -14,10 +16,13 @@ import {
   entryMinutes,
   type Project,
   type Rate,
+  type TimeEntryMark,
 } from "@/lib/work-core";
 import { startOfDay } from "@/lib/time-utils";
+import { formatMarkTime } from "@/lib/marks";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatePicker } from "@/components/rate-picker";
+import { MarkSheet } from "@/components/mark-sheet";
 import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 import { tryOpenSheet } from "@/lib/sheetGate";
@@ -105,7 +110,15 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
   const [breakMin, setBreakMin] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [markSheetOpen, setMarkSheetOpen] = useState(false);
+  const [editingMark, setEditingMark] = useState<TimeEntryMark | null>(null);
   const hydratedSessionId = useRef<string | null>(null);
+
+  const marksQ = useQuery({
+    queryKey: ["marks", "session", activeSession?.id],
+    queryFn: () => fetchMarksForSession(activeSession!.id),
+    enabled: !!activeInThisOrg && !!activeSession?.id,
+  });
 
   // Restore project/rate from active session once after refresh / navigation
   useEffect(() => {
@@ -155,24 +168,34 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     const end = new Date();
     const pid = projectId ?? activeSession!.project_id;
     const rid = rateId ?? activeSession!.rate_id;
-    const { error: insErr } = await supabase.from("time_entries").insert({
-      user_id: activeSession!.user_id,
-      organization_id: orgId,
-      project_id: pid,
-      rate_id: rid,
-      date: start.toISOString().slice(0, 10),
-      start_time: start.toTimeString().slice(0, 8),
-      end_time: end.toTimeString().slice(0, 8),
-      break_minutes: breakMin,
-      comment: (comment || activeSession!.comment || "")
-        .replace(/\[nexus:[0-9a-f-]{36}\]/gi, "")
-        .replace(/\s{2,}/g, " ")
-        .trim() || null,
-      source: "timer",
-    });
-    if (insErr) {
+    const { data: inserted, error: insErr } = await supabase
+      .from("time_entries")
+      .insert({
+        user_id: activeSession!.user_id,
+        organization_id: orgId,
+        project_id: pid,
+        rate_id: rid,
+        date: start.toISOString().slice(0, 10),
+        start_time: start.toTimeString().slice(0, 8),
+        end_time: end.toTimeString().slice(0, 8),
+        break_minutes: breakMin,
+        comment: (comment || activeSession!.comment || "")
+          .replace(/\[nexus:[0-9a-f-]{36}\]/gi, "")
+          .replace(/\s{2,}/g, " ")
+          .trim() || null,
+        source: "timer",
+      })
+      .select("id")
+      .single();
+    if (insErr || !inserted) {
       setBusy(false);
-      return toast.error(insErr.message);
+      return toast.error(insErr?.message ?? "Kunne ikke lagre");
+    }
+    try {
+      await attachMarksToEntry(activeSession!.id, inserted.id);
+    } catch (e) {
+      setBusy(false);
+      return toast.error(e instanceof Error ? e.message : "Kunne ikke knytte merker");
     }
     const { error: delErr } = await supabase
       .from("work_sessions")
@@ -187,6 +210,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     toast.success("Timeføring lagret");
     qc.invalidateQueries({ queryKey: ["session"] });
     qc.invalidateQueries({ queryKey: ["entries"] });
+    qc.invalidateQueries({ queryKey: ["marks"] });
   }
 
   return (
@@ -283,14 +307,56 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
               className={sheetFieldClass}
             />
 
-            <label className="text-xs text-muted-foreground mt-2 block">Notat</label>
+            <label className="text-xs text-muted-foreground mt-2 block">Kort oppsummering (valgfri)</label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Hva gjorde du?"
-              rows={4}
+              placeholder="Valgfri oversikt — bruk merker for detaljer underveis"
+              rows={2}
               className={sheetTextareaClass}
             />
+
+            <div className="pt-2">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <label className="text-xs text-muted-foreground">Logg underveis</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMark(null);
+                    tryOpenSheet(() => setMarkSheetOpen(true));
+                  }}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-sm font-medium"
+                >
+                  <BookmarkPlus className="h-4 w-4 text-primary" />
+                  Merke
+                </button>
+              </div>
+              {(marksQ.data?.length ?? 0) === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Sett merker med tidspunkt mens du jobber — de følger med i rapporten.
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {(marksQ.data ?? []).map((m) => (
+                    <li key={m.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingMark(m);
+                          tryOpenSheet(() => setMarkSheetOpen(true));
+                        }}
+                        className="flex w-full gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-left text-sm"
+                      >
+                        <span className="shrink-0 font-semibold tabular-nums">
+                          {formatMarkTime(m.marked_at)}
+                        </span>
+                        <span className="min-w-0 flex-1 text-muted-foreground">{m.note}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           <button
@@ -396,6 +462,16 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
               });
           }
         }}
+      />
+      <MarkSheet
+        open={markSheetOpen}
+        onClose={() => {
+          setMarkSheetOpen(false);
+          setEditingMark(null);
+        }}
+        orgId={orgId}
+        sessionId={activeInThisOrg ? activeSession!.id : null}
+        mark={editingMark}
       />
     </div>
   );

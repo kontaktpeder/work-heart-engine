@@ -36,6 +36,18 @@ export type WorkSession = {
   comment: string | null;
 };
 
+export type TimeEntryMark = {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  work_session_id: string | null;
+  time_entry_id: string | null;
+  marked_at: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type TimeEntry = {
   id: string;
   user_id: string;
@@ -251,6 +263,52 @@ export async function fetchTimeEntries(
   const { data, error } = await q.limit(1000);
   if (error) throw error;
   return (data ?? []) as TimeEntry[];
+}
+
+const MARK_COLUMNS =
+  "id, user_id, organization_id, work_session_id, time_entry_id, marked_at, note, created_at, updated_at";
+
+export async function fetchMarksForSession(sessionId: string): Promise<TimeEntryMark[]> {
+  const { data, error } = await supabase
+    .from("time_entry_marks")
+    .select(MARK_COLUMNS)
+    .eq("work_session_id", sessionId)
+    .order("marked_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as TimeEntryMark[];
+}
+
+export async function fetchMarksForEntries(entryIds: string[]): Promise<TimeEntryMark[]> {
+  if (entryIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("time_entry_marks")
+    .select(MARK_COLUMNS)
+    .in("time_entry_id", entryIds)
+    .order("marked_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as TimeEntryMark[];
+}
+
+export function groupMarksByEntryId(marks: TimeEntryMark[]): Map<string, TimeEntryMark[]> {
+  const m = new Map<string, TimeEntryMark[]>();
+  for (const mark of marks) {
+    if (!mark.time_entry_id) continue;
+    const list = m.get(mark.time_entry_id) ?? [];
+    list.push(mark);
+    m.set(mark.time_entry_id, list);
+  }
+  return m;
+}
+
+export async function attachMarksToEntry(
+  sessionId: string,
+  timeEntryId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("time_entry_marks")
+    .update({ time_entry_id: timeEntryId, work_session_id: null })
+    .eq("work_session_id", sessionId);
+  if (error) throw error;
 }
 
 export function entryMinutes(e: TimeEntry): number {

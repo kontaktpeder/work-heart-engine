@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { BookmarkPlus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  fetchMarksForEntries,
   fetchProjects,
   fetchRates,
   type Project,
   type Rate,
   type TimeEntry,
+  type TimeEntryMark,
 } from "@/lib/work-core";
 import { ProjectPicker } from "./project-picker";
 import { RatePicker } from "./rate-picker";
+import { MarkSheet } from "./mark-sheet";
 import { ContentSheet } from "./content-sheet";
 import { SheetStickyFooter } from "./sheet-sticky-footer";
 import { entryFormDefaults, stripNexusCommentTag } from "@/lib/time-utils";
+import { formatMarkTime } from "@/lib/marks";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
 
@@ -39,6 +43,8 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
   const [rate, setRate] = useState<Rate | null>(null);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
+  const [markSheetOpen, setMarkSheetOpen] = useState(false);
+  const [editingMark, setEditingMark] = useState<TimeEntryMark | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -66,6 +72,11 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
     queryKey: ["rates", activeOrgId, "include-inactive"],
     queryFn: () => fetchRates(activeOrgId, true),
     enabled: !!activeOrgId && open,
+  });
+  const marksQ = useQuery({
+    queryKey: ["marks", "entry", entry?.id],
+    queryFn: () => fetchMarksForEntries([entry!.id]),
+    enabled: !!entry?.id && open,
   });
 
   useEffect(() => {
@@ -223,15 +234,57 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground">Notat</label>
+              <label className="text-xs text-muted-foreground">Kort oppsummering (valgfri)</label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Hva gjorde du?"
-                rows={5}
-                className={`${sheetTextareaClass} mt-1 min-h-32`}
+                placeholder="Valgfri oversikt — bruk merker for detaljer"
+                rows={3}
+                className={`${sheetTextareaClass} mt-1`}
               />
             </div>
+
+            {entry ? (
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <label className="text-xs text-muted-foreground">Logg / merker</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingMark(null);
+                      tryOpenSheet(() => setMarkSheetOpen(true));
+                    }}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-sm font-medium"
+                  >
+                    <BookmarkPlus className="h-4 w-4 text-primary" />
+                    Merke
+                  </button>
+                </div>
+                {(marksQ.data?.length ?? 0) === 0 ? (
+                  <p className="text-xs text-muted-foreground">Ingen merker ennå.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {(marksQ.data ?? []).map((m) => (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMark(m);
+                            tryOpenSheet(() => setMarkSheetOpen(true));
+                          }}
+                          className="flex w-full gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-left text-sm"
+                        >
+                          <span className="shrink-0 font-semibold tabular-nums">
+                            {formatMarkTime(m.marked_at)}
+                          </span>
+                          <span className="min-w-0 flex-1 text-muted-foreground">{m.note}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <SheetStickyFooter>
@@ -284,6 +337,18 @@ export function TimeEntrySheet({ open, onClose, entry, orgId }: Props) {
           }
         }}
       />
+      {entry ? (
+        <MarkSheet
+          open={markSheetOpen}
+          onClose={() => {
+            setMarkSheetOpen(false);
+            setEditingMark(null);
+          }}
+          orgId={activeOrgId}
+          entryId={entry.id}
+          mark={editingMark}
+        />
+      ) : null}
     </>
   );
 }
