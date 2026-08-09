@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Play, Square, Sparkles, List, BarChart3, BookmarkPlus } from "lucide-react";
+import { Play, Square, Sparkles, List, BarChart3, BookmarkPlus, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   attachMarksToEntry,
@@ -14,13 +14,14 @@ import {
   fetchTimeEntries,
   formatDuration,
   entryMinutes,
+  sumPauseMinutes,
   type Project,
   type Rate,
   type TimeEntry,
   type TimeEntryMark,
 } from "@/lib/work-core";
 import { startOfDay } from "@/lib/time-utils";
-import { formatMarkTime } from "@/lib/marks";
+import { formatMarkLabel, formatMarkTime } from "@/lib/marks";
 import { ProjectPicker } from "@/components/project-picker";
 import { RatePicker } from "@/components/rate-picker";
 import { MarkSheet } from "@/components/mark-sheet";
@@ -28,6 +29,7 @@ import { TimeEntrySheet } from "@/components/time-entry-sheet";
 import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -38,7 +40,7 @@ const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 const authRoute = getRouteApi("/_authenticated");
 
 const ENTRY_SELECT =
-  "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at";
+  "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, customer, task, source, started_at, ended_at";
 
 type StartPaneProps = {
   onOpenTimer?: () => void;
@@ -107,12 +109,15 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
 
   const [projectId, setProjectId] = useState<string | null>(null);
   const [rateId, setRateId] = useState<string | null>(null);
+  const [customer, setCustomer] = useState("");
+  const [task, setTask] = useState("");
   const [project, setProject] = useState<Project | null>(null);
   const [rate, setRate] = useState<Rate | null>(null);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [ratePickerOpen, setRatePickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [markSheetOpen, setMarkSheetOpen] = useState(false);
+  const [markKind, setMarkKind] = useState<"note" | "pause">("note");
   const [editingMark, setEditingMark] = useState<TimeEntryMark | null>(null);
   const [reviewEntry, setReviewEntry] = useState<TimeEntry | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -133,7 +138,9 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     hydratedSessionId.current = activeSession.id;
     if (activeSession.project_id) setProjectId(activeSession.project_id);
     if (activeSession.rate_id) setRateId(activeSession.rate_id);
-  }, [activeInThisOrg, activeSession?.id, activeSession?.project_id, activeSession?.rate_id]);
+    setCustomer(activeSession.customer ?? "");
+    setTask(activeSession.task ?? "");
+  }, [activeInThisOrg, activeSession?.id, activeSession?.project_id, activeSession?.rate_id, activeSession?.customer, activeSession?.task]);
 
   useEffect(() => {
     const pid = projectId ?? (activeInThisOrg ? activeSession!.project_id : null);
@@ -150,6 +157,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
 
   async function startWork() {
     if (!projectId) return toast.error("Velg prosjekt");
+    if (!task.trim()) return toast.error("Skriv inn oppgave");
     setBusy(true);
     const { error } = await supabase.from("work_sessions").insert({
       user_id: user.id,
@@ -157,6 +165,8 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       project_id: projectId,
       rate_id: rateId,
       comment: null,
+      customer: customer.trim() || null,
+      task: task.trim(),
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -170,6 +180,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     const end = new Date();
     const pid = projectId ?? activeSession!.project_id;
     const rid = rateId ?? activeSession!.rate_id;
+    const sessionCustomer = customer.trim() || activeSession!.customer || null;
+    const sessionTask = task.trim() || activeSession!.task || null;
+    const pauseMin = sumPauseMinutes(marksQ.data ?? []);
+
     const { data: inserted, error: insErr } = await supabase
       .from("time_entries")
       .insert({
@@ -180,8 +194,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         date: start.toISOString().slice(0, 10),
         start_time: start.toTimeString().slice(0, 8),
         end_time: end.toTimeString().slice(0, 8),
-        break_minutes: 0,
+        break_minutes: pauseMin,
         comment: null,
+        customer: sessionCustomer,
+        task: sessionTask,
         source: "timer",
       })
       .select(ENTRY_SELECT)
@@ -204,11 +220,19 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     if (delErr) return toast.error(delErr.message);
     setProjectId(null);
     setRateId(null);
+    setCustomer("");
+    setTask("");
     void qc.invalidateQueries({ queryKey: ["session"] });
     void qc.invalidateQueries({ queryKey: ["entries"] });
     void qc.invalidateQueries({ queryKey: ["marks"] });
     setReviewEntry(inserted as TimeEntry);
     tryOpenSheet(() => setReviewOpen(true));
+  }
+
+  function openMark(kind: "note" | "pause", mark: TimeEntryMark | null = null) {
+    setEditingMark(mark);
+    setMarkKind(mark?.kind ?? kind);
+    tryOpenSheet(() => setMarkSheetOpen(true));
   }
 
   return (
@@ -263,6 +287,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             </p>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {project?.name ?? "—"}
+              {task ? ` · ${task}` : ""}
               {rate ? ` · ${rate.name}` : ""} · start{" "}
               {new Date(activeSession!.started_at).toLocaleTimeString("nb-NO", {
                 hour: "2-digit",
@@ -295,21 +320,28 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
             <div className="flex shrink-0 items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">Logg</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingMark(null);
-                  tryOpenSheet(() => setMarkSheetOpen(true));
-                }}
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
-              >
-                <BookmarkPlus className="h-3.5 w-3.5 text-primary" />
-                Merke
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => openMark("pause")}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
+                >
+                  <Coffee className="h-3.5 w-3.5 text-primary" />
+                  Pause
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openMark("note")}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
+                >
+                  <BookmarkPlus className="h-3.5 w-3.5 text-primary" />
+                  Merke
+                </button>
+              </div>
             </div>
             {(marksQ.data?.length ?? 0) === 0 ? (
               <p className="text-xs text-muted-foreground">
-                Trykk Merke for pause, ankomst, osv.
+                Pause eller merke underveis — følger med i rapporten.
               </p>
             ) : (
               <ul className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
@@ -317,16 +349,15 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                   <li key={m.id}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setEditingMark(m);
-                        tryOpenSheet(() => setMarkSheetOpen(true));
-                      }}
+                      onClick={() => openMark(m.kind, m)}
                       className="flex w-full gap-2 rounded-lg px-1 py-1 text-left text-sm"
                     >
                       <span className="shrink-0 font-semibold tabular-nums">
                         {formatMarkTime(m.marked_at)}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-muted-foreground">{m.note}</span>
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                        {formatMarkLabel(m)}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -357,6 +388,22 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
               </span>
             </button>
 
+            <label className="mt-2 block text-xs text-muted-foreground">Kunde (valgfri)</label>
+            <input
+              value={customer}
+              onChange={(e) => setCustomer(e.target.value)}
+              placeholder="Fritekst"
+              className={sheetFieldClass}
+            />
+
+            <label className="mt-2 block text-xs text-muted-foreground">Oppgave</label>
+            <input
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              placeholder="Hva skal du gjøre?"
+              className={sheetFieldClass}
+            />
+
             <label className="mt-2 block text-xs text-muted-foreground">Sats (valgfri)</label>
             <button
               type="button"
@@ -374,7 +421,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
 
           <button
             onClick={startWork}
-            disabled={busy || !projectId || !!activeSession}
+            disabled={busy || !projectId || !task.trim() || !!activeSession}
             className="tap-target h-14 w-full bg-primary text-base text-primary-foreground disabled:opacity-60"
           >
             <Play className="mr-2 h-5 w-5" fill="currentColor" />
@@ -435,6 +482,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         orgId={orgId}
         sessionId={activeInThisOrg ? activeSession!.id : null}
         mark={editingMark}
+        initialKind={markKind}
       />
       <TimeEntrySheet
         key={reviewEntry?.id ?? "review"}
@@ -442,6 +490,11 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         onClose={() => {
           setReviewOpen(false);
           setReviewEntry(null);
+        }}
+        onSaved={() => {
+          setReviewOpen(false);
+          setReviewEntry(null);
+          onOpenTimer?.();
         }}
         entry={reviewEntry}
         orgId={orgId}

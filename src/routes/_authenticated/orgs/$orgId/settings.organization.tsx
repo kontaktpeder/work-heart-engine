@@ -7,7 +7,10 @@ import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Organization } from "@/lib/work-core";
+import {
+  updateOrganizationReportFields,
+  type Organization,
+} from "@/lib/work-core";
 import {
   getOrganizationPlatformLink,
   saveOrganizationPlatformLink,
@@ -24,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/organization")({
   beforeLoad: ({ params, search }) => {
@@ -71,9 +75,20 @@ export function OrganizationSettingsPane() {
   const [platformOrgId, setPlatformOrgId] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "editor" | "viewer">("editor");
+  const [companyName, setCompanyName] = useState(org.report_company_name ?? org.name ?? "");
+  const [employeeName, setEmployeeName] = useState(org.report_employee_name ?? "");
+  const [managerName, setManagerName] = useState(org.report_manager_name ?? "");
+  const [reportBusy, setReportBusy] = useState(false);
+
   useEffect(() => {
     setPlatformOrgId(linkQ.data?.externalIdentityOrgId ?? "");
   }, [linkQ.data?.externalIdentityOrgId]);
+
+  useEffect(() => {
+    setCompanyName(org.report_company_name ?? org.name ?? "");
+    setEmployeeName(org.report_employee_name ?? "");
+    setManagerName(org.report_manager_name ?? "");
+  }, [org.id, org.name, org.report_company_name, org.report_employee_name, org.report_manager_name]);
 
   const saveMut = useMutation({
     mutationFn: () =>
@@ -109,6 +124,24 @@ export function OrganizationSettingsPane() {
     onError: (e: Error) => toast.error(e.message ?? "Kunne ikke invitere"),
   });
 
+  async function saveReportFields() {
+    setReportBusy(true);
+    try {
+      await updateOrganizationReportFields(orgId, {
+        report_company_name: companyName.trim() || null,
+        report_employee_name: employeeName.trim() || null,
+        report_manager_name: managerName.trim() || null,
+      });
+      toast.success("Rapportfelter lagret");
+      // Force org reload on next navigation
+      window.location.reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunne ikke lagre");
+    } finally {
+      setReportBusy(false);
+    }
+  }
+
   const appBase =
     typeof window !== "undefined" ? window.location.origin : "https://…";
 
@@ -117,6 +150,45 @@ export function OrganizationSettingsPane() {
       <div className="rounded-lg border border-border p-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Navn</p>
         <p className="text-lg font-medium">{org.name}</p>
+      </div>
+
+      <div className="rounded-lg border border-border p-4 space-y-3">
+        <div>
+          <p className="text-sm font-semibold">Rapport (e-skjenk)</p>
+          <p className="text-xs text-muted-foreground">
+            Forhåndsutfylt i CSV/PDF-header. Periode settes ved eksport.
+          </p>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Firmanavn</label>
+          <input
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className={`${sheetFieldClass} mt-1`}
+            placeholder={org.name}
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Ansatt</label>
+          <input
+            value={employeeName}
+            onChange={(e) => setEmployeeName(e.target.value)}
+            className={`${sheetFieldClass} mt-1`}
+            placeholder="Navn på rapport"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">Leder</label>
+          <input
+            value={managerName}
+            onChange={(e) => setManagerName(e.target.value)}
+            className={`${sheetFieldClass} mt-1`}
+            placeholder="Leder / godkjenner"
+          />
+        </div>
+        <Button type="button" onClick={saveReportFields} disabled={reportBusy}>
+          {reportBusy ? "Lagrer…" : "Lagre rapportfelter"}
+        </Button>
       </div>
 
       <div className="rounded-lg border border-border p-4 space-y-4">

@@ -15,7 +15,7 @@ import {
   formatNok,
 } from "@/lib/work-core";
 import { startOfMonth, endOfMonth, toDateInput } from "@/lib/time-utils";
-import { buildCsv, buildPdf, buildRows } from "@/lib/export";
+import { buildCsv, buildPdf, buildReportMeta, buildRows } from "@/lib/export";
 import {
   countExportableEntries,
   exportTimeEntriesToFinance,
@@ -44,12 +44,18 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
 });
 
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
+const authRoute = getRouteApi("/_authenticated");
 
 type PeriodPreset = "current" | "previous" | "month" | "custom";
 type PendingExport = "csv" | "pdf" | "finance" | null;
 
 export function ReportsPane() {
   const { org, orgId } = orgRoute.useRouteContext();
+  const { user } = authRoute.useRouteContext() as {
+    user: { email?: string; user_metadata?: { full_name?: string } };
+  };
+  const employeeFallback =
+    user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "";
   const [anchorDay, setAnchorDay] = useState(() => getPayCycleAnchorDay(orgId));
   const initialCycle = payCycleContaining(new Date(), getPayCycleAnchorDay(orgId));
   const initial = periodToInputs(initialCycle.from, initialCycle.to);
@@ -161,6 +167,9 @@ export function ReportsPane() {
     return [...m.values()].sort((a, b) => b.min - a.min);
   }, [entries, rateById]);
 
+  const periodLabel = formatPeriodLabel(fromDate, toDate);
+  const reportMeta = buildReportMeta(org, periodLabel, employeeFallback);
+
   function applyPeriod(next: PeriodPreset, day = anchorDay) {
     setPreset(next);
     if (next === "current") {
@@ -193,15 +202,14 @@ export function ReportsPane() {
   }
 
   function exportCsv() {
-    const rows = buildRows(entries, projById, rateById, marksByEntry);
-    buildCsv(rows, `${org.name}_${from}_${to}.csv`);
+    const rows = buildRows(entries, projById, marksByEntry);
+    buildCsv(rows, reportMeta, `${org.name}_${from}_${to}.csv`);
     setPendingExport(null);
   }
   function exportPdf() {
-    const rows = buildRows(entries, projById, rateById, marksByEntry);
-    buildPdf(rows, {
-      title: "Timeoppgave",
-      periodLabel: `${org.name} · ${from} – ${to}`,
+    const rows = buildRows(entries, projById, marksByEntry);
+    buildPdf(rows, reportMeta, {
+      title: "Prosjekttimeliste",
       filename: `${org.name}_${from}_${to}.pdf`,
     });
     setPendingExport(null);
@@ -424,10 +432,13 @@ export function ReportsPane() {
         }}
         entries={entries}
         totalMin={totalMin}
-        totalAmount={totalAmount}
-        anyAmount={anyAmount}
         confirmLabel={confirmLabel}
         busy={pendingExport === "finance" && exportMut.isPending}
+        metaPreview={{
+          company: reportMeta.companyName,
+          employee: reportMeta.employeeName,
+          manager: reportMeta.managerName,
+        }}
         onConfirm={() => {
           if (pendingExport === "csv") exportCsv();
           else if (pendingExport === "pdf") exportPdf();

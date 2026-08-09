@@ -4,6 +4,9 @@ export type Organization = {
   id: string;
   name: string;
   owner_id: string;
+  report_company_name: string | null;
+  report_employee_name: string | null;
+  report_manager_name: string | null;
 };
 
 export type Project = {
@@ -34,6 +37,8 @@ export type WorkSession = {
   rate_id: string | null;
   started_at: string;
   comment: string | null;
+  customer: string | null;
+  task: string | null;
 };
 
 export type TimeEntryMark = {
@@ -44,6 +49,8 @@ export type TimeEntryMark = {
   time_entry_id: string | null;
   marked_at: string;
   note: string;
+  kind: "note" | "pause";
+  pause_minutes: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -63,13 +70,15 @@ export type TimeEntry = {
   hourly_rate: number | null;
   amount: number | null;
   comment: string | null;
+  customer: string | null;
+  task: string | null;
   source: "manual" | "timer";
   started_at: string | null;
   ended_at: string | null;
 };
 
 const ENTRY_COLUMNS =
-  "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, source, started_at, ended_at";
+  "id, user_id, organization_id, project_id, rate_id, hourly_rate_snapshot, date, start_time, end_time, break_minutes, total_minutes, hourly_rate, amount, comment, customer, task, source, started_at, ended_at";
 
 export async function fetchDefaultOrgId(): Promise<string | null> {
   const { data: u } = await supabase.auth.getUser();
@@ -94,10 +103,27 @@ export async function setDefaultOrgId(orgId: string): Promise<void> {
 export async function fetchOrganizations(): Promise<Organization[]> {
   const { data, error } = await supabase
     .from("organizations")
-    .select("id, name, owner_id")
+    .select(
+      "id, name, owner_id, report_company_name, report_employee_name, report_manager_name",
+    )
     .order("created_at", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as Organization[];
+}
+
+export async function updateOrganizationReportFields(
+  orgId: string,
+  fields: {
+    report_company_name: string | null;
+    report_employee_name: string | null;
+    report_manager_name: string | null;
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from("organizations")
+    .update(fields)
+    .eq("id", orgId);
+  if (error) throw error;
 }
 
 export async function fetchProjects(orgId?: string, includeInactive = false): Promise<Project[]> {
@@ -237,7 +263,7 @@ export async function fetchActiveSession(): Promise<WorkSession | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("work_sessions")
-    .select("id, user_id, organization_id, project_id, rate_id, started_at, comment")
+    .select("id, user_id, organization_id, project_id, rate_id, started_at, comment, customer, task")
     .eq("user_id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -266,7 +292,7 @@ export async function fetchTimeEntries(
 }
 
 const MARK_COLUMNS =
-  "id, user_id, organization_id, work_session_id, time_entry_id, marked_at, note, created_at, updated_at";
+  "id, user_id, organization_id, work_session_id, time_entry_id, marked_at, note, kind, pause_minutes, created_at, updated_at";
 
 export async function fetchMarksForSession(sessionId: string): Promise<TimeEntryMark[]> {
   const { data, error } = await supabase
@@ -300,6 +326,15 @@ export function groupMarksByEntryId(marks: TimeEntryMark[]): Map<string, TimeEnt
   return m;
 }
 
+export function sumPauseMinutes(marks: TimeEntryMark[]): number {
+  return marks.reduce((s, m) => {
+    if (m.kind === "pause" && typeof m.pause_minutes === "number") {
+      return s + Math.max(0, m.pause_minutes);
+    }
+    return s;
+  }, 0);
+}
+
 export async function attachMarksToEntry(
   sessionId: string,
   timeEntryId: string,
@@ -309,6 +344,17 @@ export async function attachMarksToEntry(
     .update({ time_entry_id: timeEntryId, work_session_id: null })
     .eq("work_session_id", sessionId);
   if (error) throw error;
+}
+
+export async function syncEntryBreakFromMarks(timeEntryId: string): Promise<number> {
+  const marks = await fetchMarksForEntries([timeEntryId]);
+  const pause = sumPauseMinutes(marks);
+  const { error } = await supabase
+    .from("time_entries")
+    .update({ break_minutes: pause })
+    .eq("id", timeEntryId);
+  if (error) throw error;
+  return pause;
 }
 
 export function entryMinutes(e: TimeEntry): number {

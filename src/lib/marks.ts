@@ -16,12 +16,18 @@ export function roundToNearestMinutes(d: Date, step = 5): Date {
   return x;
 }
 
-export function markFormDefaults(mark?: TimeEntryMark | null, now = new Date()) {
+export function markFormDefaults(
+  mark?: TimeEntryMark | null,
+  now = new Date(),
+  kind: "note" | "pause" = "note",
+) {
   const at = mark ? new Date(mark.marked_at) : roundToNearestMinutes(now);
   return {
     date: toDateInput(at),
     time: toTimeInput(null, at.toISOString()),
     note: mark?.note ?? "",
+    kind: (mark?.kind ?? kind) as "note" | "pause",
+    pauseMinutes: mark?.pause_minutes ?? 30,
   };
 }
 
@@ -38,12 +44,23 @@ export function formatMarkTime(iso: string): string {
   });
 }
 
-/** Multiline log for timer cards / export comment cells */
+export function formatMarkLabel(m: TimeEntryMark): string {
+  if (m.kind === "pause") {
+    return `Pause ${m.pause_minutes ?? 0} min`;
+  }
+  return m.note.trim();
+}
+
+/** Multiline log for timer cards / export Notater (notes only, not pauses) */
 export function formatMarksTimeline(marks: TimeEntryMark[]): string {
   return marks
     .slice()
     .sort((a, b) => a.marked_at.localeCompare(b.marked_at))
-    .map((m) => `${formatMarkTime(m.marked_at)}  ${m.note.trim()}`)
+    .map((m) => {
+      const time = formatMarkTime(m.marked_at);
+      if (m.kind === "pause") return `${time}  Pause ${m.pause_minutes ?? 0} min`;
+      return `${time}  ${m.note.trim()}`;
+    })
     .join("\n");
 }
 
@@ -55,4 +72,14 @@ export function combineCommentAndMarks(
   const c = (comment ?? "").trim();
   if (c && timeline) return `${c}\n\n${timeline}`;
   return c || timeline;
+}
+
+export function reportNotes(
+  comment: string | null | undefined,
+  marks: TimeEntryMark[],
+): string {
+  const noteMarks = marks.filter((m) => m.kind === "note");
+  const timeline = formatMarksTimeline(noteMarks);
+  const parts = [comment?.trim(), timeline].filter(Boolean);
+  return parts.join("\n\n");
 }

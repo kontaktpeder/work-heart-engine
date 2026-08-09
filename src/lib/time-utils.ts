@@ -85,6 +85,8 @@ export function entryFormDefaults(entry: TimeEntry | null | undefined, defaultOr
       projectId: null as string | null,
       rateId: null as string | null,
       comment: "",
+      customer: "",
+      task: "",
     };
   }
   return {
@@ -98,5 +100,7 @@ export function entryFormDefaults(entry: TimeEntry | null | undefined, defaultOr
     projectId: entry.project_id ?? null,
     rateId: entry.rate_id ?? null,
     comment: stripNexusCommentTag(entry.comment),
+    customer: entry.customer ?? "",
+    task: entry.task ?? "",
   };
 }

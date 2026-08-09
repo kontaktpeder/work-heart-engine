@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ContentSheet } from "@/components/content-sheet";
 import { SheetStickyFooter } from "@/components/sheet-sticky-footer";
 import { sheetFieldClass } from "@/lib/sheetField";
-import { formatDuration, formatNok, type TimeEntry } from "@/lib/work-core";
+import { entryMinutes, formatDuration, type TimeEntry } from "@/lib/work-core";
 import { formatPeriodLabel } from "@/lib/pay-cycle";
 
 type Props = {
@@ -14,11 +14,10 @@ type Props = {
   onChangePeriod: (from: string, to: string) => void;
   entries: TimeEntry[];
   totalMin: number;
-  totalAmount: number;
-  anyAmount: boolean;
   confirmLabel: string;
   busy?: boolean;
   onConfirm: () => void;
+  metaPreview?: { company: string; employee: string; manager: string };
 };
 
 function dateKey(d: Date): string {
@@ -34,21 +33,30 @@ function entryDay(e: TimeEntry): string | null {
   return null;
 }
 
+function fmtClock(iso: string | null | undefined, fallback?: string | null): string {
+  if (iso) {
+    return new Date(iso).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+  }
+  return (fallback ?? "").slice(0, 5);
+}
+
 function MonthGrid({
   year,
   monthIndex,
   worked,
   rangeFrom,
   rangeTo,
+  onDayClick,
 }: {
   year: number;
   monthIndex: number;
   worked: Set<string>;
   rangeFrom: string;
   rangeTo: string;
+  onDayClick: (key: string) => void;
 }) {
   const first = new Date(year, monthIndex, 1);
-  const startPad = (first.getDay() + 6) % 7; // Monday=0
+  const startPad = (first.getDay() + 6) % 7;
   const days = new Date(year, monthIndex + 1, 0).getDate();
   const label = first.toLocaleDateString("nb-NO", { month: "long", year: "numeric" });
   const cells: (number | null)[] = [...Array(startPad).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
@@ -68,15 +76,18 @@ function MonthGrid({
           const inRange = key >= rangeFrom && key <= rangeTo;
           const hasWork = worked.has(key);
           return (
-            <div
+            <button
+              type="button"
               key={key}
+              disabled={!hasWork}
+              onClick={() => onDayClick(key)}
               className={`flex h-9 flex-col items-center justify-center rounded-lg text-xs tabular-nums ${
                 inRange ? "bg-muted/60" : "opacity-40"
-              }`}
+              } ${hasWork ? "active:scale-95" : ""}`}
             >
               <span>{day}</span>
               {hasWork ? <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary" /> : <span className="mt-0.5 h-1.5" />}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -93,19 +104,20 @@ export function ExportApprovalSheet({
   onChangePeriod,
   entries,
   totalMin,
-  totalAmount,
-  anyAmount,
   confirmLabel,
   busy,
   onConfirm,
+  metaPreview,
 }: Props) {
   const [draftFrom, setDraftFrom] = useState(from);
   const [draftTo, setDraftTo] = useState(to);
+  const [peekDay, setPeekDay] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setDraftFrom(from);
       setDraftTo(to);
+      setPeekDay(null);
     }
   }, [open, from, to]);
 
@@ -132,6 +144,11 @@ export function ExportApprovalSheet({
     return list;
   }, [draftFrom, draftTo]);
 
+  const peekEntries = useMemo(() => {
+    if (!peekDay) return [];
+    return entries.filter((e) => entryDay(e) === peekDay);
+  }, [entries, peekDay]);
+
   const fromDate = new Date(draftFrom + "T00:00:00");
   const toDate = new Date(draftTo + "T00:00:00");
   const periodOk = !Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime()) && draftFrom <= draftTo;
@@ -145,8 +162,16 @@ export function ExportApprovalSheet({
         className="scroll-touch min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5"
       >
         <p className="text-sm text-muted-foreground">
-          Bekreft perioden før eksport. Juster datoene hvis timer fra feil periode er med.
+          Bekreft perioden før eksport. Trykk en prikk-dato for kjapt referat.
         </p>
+
+        {metaPreview ? (
+          <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-0.5">
+            <p>Firmanavn: <span className="text-foreground">{metaPreview.company || "—"}</span></p>
+            <p>Ansatt: <span className="text-foreground">{metaPreview.employee || "—"}</span></p>
+            <p>Leder: <span className="text-foreground">{metaPreview.manager || "—"}</span></p>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="min-w-0">
@@ -184,12 +209,6 @@ export function ExportApprovalSheet({
             <span className="text-sm text-muted-foreground">Timer i perioden</span>
             <span className="text-xl font-bold tabular-nums">{formatDuration(totalMin)}</span>
           </div>
-          {anyAmount ? (
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm text-muted-foreground">Beløp</span>
-              <span className="text-lg font-bold tabular-nums">{formatNok(totalAmount)}</span>
-            </div>
-          ) : null}
           <p className="text-xs text-muted-foreground">{entries.length} føringer · prikk = jobbet</p>
         </div>
 
@@ -202,6 +221,7 @@ export function ExportApprovalSheet({
               worked={worked}
               rangeFrom={draftFrom}
               rangeTo={draftTo}
+              onDayClick={setPeekDay}
             />
           ))}
         </div>
@@ -217,6 +237,47 @@ export function ExportApprovalSheet({
           {busy ? "Eksporterer…" : confirmLabel}
         </button>
       </SheetStickyFooter>
+
+      {peekDay ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 px-4 pb-10 sm:items-center"
+          onClick={() => setPeekDay(null)}
+          aria-label="Lukk referat"
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 text-left shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs text-muted-foreground">
+              {new Date(peekDay + "T12:00:00").toLocaleDateString("nb-NO", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+            <div className="mt-3 space-y-3">
+              {peekEntries.map((e) => (
+                <div key={e.id} className="rounded-xl border border-border/60 px-3 py-2">
+                  <p className="font-medium tabular-nums">
+                    {fmtClock(e.started_at, e.start_time)} – {fmtClock(e.ended_at, e.end_time)}
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      {formatDuration(entryMinutes(e))}
+                    </span>
+                  </p>
+                  {e.task ? <p className="mt-0.5 text-sm">{e.task}</p> : null}
+                  {e.comment ? (
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{e.comment}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-center text-[11px] text-muted-foreground">
+              Trykk utenfor for å lukke
+            </p>
+          </div>
+        </button>
+      ) : null}
     </ContentSheet>
   );
 }

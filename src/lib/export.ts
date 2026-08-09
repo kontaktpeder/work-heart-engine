@@ -1,21 +1,26 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { TimeEntry, Project, Rate, TimeEntryMark } from "./work-core";
-import { entryMinutes, formatNok } from "./work-core";
-import { combineCommentAndMarks } from "./marks";
+import type { TimeEntry, Project, TimeEntryMark, Organization } from "./work-core";
+import { entryMinutes, sumPauseMinutes } from "./work-core";
+import { reportNotes } from "./marks";
+
+export type ReportMeta = {
+  companyName: string;
+  employeeName: string;
+  managerName: string;
+  periodLabel: string;
+};
 
 export type ExportRow = {
   date: string;
+  customer: string;
+  project: string;
+  task: string;
   start: string;
   end: string;
-  breakMin: number;
+  pauseMin: number;
   hours: number;
-  project: string;
-  rate: string;
-  rateAmount: number | null;
-  comment: string;
-  amount: number | null;
-  log: string;
+  notes: string;
 };
 
 function fmtHours(min: number): string {
@@ -25,42 +30,44 @@ function fmtHours(min: number): string {
   });
 }
 
+export function buildReportMeta(
+  org: Organization,
+  periodLabel: string,
+  fallbackEmployee?: string | null,
+): ReportMeta {
+  return {
+    companyName: (org.report_company_name || org.name || "").trim(),
+    employeeName: (org.report_employee_name || fallbackEmployee || "").trim(),
+    managerName: (org.report_manager_name || "").trim(),
+    periodLabel,
+  };
+}
+
 export function buildRows(
   entries: TimeEntry[],
   projectsById: Map<string, Project>,
-  ratesById: Map<string, Rate> = new Map(),
   marksByEntry: Map<string, TimeEntryMark[]> = new Map(),
 ): ExportRow[] {
   return entries.map((e) => {
     const min = entryMinutes(e);
     const start = e.started_at ? new Date(e.started_at) : null;
     const end = e.ended_at ? new Date(e.ended_at) : null;
-    const rateObj = e.rate_id ? ratesById.get(e.rate_id) : null;
-    const snapshot = e.hourly_rate_snapshot ?? e.hourly_rate ?? null;
-    const rateLabel = rateObj
-      ? snapshot != null
-        ? `${rateObj.name} (${snapshot})`
-        : rateObj.name
-      : snapshot != null
-        ? String(snapshot)
-        : "";
     const marks = marksByEntry.get(e.id) ?? [];
+    const pauseFromMarks = sumPauseMinutes(marks);
     return {
       date: start ? start.toLocaleDateString("nb-NO") : (e.date ?? ""),
+      customer: (e.customer ?? "").trim(),
+      project: e.project_id ? (projectsById.get(e.project_id)?.name ?? "—") : "—",
+      task: (e.task ?? "").trim(),
       start: start
         ? start.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
         : (e.start_time ?? "").slice(0, 5),
       end: end
         ? end.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
         : (e.end_time ?? "").slice(0, 5),
-      breakMin: e.break_minutes ?? 0,
+      pauseMin: pauseFromMarks || e.break_minutes || 0,
       hours: min / 60,
-      project: e.project_id ? (projectsById.get(e.project_id)?.name ?? "—") : "—",
-      rate: rateLabel,
-      rateAmount: snapshot,
-      comment: combineCommentAndMarks(e.comment, marks),
-      amount: e.amount,
-      log: combineCommentAndMarks(e.comment, marks),
+      notes: reportNotes(e.comment, marks),
     };
   });
 }
@@ -85,33 +92,44 @@ function csvEscape(v: string | number | null | undefined): string {
   return s;
 }
 
-export function buildCsv(rows: ExportRow[], filename = "timer.csv") {
-  const anyRate = rows.some((r) => r.amount != null || r.rateAmount != null);
-  const header = ["Dato", "Fra", "Til", "Pause (min)", "Timer", "Prosjekt", "Sats", "Logg"];
-  if (anyRate) header.push("Timepris", "Beløp");
-  const lines = [header.join(";")];
+export function buildCsv(
+  rows: ExportRow[],
+  meta: ReportMeta,
+  filename = "prosjekttimeliste.csv",
+) {
+  const lines: string[] = [
+    ["Firmanavn", meta.companyName].map(csvEscape).join(";"),
+    ["Ansatt", meta.employeeName].map(csvEscape).join(";"),
+    ["Periode", meta.periodLabel].map(csvEscape).join(";"),
+    ["Leder", meta.managerName].map(csvEscape).join(";"),
+    "",
+    ["Dato", "Kunde", "Prosjekt", "Oppgave", "Starttid", "Sluttid", "Pause", "Arbeidede timer", "Notater"]
+      .map(csvEscape)
+      .join(";"),
+  ];
+
   for (const r of rows) {
-    const base = [
-      r.date,
-      r.start,
-      r.end,
-      r.breakMin,
-      fmtHours(Math.round(r.hours * 60)),
-      r.project,
-      r.rate,
-      r.log,
-    ].map(csvEscape);
-    if (anyRate) {
-      base.push(csvEscape(r.rateAmount ?? ""), csvEscape(r.amount ?? ""));
-    }
-    lines.push(base.join(";"));
+    lines.push(
+      [
+        r.date,
+        r.customer,
+        r.project,
+        r.task,
+        r.start,
+        r.end,
+        r.pauseMin,
+        fmtHours(Math.round(r.hours * 60)),
+        r.notes,
+      ]
+        .map(csvEscape)
+        .join(";"),
+    );
   }
+
   const totalMin = Math.round(rows.reduce((s, r) => s + r.hours * 60, 0));
-  const totalAmount = rows.reduce((s, r) => s + (r.amount ?? 0), 0);
   lines.push("");
   lines.push(
-    ["Sum", "", "", "", fmtHours(totalMin), "", "", ""]
-      .concat(anyRate ? ["", String(totalAmount.toFixed(2))] : [])
+    ["", "", "", "", "", "", "Prosjekt totalt", fmtHours(totalMin), ""]
       .map(csvEscape)
       .join(";"),
   );
@@ -122,98 +140,53 @@ export function buildCsv(rows: ExportRow[], filename = "timer.csv") {
 
 export function buildPdf(
   rows: ExportRow[],
-  opts: { title: string; periodLabel: string; filename?: string },
+  meta: ReportMeta,
+  opts: { title?: string; filename?: string } = {},
 ) {
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const anyRate = rows.some((r) => r.amount != null || r.rateAmount != null);
 
   doc.setFontSize(16);
-  doc.text(opts.title, 40, 40);
+  doc.text(opts.title ?? "Prosjekttimeliste", 40, 36);
   doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text(opts.periodLabel, 40, 58);
+  doc.setTextColor(80);
+  let y = 56;
+  for (const [label, value] of [
+    ["Firmanavn", meta.companyName],
+    ["Ansatt", meta.employeeName],
+    ["Periode", meta.periodLabel],
+    ["Leder", meta.managerName],
+  ] as const) {
+    doc.text(`${label}: ${value || "—"}`, 40, y);
+    y += 14;
+  }
   doc.setTextColor(0);
 
-  const head = [["Dato", "Fra", "Til", "Pause", "Timer", "Prosjekt", "Sats", "Logg"]];
-  if (anyRate) head[0].push("Timepris", "Beløp");
-
-  const body = rows.map((r) => {
-    const base = [
-      r.date,
-      r.start,
-      r.end,
-      String(r.breakMin),
-      fmtHours(Math.round(r.hours * 60)),
-      r.project,
-      r.rate,
-      r.log,
-    ];
-    if (anyRate)
-      base.push(
-        r.rateAmount != null ? String(r.rateAmount) : "",
-        r.amount != null ? formatNok(r.amount) : "",
-      );
-    return base;
-  });
+  const head = [["Dato", "Kunde", "Prosjekt", "Oppgave", "Start", "Slutt", "Pause", "Timer", "Notater"]];
+  const body = rows.map((r) => [
+    r.date,
+    r.customer,
+    r.project,
+    r.task,
+    r.start,
+    r.end,
+    String(r.pauseMin),
+    fmtHours(Math.round(r.hours * 60)),
+    r.notes,
+  ]);
 
   const totalMin = Math.round(rows.reduce((s, r) => s + r.hours * 60, 0));
-  const totalAmount = rows.reduce((s, r) => s + (r.amount ?? 0), 0);
-  const foot = [["Sum", "", "", "", fmtHours(totalMin), "", "", ""]];
-  if (anyRate) foot[0].push("", formatNok(totalAmount));
+  const foot = [["", "", "", "", "", "", "Totalt", fmtHours(totalMin), ""]];
 
   autoTable(doc, {
     head,
     body,
     foot,
-    startY: 75,
-    styles: { fontSize: 9, cellPadding: 5, valign: "top" },
-    columnStyles: { 7: { cellWidth: 180 } },
-    headStyles: { fillColor: [30, 30, 30] },
+    startY: y + 8,
+    styles: { fontSize: 8, cellPadding: 4, valign: "top" },
+    columnStyles: { 8: { cellWidth: 160 } },
+    headStyles: { fillColor: [34, 120, 60] },
     footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold" },
   });
 
-  const byProject = new Map<string, { min: number; amount: number }>();
-  for (const r of rows) {
-    const cur = byProject.get(r.project) ?? { min: 0, amount: 0 };
-    cur.min += r.hours * 60;
-    cur.amount += r.amount ?? 0;
-    byProject.set(r.project, cur);
-  }
-  if (byProject.size > 0) {
-    autoTable(doc, {
-      head: [["Prosjekt", "Timer", ...(anyRate ? ["Beløp"] : [])]],
-      body: [...byProject.entries()].map(([name, v]) => [
-        name,
-        fmtHours(Math.round(v.min)),
-        ...(anyRate ? [formatNok(v.amount)] : []),
-      ]),
-      startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20,
-      styles: { fontSize: 9, cellPadding: 5 },
-      headStyles: { fillColor: [60, 60, 60] },
-    });
-  }
-
-  const byRate = new Map<string, { min: number; amount: number }>();
-  for (const r of rows) {
-    if (!r.rate) continue;
-    const cur = byRate.get(r.rate) ?? { min: 0, amount: 0 };
-    cur.min += r.hours * 60;
-    cur.amount += r.amount ?? 0;
-    byRate.set(r.rate, cur);
-  }
-  if (byRate.size > 0) {
-    autoTable(doc, {
-      head: [["Sats", "Timer", ...(anyRate ? ["Beløp"] : [])]],
-      body: [...byRate.entries()].map(([name, v]) => [
-        name,
-        fmtHours(Math.round(v.min)),
-        ...(anyRate ? [formatNok(v.amount)] : []),
-      ]),
-      startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20,
-      styles: { fontSize: 9, cellPadding: 5 },
-      headStyles: { fillColor: [60, 60, 60] },
-    });
-  }
-
-  doc.save(opts.filename ?? "timer.pdf");
+  doc.save(opts.filename ?? "prosjekttimeliste.pdf");
 }

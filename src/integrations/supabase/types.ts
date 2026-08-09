@@ -206,6 +206,9 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          report_company_name: string | null
+          report_employee_name: string | null
+          report_manager_name: string | null
           slug: string | null
           updated_at: string
         }
@@ -215,6 +218,9 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
+          report_company_name?: string | null
+          report_employee_name?: string | null
+          report_manager_name?: string | null
           slug?: string | null
           updated_at?: string
         }
@@ -224,6 +230,9 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          report_company_name?: string | null
+          report_employee_name?: string | null
+          report_manager_name?: string | null
           slug?: string | null
           updated_at?: string
         }
@@ -324,6 +333,7 @@ export type Database = {
           break_minutes: number
           comment: string | null
           created_at: string
+          customer: string | null
           date: string | null
           end_time: string | null
           ended_at: string | null
@@ -337,6 +347,7 @@ export type Database = {
           source: Database["public"]["Enums"]["time_entry_source"]
           start_time: string | null
           started_at: string | null
+          task: string | null
           total_minutes: number | null
           updated_at: string
           user_id: string
@@ -348,6 +359,7 @@ export type Database = {
           break_minutes?: number
           comment?: string | null
           created_at?: string
+          customer?: string | null
           date?: string | null
           end_time?: string | null
           ended_at?: string | null
@@ -361,6 +373,7 @@ export type Database = {
           source?: Database["public"]["Enums"]["time_entry_source"]
           start_time?: string | null
           started_at?: string | null
+          task?: string | null
           total_minutes?: number | null
           updated_at?: string
           user_id: string
@@ -372,6 +385,7 @@ export type Database = {
           break_minutes?: number
           comment?: string | null
           created_at?: string
+          customer?: string | null
           date?: string | null
           end_time?: string | null
           ended_at?: string | null
@@ -385,6 +399,7 @@ export type Database = {
           source?: Database["public"]["Enums"]["time_entry_source"]
           start_time?: string | null
           started_at?: string | null
+          task?: string | null
           total_minutes?: number | null
           updated_at?: string
           user_id?: string
@@ -425,9 +440,11 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          kind: string
           marked_at: string
           note: string
           organization_id: string
+          pause_minutes: number | null
           time_entry_id: string | null
           updated_at: string
           user_id: string
@@ -436,9 +453,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          kind?: string
           marked_at: string
           note?: string
           organization_id: string
+          pause_minutes?: number | null
           time_entry_id?: string | null
           updated_at?: string
           user_id: string
@@ -447,9 +466,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          kind?: string
           marked_at?: string
           note?: string
           organization_id?: string
+          pause_minutes?: number | null
           time_entry_id?: string | null
           updated_at?: string
           user_id?: string
@@ -509,33 +530,39 @@ export type Database = {
         Row: {
           comment: string | null
           created_at: string
+          customer: string | null
           id: string
           organization_id: string
           project_id: string | null
           rate_id: string | null
           started_at: string
+          task: string | null
           user_id: string
           work_type_id: string | null
         }
         Insert: {
           comment?: string | null
           created_at?: string
+          customer?: string | null
           id?: string
           organization_id: string
           project_id?: string | null
           rate_id?: string | null
           started_at?: string
+          task?: string | null
           user_id: string
           work_type_id?: string | null
         }
         Update: {
           comment?: string | null
           created_at?: string
+          customer?: string | null
           id?: string
           organization_id?: string
           project_id?: string | null
           rate_id?: string | null
           started_at?: string
+          task?: string | null
           user_id?: string
           work_type_id?: string | null
         }
