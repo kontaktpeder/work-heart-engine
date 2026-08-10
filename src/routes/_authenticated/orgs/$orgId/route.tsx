@@ -4,7 +4,7 @@ import {
   Link,
   useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
 import { z } from "zod";
 import {
   Settings,
@@ -12,11 +12,17 @@ import {
   LogOut,
   ChevronRight,
 } from "lucide-react";
-import { fetchOrganizations, type Organization } from "@/lib/work-core";
+import {
+  fetchOrganizations,
+  setDefaultOrgId,
+  type Organization,
+} from "@/lib/work-core";
+import { adjacentOrgId, orgStackIndex } from "@/lib/org-stack";
+import { useOrgStackSwipe } from "@/hooks/useOrgStackSwipe";
 import { MissionReturnLink } from "@/components/mission-return-link";
 import { ContentSheet } from "@/components/content-sheet";
 import { authSupabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { useAppFrame } from "@/hooks/useAppFrame";
 import { StartPane } from "./start";
@@ -64,9 +70,59 @@ function OrgLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
+  const switchingRef = useRef(false);
+  const [stackDir, setStackDir] = useState(0);
+
+  const orgsQ = useQuery({
+    queryKey: ["orgs"],
+    queryFn: fetchOrganizations,
+    staleTime: 60_000,
+  });
+  const orgs = orgsQ.data ?? [org];
+  const canSwipeOrgs = orgs.length > 1;
+  const stackIndex = useMemo(() => orgStackIndex(orgs, orgId), [orgs, orgId]);
 
   const sheet = search.sheet;
   const section = search.section;
+  const sheetOpen = !!sheet || menuOpen;
+
+  const switchOrg = useCallback(
+    async (nextId: string, direction: 1 | -1) => {
+      if (switchingRef.current || nextId === orgId) return;
+      switchingRef.current = true;
+      setStackDir(direction);
+      try {
+        await setDefaultOrgId(nextId);
+        await navigate({
+          to: "/orgs/$orgId/start",
+          params: { orgId: nextId },
+          search: {
+            return: search.return,
+          },
+          replace: true,
+        });
+      } finally {
+        window.setTimeout(() => {
+          switchingRef.current = false;
+        }, 350);
+      }
+    },
+    [navigate, orgId, search.return],
+  );
+
+  const onStackSwipe = useCallback(
+    (direction: 1 | -1) => {
+      if (sheetOpen) return;
+      const nextId = adjacentOrgId(orgs, orgId, direction);
+      if (nextId) void switchOrg(nextId, direction);
+    },
+    [sheetOpen, orgs, orgId, switchOrg],
+  );
+
+  const swipeRef = useOrgStackSwipe({
+    enabled: canSwipeOrgs && !sheetOpen,
+    onSwipe: onStackSwipe,
+  });
 
   function setSheet(next: OrgSearch["sheet"], nextSection?: OrgSearch["section"]) {
     void navigate({
@@ -100,6 +156,12 @@ function OrgLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
+  const stackStyle = canSwipeOrgs
+    ? ({
+        ["--org-stack-from" as string]: stackDir >= 0 ? "28px" : "-28px",
+      } as CSSProperties)
+    : undefined;
+
   return (
     <div
       className="mx-auto flex max-w-2xl flex-col overflow-hidden px-5 pt-[max(0.5rem,env(safe-area-inset-top))]"
@@ -109,8 +171,20 @@ function OrgLayout() {
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
-          className="min-w-0 text-left"
+          className="flex min-w-0 items-center gap-2 text-left"
         >
+          {canSwipeOrgs ? (
+            <span className="flex shrink-0 flex-col gap-1" aria-hidden>
+              {orgs.map((o, i) => (
+                <span
+                  key={o.id}
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    i === stackIndex ? "bg-foreground/70" : "bg-border"
+                  }`}
+                />
+              ))}
+            </span>
+          ) : null}
           <p className="truncate text-sm font-semibold tracking-tight">{org.name}</p>
         </button>
         <button
@@ -129,7 +203,15 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div
+        ref={swipeRef}
+        key={orgId}
+        className={`min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))] ${
+          canSwipeOrgs ? "touch-pan-y org-stack-enter" : ""
+        }`}
+        style={stackStyle}
+        aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
+      >
         <StartPane
           onOpenTimer={() => openSheet("timer")}
           onOpenReports={() => openSheet("reports")}

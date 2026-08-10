@@ -344,7 +344,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                 Pause eller merke underveis — følger med i rapporten.
               </p>
             ) : (
-              <ul className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
+              <ul
+                data-org-stack-scroll
+                className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain"
+              >
                 {(marksQ.data ?? []).map((m) => (
                   <li key={m.id}>
                     <button
