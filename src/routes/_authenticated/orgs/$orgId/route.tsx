@@ -4,7 +4,7 @@ import {
   Link,
   useNavigate,
 } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { z } from "zod";
 import {
   Settings,
@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import {
   fetchOrganizations,
+  fetchProjects,
+  fetchRates,
+  fetchTimeEntries,
   setDefaultOrgId,
   type Organization,
 } from "@/lib/work-core";
@@ -25,6 +28,7 @@ import { authSupabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { useAppFrame } from "@/hooks/useAppFrame";
+import { startOfDay } from "@/lib/time-utils";
 import { StartPane } from "./start";
 import { TimerPane } from "./timer";
 import { ReportsPane } from "./reports";
@@ -46,8 +50,13 @@ export type OrgSearch = z.infer<typeof OrgSearch>;
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
   validateSearch: (s) => OrgSearch.parse(s),
-  beforeLoad: async ({ params }) => {
-    const orgs = await fetchOrganizations();
+  beforeLoad: async ({ params, context }) => {
+    const qc = context.queryClient;
+    const orgs = await qc.ensureQueryData({
+      queryKey: ["orgs"],
+      queryFn: fetchOrganizations,
+      staleTime: 5 * 60_000,
+    });
     const org = orgs.find((o) => o.id === params.orgId);
     if (!org) throw redirect({ to: "/orgs" });
     return { org, orgId: params.orgId };
@@ -76,7 +85,7 @@ function OrgLayout() {
   const orgsQ = useQuery({
     queryKey: ["orgs"],
     queryFn: fetchOrganizations,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
   const orgs = orgsQ.data ?? [org];
   const canSwipeOrgs = orgs.length > 1;
@@ -86,28 +95,56 @@ function OrgLayout() {
   const section = search.section;
   const sheetOpen = !!sheet || menuOpen;
 
+  // Prefetch neighbor orgs so swipe lands warm.
+  useEffect(() => {
+    if (orgs.length < 2) return;
+    const today = startOfDay();
+    for (const dir of [1, -1] as const) {
+      const id = adjacentOrgId(orgs, orgId, dir);
+      if (!id || id === orgId) continue;
+      void queryClient.prefetchQuery({
+        queryKey: ["projects", id],
+        queryFn: () => fetchProjects(id),
+        staleTime: 60_000,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: ["rates", id],
+        queryFn: () => fetchRates(id),
+        staleTime: 60_000,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: ["entries", id, "today"],
+        queryFn: () => fetchTimeEntries({ from: today, orgId: id }),
+        staleTime: 30_000,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: ["entries", id, "recent"],
+        queryFn: () => fetchTimeEntries({ orgId: id }),
+        staleTime: 30_000,
+      });
+    }
+  }, [orgs, orgId, queryClient]);
+
   const switchOrg = useCallback(
-    async (nextId: string, direction: 1 | -1) => {
+    (nextId: string, direction: 1 | -1) => {
       if (switchingRef.current || nextId === orgId) return;
       switchingRef.current = true;
       setStackDir(direction);
-      try {
-        await setDefaultOrgId(nextId);
-        await navigate({
-          to: "/orgs/$orgId/start",
-          params: { orgId: nextId },
-          search: {
-            return: search.return,
-          },
-          replace: true,
-        });
-      } catch {
-        switchingRef.current = false;
-      } finally {
+      // Persist preference in background — don't block UI.
+      void setDefaultOrgId(nextId);
+      void navigate({
+        to: "/orgs/$orgId/start",
+        params: { orgId: nextId },
+        search: {
+          return: search.return,
+        },
+        replace: true,
+      }).finally(() => {
+        // Short debounce only — avoids double-fire from one gesture.
         window.setTimeout(() => {
           switchingRef.current = false;
-        }, 280);
-      }
+        }, 120);
+      });
     },
     [navigate, orgId, search.return],
   );
@@ -116,7 +153,7 @@ function OrgLayout() {
     (direction: 1 | -1) => {
       if (sheetOpen) return;
       const nextId = adjacentOrgId(orgs, orgId, direction);
-      if (nextId) void switchOrg(nextId, direction);
+      if (nextId) switchOrg(nextId, direction);
     },
     [sheetOpen, orgs, orgId, switchOrg],
   );

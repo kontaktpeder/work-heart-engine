@@ -55,23 +55,31 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   const qc = useQueryClient();
   const seedFn = useServerFn(seedWorkDemoData);
 
-  const sessionQ = useQuery({ queryKey: ["session"], queryFn: fetchActiveSession });
+  const sessionQ = useQuery({
+    queryKey: ["session"],
+    queryFn: fetchActiveSession,
+    staleTime: 15_000,
+  });
   const today = startOfDay();
   const entriesQ = useQuery({
     queryKey: ["entries", orgId, "today"],
     queryFn: () => fetchTimeEntries({ from: today, orgId }),
+    staleTime: 30_000,
   });
   const projectsQ = useQuery({
     queryKey: ["projects", orgId],
     queryFn: () => fetchProjects(orgId),
+    staleTime: 60_000,
   });
   const ratesQ = useQuery({
     queryKey: ["rates", orgId],
     queryFn: () => fetchRates(orgId),
+    staleTime: 60_000,
   });
   const recentEntriesQ = useQuery({
     queryKey: ["entries", orgId, "recent"],
     queryFn: () => fetchTimeEntries({ orgId }),
+    staleTime: 30_000,
   });
 
   const seedMut = useMutation({
@@ -127,6 +135,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     queryKey: ["marks", "session", activeSession?.id],
     queryFn: () => fetchMarksForSession(activeSession!.id),
     enabled: !!activeInThisOrg && !!activeSession?.id,
+    staleTime: 15_000,
   });
 
   useEffect(() => {
