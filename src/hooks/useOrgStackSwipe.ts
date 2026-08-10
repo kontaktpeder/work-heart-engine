@@ -141,7 +141,8 @@ export function useOrgStackSwipe(opts: {
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("pointercancel", onUp);
     };
-  }, [reset]);
+    // Re-bind if the host node is replaced (e.g. parent remount).
+  }, [reset, opts.enabled]);
 
   return ref;
 }

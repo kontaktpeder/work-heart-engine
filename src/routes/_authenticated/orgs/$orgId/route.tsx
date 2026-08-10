@@ -101,10 +101,12 @@ function OrgLayout() {
           },
           replace: true,
         });
+      } catch {
+        switchingRef.current = false;
       } finally {
         window.setTimeout(() => {
           switchingRef.current = false;
-        }, 350);
+        }, 280);
       }
     },
     [navigate, orgId, search.return],
@@ -205,17 +207,21 @@ function OrgLayout() {
 
       <div
         ref={swipeRef}
-        key={orgId}
         className={`min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))] ${
-          canSwipeOrgs ? "touch-pan-y org-stack-enter" : ""
+          canSwipeOrgs ? "touch-pan-y" : ""
         }`}
-        style={stackStyle}
         aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
       >
-        <StartPane
-          onOpenTimer={() => openSheet("timer")}
-          onOpenReports={() => openSheet("reports")}
-        />
+        <div
+          key={orgId}
+          className={`h-full min-h-0 ${canSwipeOrgs ? "org-stack-enter" : ""}`}
+          style={stackStyle}
+        >
+          <StartPane
+            onOpenTimer={() => openSheet("timer")}
+            onOpenReports={() => openSheet("reports")}
+          />
+        </div>
       </div>
 
       {sheet === "timer" ? (
