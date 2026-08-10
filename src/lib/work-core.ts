@@ -55,6 +55,17 @@ export type TimeEntryMark = {
   updated_at: string;
 };
 
+/** Earliest → latest by marked_at (stable tie-break on created_at / id). */
+export function sortMarksChronological(marks: TimeEntryMark[]): TimeEntryMark[] {
+  return marks.slice().sort((a, b) => {
+    const byTime = a.marked_at.localeCompare(b.marked_at);
+    if (byTime !== 0) return byTime;
+    const byCreated = (a.created_at ?? "").localeCompare(b.created_at ?? "");
+    if (byCreated !== 0) return byCreated;
+    return a.id.localeCompare(b.id);
+  });
+}
+
 export type TimeEntry = {
   id: string;
   user_id: string;
@@ -301,7 +312,7 @@ export async function fetchMarksForSession(sessionId: string): Promise<TimeEntry
     .eq("work_session_id", sessionId)
     .order("marked_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as TimeEntryMark[];
+  return sortMarksChronological((data ?? []) as TimeEntryMark[]);
 }
 
 export async function fetchMarksForEntries(entryIds: string[]): Promise<TimeEntryMark[]> {
@@ -312,7 +323,7 @@ export async function fetchMarksForEntries(entryIds: string[]): Promise<TimeEntr
     .in("time_entry_id", entryIds)
     .order("marked_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as TimeEntryMark[];
+  return sortMarksChronological((data ?? []) as TimeEntryMark[]);
 }
 
 export function groupMarksByEntryId(marks: TimeEntryMark[]): Map<string, TimeEntryMark[]> {
@@ -322,6 +333,9 @@ export function groupMarksByEntryId(marks: TimeEntryMark[]): Map<string, TimeEnt
     const list = m.get(mark.time_entry_id) ?? [];
     list.push(mark);
     m.set(mark.time_entry_id, list);
+  }
+  for (const [id, list] of m) {
+    m.set(id, sortMarksChronological(list));
   }
   return m;
 }

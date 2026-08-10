@@ -1,5 +1,5 @@
 import { toDateInput, toTimeInput } from "@/lib/time-utils";
-import type { TimeEntryMark } from "@/lib/work-core";
+import { sortMarksChronological, type TimeEntryMark } from "@/lib/work-core";
 
 /** Round to nearest `step` minutes (default 5) so marks land on clean clock times. */
 export function roundToNearestMinutes(d: Date, step = 5): Date {
@@ -51,11 +51,11 @@ export function formatMarkLabel(m: TimeEntryMark): string {
   return m.note.trim();
 }
 
+export { sortMarksChronological };
+
 /** Multiline log for timer cards / export Notater (notes only, not pauses) */
 export function formatMarksTimeline(marks: TimeEntryMark[]): string {
-  return marks
-    .slice()
-    .sort((a, b) => a.marked_at.localeCompare(b.marked_at))
+  return sortMarksChronological(marks)
     .map((m) => {
       const time = formatMarkTime(m.marked_at);
       if (m.kind === "pause") return `${time}  Pause ${m.pause_minutes ?? 0} min`;
