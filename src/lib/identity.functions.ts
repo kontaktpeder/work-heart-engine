@@ -3,7 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAuthSupabaseConfig } from "@/integrations/supabase/shared-auth";
-import { isWorkLocalAccountMetadata } from "@/lib/invite-auth";
+import {
+  invitedOrganizationIdFromMetadata,
+  isPersonalOrganizationName,
+  isWorkLocalAccountMetadata,
+} from "@/lib/invite-auth";
 
 function emailFromAccessToken(accessToken: string): string | null {
   try {
@@ -551,6 +555,71 @@ export const ensureModuleIdentity = createServerFn({ method: "POST" })
     return { ok: true as const, ...ensured, userId };
   });
 
+async function pruneEmptyPersonalOrgs(
+  admin: any,
+  userId: string,
+  meta: Record<string, unknown>,
+): Promise<{ pruned: number; defaultOrgId: string | null }> {
+  const { data: memberships, error } = await admin
+    .from("organization_members")
+    .select("organization_id, role, organizations(id, name, owner_id)")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+
+  const rows = (memberships ?? []) as Array<{
+    organization_id: string;
+    role: string;
+    organizations: { id: string; name: string; owner_id: string } | null;
+  }>;
+
+  const personal = rows.filter(
+    (m) =>
+      m.organizations?.owner_id === userId &&
+      isPersonalOrganizationName(m.organizations?.name),
+  );
+  const shared = rows.filter(
+    (m) => !personal.some((p) => p.organization_id === m.organization_id),
+  );
+
+  if (shared.length === 0) {
+    return { pruned: 0, defaultOrgId: rows[0]?.organization_id ?? null };
+  }
+
+  let pruned = 0;
+  for (const p of personal) {
+    const orgId = p.organization_id;
+    const { data: entries, error: eErr } = await admin
+      .from("time_entries")
+      .select("id, comment")
+      .eq("organization_id", orgId)
+      .limit(50);
+    if (eErr) throw new Error(eErr.message);
+    const hasRealWork = (entries ?? []).some(
+      (e: { comment: string | null }) => e.comment !== "demo-seed",
+    );
+    if (hasRealWork) continue;
+    const { error: delErr } = await admin.from("organizations").delete().eq("id", orgId);
+    if (delErr) throw new Error(delErr.message);
+    pruned += 1;
+  }
+
+  const invited = invitedOrganizationIdFromMetadata(meta);
+  const defaultOrgId =
+    (invited && shared.some((s) => s.organization_id === invited) ? invited : null) ??
+    shared[0]?.organization_id ??
+    null;
+
+  if (defaultOrgId) {
+    const { error: prefErr } = await admin.from("user_preferences").upsert(
+      { user_id: userId, default_organization_id: defaultOrgId },
+      { onConflict: "user_id" },
+    );
+    if (prefErr) throw new Error(prefErr.message);
+  }
+
+  return { pruned, defaultOrgId };
+}
+
 /** Repair pending org names / reclaim orphans after Identity Core SSO (safe to call on /orgs). */
 export const repairWorkIdentityWorkspace = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -560,17 +629,17 @@ export const repairWorkIdentityWorkspace = createServerFn({ method: "POST" })
       (typeof context.claims?.email === "string" && context.claims.email) || null;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: self } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (isWorkLocalAccountMetadata((self.user?.user_metadata ?? {}) as Record<string, unknown>)) {
-      return { ok: true as const, remapped: 0 };
+    const meta = (self.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const pruned = await pruneEmptyPersonalOrgs(supabaseAdmin, userId, meta);
+    if (isWorkLocalAccountMetadata(meta)) {
+      return { ok: true as const, remapped: 0, pruned: pruned.pruned };
     }
     if (!email) {
-      // Still try rename using auth user email
-      const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
-      const resolved = data.user?.email?.trim().toLowerCase() ?? null;
-      if (!resolved) return { ok: true as const, remapped: 0 };
+      const resolved = self.user?.email?.trim().toLowerCase() ?? null;
+      if (!resolved) return { ok: true as const, remapped: 0, pruned: pruned.pruned };
       const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, resolved);
-      return { ok: true as const, remapped: ensured.remapped };
+      return { ok: true as const, remapped: ensured.remapped, pruned: pruned.pruned };
     }
     const ensured = await ensureShadowAndRemap(supabaseAdmin, userId, email);
-    return { ok: true as const, remapped: ensured.remapped };
+    return { ok: true as const, remapped: ensured.remapped, pruned: pruned.pruned };
   });

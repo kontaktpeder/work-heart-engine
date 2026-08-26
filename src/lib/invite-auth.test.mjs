@@ -72,4 +72,12 @@ describe("work-local invite contract", () => {
       "none",
     );
   });
+
+  it("recognizes auto-created personal org names", () => {
+    function isPersonalOrganizationName(name) {
+      return /\(\s*personlig\s*\)\s*$/i.test(String(name ?? "").trim());
+    }
+    assert.equal(isPersonalOrganizationName("ola (personlig)"), true);
+    assert.equal(isPersonalOrganizationName("Eskjenk"), false);
+  });
 });

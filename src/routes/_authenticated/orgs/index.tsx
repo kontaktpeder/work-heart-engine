@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, getRouteApi } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
@@ -12,13 +12,18 @@ export const Route = createFileRoute("/_authenticated/orgs/")({
   component: OrgsPicker,
 });
 
+const authRoute = getRouteApi("/_authenticated");
+
 function OrgsPicker() {
+  const { user } = authRoute.useRouteContext() as { user: { id: string } };
   const navigate = useNavigate();
   const qc = useQueryClient();
   const repairIdentity = useServerFn(repairWorkIdentityWorkspace);
   const repairedRef = useRef(false);
   const orgsQ = useQuery({ queryKey: ["orgs"], queryFn: fetchOrganizations });
   const defaultOrgQ = useQuery({ queryKey: ["default-org"], queryFn: fetchDefaultOrgId });
+  const orgs = orgsQ.data ?? [];
+  const canCreateOrg = orgs.length === 0 || orgs.some((o) => o.owner_id === user.id);
 
   useEffect(() => {
     if (repairedRef.current) return;
@@ -48,11 +53,13 @@ function OrgsPicker() {
             Alt du gjør etter dette skjer inne i det valgte arbeidsrommet.
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link to="/orgs/new">
-            <Plus className="h-4 w-4 mr-1" /> Ny organisasjon
-          </Link>
-        </Button>
+        {canCreateOrg ? (
+          <Button asChild size="sm">
+            <Link to="/orgs/new">
+              <Plus className="h-4 w-4 mr-1" /> Ny organisasjon
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <div className="space-y-2">

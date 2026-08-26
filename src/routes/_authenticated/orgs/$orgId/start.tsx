@@ -263,7 +263,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         </button>
       </div>
 
-      {(recentEntriesQ.data?.length ?? 0) === 0 && (
+      {(recentEntriesQ.data?.length ?? 0) === 0 && org.owner_id === user.id ? (
         <div className="flex shrink-0 flex-col justify-between gap-3 rounded-lg border border-dashed border-border p-3 sm:flex-row sm:items-center">
           <p className="text-sm text-muted-foreground">
             Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
@@ -279,7 +279,11 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             {seedMut.isPending ? "Legger inn…" : "Fyll med demodata"}
           </Button>
         </div>
-      )}
+      ) : null}
+
+      {(recentEntriesQ.data?.length ?? 0) === 0 && org.owner_id !== user.id ? (
+        <p className="shrink-0 text-sm text-muted-foreground">Ingen timer ennå.</p>
+      ) : null}
 
       {activeSession && !activeInThisOrg ? (
         <div className="surface-card shrink-0 border-destructive/40 text-sm">

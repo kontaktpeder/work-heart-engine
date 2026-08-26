@@ -17,6 +17,10 @@ export function enterAppAfterAuth() {
   window.location.replace("/");
 }
 
+export function isPersonalOrganizationName(name: string | null | undefined): boolean {
+  return /\(\s*personlig\s*\)\s*$/i.test(String(name ?? "").trim());
+}
+
 export function inviteRedirectUrl(appUrl: string): string {
   const base = appUrl.replace(/\/+$/, "");
   if (!base) return "";
