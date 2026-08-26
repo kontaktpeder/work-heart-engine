@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getAuthSupabaseConfig } from "@/integrations/supabase/shared-auth";
+import { isWorkLocalAccountMetadata } from "@/lib/invite-auth";
 
 function emailFromAccessToken(accessToken: string): string | null {
   try {
@@ -62,6 +63,13 @@ async function resolveEmailHolderId(admin: any, email: string): Promise<string |
  * Remap Work rows from legacy UUID → Nexus UUID, then delete legacy auth user.
  * Must run only after Nexus shadow user exists (FK-safe).
  */
+async function isProtectedLocalWorkUser(admin: any, userId: string): Promise<boolean> {
+  const { data } = await admin.auth.admin.getUserById(userId);
+  return isWorkLocalAccountMetadata(
+    (data.user?.user_metadata ?? {}) as Record<string, unknown>,
+  );
+}
+
 async function remapAndDeleteLegacy(
   admin: any,
   nexusUserId: string,
@@ -69,6 +77,9 @@ async function remapAndDeleteLegacy(
 ): Promise<number> {
   const { data: stillThere } = await admin.auth.admin.getUserById(oldId);
   if (!stillThere.user) return 0;
+  if (isWorkLocalAccountMetadata((stillThere.user.user_metadata ?? {}) as Record<string, unknown>)) {
+    return 0;
+  }
 
   let remapped = 0;
   const { data: rows, error } = await admin
@@ -151,6 +162,7 @@ async function absorbHoldersOfEmail(
 
   let remapped = 0;
   for (const oldId of holders) {
+    if (await isProtectedLocalWorkUser(admin, oldId)) continue;
     remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
   }
   return remapped;
@@ -180,6 +192,11 @@ async function claimRealEmail(admin: any, nexusUserId: string, email: string): P
 
   let remapped = 0;
   for (const oldId of holders) {
+    if (await isProtectedLocalWorkUser(admin, oldId)) {
+      throw new Error(
+        "Denne e-posten tilhører en lokal Work-konto. Logg inn med e-post og passord i Work — ikke via Nexus.",
+      );
+    }
     remapped += await remapAndDeleteLegacy(admin, nexusUserId, oldId);
   }
 
@@ -370,6 +387,14 @@ async function ensureShadowAndRemap(
   }
 
   const normalized = email.trim().toLowerCase();
+  const holders = (await findUserIdsByEmail(admin, normalized)).filter((id) => id !== userId);
+  for (const holderId of holders) {
+    if (await isProtectedLocalWorkUser(admin, holderId)) {
+      throw new Error(
+        "Denne e-posten tilhører en lokal Work-konto. Logg inn med e-post og passord i Work — ikke via Nexus.",
+      );
+    }
+  }
   const ensured = await ensureNexusShadowExists(admin, userId, normalized, fullName);
   let remapped = await absorbHoldersOfEmail(admin, userId, normalized);
   remapped += await claimRealEmail(admin, userId, normalized);
@@ -534,6 +559,10 @@ export const repairWorkIdentityWorkspace = createServerFn({ method: "POST" })
     const email =
       (typeof context.claims?.email === "string" && context.claims.email) || null;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: self } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (isWorkLocalAccountMetadata((self.user?.user_metadata ?? {}) as Record<string, unknown>)) {
+      return { ok: true as const, remapped: 0 };
+    }
     if (!email) {
       // Still try rename using auth user email
       const { data } = await supabaseAdmin.auth.admin.getUserById(userId);

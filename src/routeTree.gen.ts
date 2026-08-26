@@ -20,6 +20,7 @@ import { Route as AuthenticatedSatserRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTimelisteRouteImport } from './routes/_authenticated/timeliste'
 import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthInviteRouteImport } from './routes/auth.invite'
 import { Route as AuthenticatedOrgsIndexRouteImport } from './routes/_authenticated/orgs/index'
 import { Route as AuthenticatedOrgsOrgIdRouteRouteImport } from './routes/_authenticated/orgs/$orgId/route'
 import { Route as AuthenticatedOrgsNewRouteImport } from './routes/_authenticated/orgs/new'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedOrgsOrgIdSettingsIndexRouteImport } from './route
 import { Route as AuthenticatedOrgsOrgIdSettingsApiKeysRouteImport } from './routes/_authenticated/orgs/$orgId/settings.api-keys'
 import { Route as AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.finance-integration'
 import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
+import { Route as AuthenticatedOrgsOrgIdSettingsMembersRouteImport } from './routes/_authenticated/orgs/$orgId/settings.members'
 import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
 import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
 import { Route as ApiPublicV1ModuleAlertsRouteImport } from './routes/api/public/v1/module.alerts'
@@ -94,6 +96,11 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthInviteRoute = AuthInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedOrgsIndexRoute = AuthenticatedOrgsIndexRouteImport.update({
@@ -166,6 +173,12 @@ const AuthenticatedOrgsOrgIdSettingsOrganizationRoute =
     path: '/organization',
     getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
   } as any)
+const AuthenticatedOrgsOrgIdSettingsMembersRoute =
+  AuthenticatedOrgsOrgIdSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
 const AuthenticatedOrgsOrgIdSettingsProjectsRoute =
   AuthenticatedOrgsOrgIdSettingsProjectsRouteImport.update({
     id: '/projects',
@@ -222,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/auth/': typeof AuthIndexRoute
   '/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
@@ -234,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/orgs/$orgId/settings/members': typeof AuthenticatedOrgsOrgIdSettingsMembersRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
@@ -253,6 +268,7 @@ export interface FileRoutesByTo {
   '/satser': typeof AuthenticatedSatserRoute
   '/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/auth': typeof AuthIndexRoute
   '/orgs/new': typeof AuthenticatedOrgsNewRoute
   '/orgs': typeof AuthenticatedOrgsIndexRoute
@@ -263,6 +279,7 @@ export interface FileRoutesByTo {
   '/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/orgs/$orgId/settings/members': typeof AuthenticatedOrgsOrgIdSettingsMembersRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
@@ -285,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/satser': typeof AuthenticatedSatserRoute
   '/_authenticated/timeliste': typeof AuthenticatedTimelisteRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/invite': typeof AuthInviteRoute
   '/auth/': typeof AuthIndexRoute
   '/_authenticated/orgs/$orgId': typeof AuthenticatedOrgsOrgIdRouteRouteWithChildren
   '/_authenticated/orgs/new': typeof AuthenticatedOrgsNewRoute
@@ -297,6 +315,7 @@ export interface FileRoutesById {
   '/_authenticated/orgs/$orgId/settings/api-keys': typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   '/_authenticated/orgs/$orgId/settings/finance-integration': typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  '/_authenticated/orgs/$orgId/settings/members': typeof AuthenticatedOrgsOrgIdSettingsMembersRoute
   '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
@@ -319,6 +338,7 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/auth/callback'
+    | '/auth/invite'
     | '/auth/'
     | '/orgs/$orgId'
     | '/orgs/new'
@@ -331,6 +351,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/api-keys'
     | '/orgs/$orgId/settings/finance-integration'
     | '/orgs/$orgId/settings/organization'
+    | '/orgs/$orgId/settings/members'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
     | '/api/public/v1/module/alerts'
@@ -350,6 +371,7 @@ export interface FileRouteTypes {
     | '/satser'
     | '/timeliste'
     | '/auth/callback'
+    | '/auth/invite'
     | '/auth'
     | '/orgs/new'
     | '/orgs'
@@ -360,6 +382,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/api-keys'
     | '/orgs/$orgId/settings/finance-integration'
     | '/orgs/$orgId/settings/organization'
+    | '/orgs/$orgId/settings/members'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
     | '/api/public/v1/module/alerts'
@@ -381,6 +404,7 @@ export interface FileRouteTypes {
     | '/_authenticated/satser'
     | '/_authenticated/timeliste'
     | '/auth/callback'
+    | '/auth/invite'
     | '/auth/'
     | '/_authenticated/orgs/$orgId'
     | '/_authenticated/orgs/new'
@@ -393,6 +417,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orgs/$orgId/settings/api-keys'
     | '/_authenticated/orgs/$orgId/settings/finance-integration'
     | '/_authenticated/orgs/$orgId/settings/organization'
+    | '/_authenticated/orgs/$orgId/settings/members'
     | '/_authenticated/orgs/$orgId/settings/projects'
     | '/_authenticated/orgs/$orgId/settings/rates'
     | '/api/public/v1/module/alerts'
@@ -494,6 +519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/auth/invite': {
+      id: '/auth/invite'
+      path: '/invite'
+      fullPath: '/auth/invite'
+      preLoaderRoute: typeof AuthInviteRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_authenticated/orgs/': {
       id: '/_authenticated/orgs/'
       path: '/orgs'
@@ -578,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport
       parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
     }
+    '/_authenticated/orgs/$orgId/settings/members': {
+      id: '/_authenticated/orgs/$orgId/settings/members'
+      path: '/members'
+      fullPath: '/orgs/$orgId/settings/members'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsMembersRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
     '/_authenticated/orgs/$orgId/settings/projects': {
       id: '/_authenticated/orgs/$orgId/settings/projects'
       path: '/projects'
@@ -641,6 +680,7 @@ interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
   AuthenticatedOrgsOrgIdSettingsApiKeysRoute: typeof AuthenticatedOrgsOrgIdSettingsApiKeysRoute
   AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute: typeof AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute
   AuthenticatedOrgsOrgIdSettingsOrganizationRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
+  AuthenticatedOrgsOrgIdSettingsMembersRoute: typeof AuthenticatedOrgsOrgIdSettingsMembersRoute
   AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
   AuthenticatedOrgsOrgIdSettingsIndexRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
@@ -654,6 +694,8 @@ const AuthenticatedOrgsOrgIdSettingsRouteChildren: AuthenticatedOrgsOrgIdSetting
       AuthenticatedOrgsOrgIdSettingsFinanceIntegrationRoute,
     AuthenticatedOrgsOrgIdSettingsOrganizationRoute:
       AuthenticatedOrgsOrgIdSettingsOrganizationRoute,
+    AuthenticatedOrgsOrgIdSettingsMembersRoute:
+      AuthenticatedOrgsOrgIdSettingsMembersRoute,
     AuthenticatedOrgsOrgIdSettingsProjectsRoute:
       AuthenticatedOrgsOrgIdSettingsProjectsRoute,
     AuthenticatedOrgsOrgIdSettingsRatesRoute:
@@ -720,11 +762,13 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthInviteRoute: typeof AuthInviteRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthInviteRoute: AuthInviteRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 
