@@ -20,9 +20,9 @@ async function assertEditor(
   if (
     error ||
     !membership ||
-    !["owner", "admin", "editor"].includes(membership.role)
+    membership.role !== "owner"
   ) {
-    throw new Error("Du har ikke tilgang til å legge inn demodata.");
+    throw new Error("Bare eier kan legge inn demodata.");
   }
 }
 

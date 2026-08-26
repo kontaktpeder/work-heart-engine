@@ -35,7 +35,7 @@ function AuthCallbackPage() {
       }
       const lockKey = `sso:done:${code}`;
       if (sessionStorage.getItem(lockKey) === "1") {
-        navigate({ to: "/dashboard", replace: true });
+        window.location.replace("/");
         return;
       }
       try {
@@ -48,7 +48,7 @@ function AuthCallbackPage() {
         });
         if (error) throw error;
         sessionStorage.setItem(lockKey, "1");
-        navigate({ to: "/dashboard", replace: true });
+        window.location.replace("/");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "SSO feilet";
         setErrorText(msg);

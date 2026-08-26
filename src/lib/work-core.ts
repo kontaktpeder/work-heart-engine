@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isPersonalOrganizationName } from "@/lib/invite-auth";
 
 export type Organization = {
   id: string;
@@ -99,8 +100,17 @@ export async function fetchDefaultOrgId(): Promise<string | null> {
     .select("default_organization_id")
     .eq("user_id", u.user.id)
     .maybeSingle();
-  if (error) return null;
-  return data?.default_organization_id ?? null;
+  if (!error && data?.default_organization_id) {
+    const orgs = await fetchOrganizations();
+    const preferred = orgs.find((o) => o.id === data.default_organization_id);
+    if (preferred && !isPersonalOrganizationName(preferred.name)) return preferred.id;
+    const shared = orgs.filter((o) => !isPersonalOrganizationName(o.name));
+    return (shared[0] ?? preferred ?? orgs[0])?.id ?? null;
+  }
+
+  const orgs = await fetchOrganizations();
+  const shared = orgs.filter((o) => !isPersonalOrganizationName(o.name));
+  return (shared[0] ?? orgs[0])?.id ?? null;
 }
 
 export async function setDefaultOrgId(orgId: string): Promise<void> {

@@ -44,6 +44,7 @@ import { ReportsPane } from "./reports";
 import { ProjectsPane } from "./settings.projects";
 import { RatesPane } from "./settings.rates";
 import { OrganizationSettingsPane } from "./settings.organization";
+import { MembersPane } from "./settings.members";
 import { FinanceIntegrationPane } from "./settings.finance-integration";
 import { ApiKeysPane } from "./settings.api-keys";
 
@@ -51,7 +52,7 @@ const OrgSearch = z.object({
   return: z.string().optional(),
   sheet: z.enum(["timer", "reports", "settings"]).optional(),
   section: z
-    .enum(["organization", "projects", "rates", "finance", "api-keys"])
+    .enum(["members", "organization", "projects", "rates", "finance", "api-keys"])
     .optional(),
 });
 
@@ -74,11 +75,12 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
 });
 
 const settingsItems = [
-  { section: "organization" as const, label: "Organization", hint: "Navn og detaljer" },
-  { section: "projects" as const, label: "Projects", hint: "Prosjektliste" },
-  { section: "rates" as const, label: "Rates", hint: "Timepriser" },
+  { section: "members" as const, label: "Medlemmer", hint: "Inviter kollega – egne timer" },
+  { section: "organization" as const, label: "Organisasjon", hint: "Navn og rapport" },
+  { section: "projects" as const, label: "Prosjekter", hint: "Felles prosjektliste" },
+  { section: "rates" as const, label: "Satser", hint: "Felles timepriser" },
   { section: "finance" as const, label: "Finance", hint: "Eksport og kobling" },
-  { section: "api-keys" as const, label: "API keys", hint: "Nøkler for integrasjoner" },
+  { section: "api-keys" as const, label: "API-nøkler", hint: "Nøkler for integrasjoner" },
 ];
 
 function OrgLayout() {
@@ -326,6 +328,7 @@ function OrgLayout() {
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
+            {section === "members" ? <MembersPane /> : null}
             {section === "organization" ? <OrganizationSettingsPane /> : null}
             {section === "projects" ? <ProjectsPane /> : null}
             {section === "rates" ? <RatesPane /> : null}

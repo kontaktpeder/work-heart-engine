@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { repairWorkIdentityWorkspace } from "@/lib/identity.functions";
 import { fetchDefaultOrgId } from "@/lib/work-core";
 
 export const Route = createFileRoute("/")({
@@ -7,6 +8,11 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/auth" });
+    try {
+      await repairWorkIdentityWorkspace();
+    } catch {
+      /* still route into the app */
+    }
     const defaultOrg = await fetchDefaultOrgId();
     if (defaultOrg) {
       throw redirect({ to: "/orgs/$orgId/start", params: { orgId: defaultOrg } });
