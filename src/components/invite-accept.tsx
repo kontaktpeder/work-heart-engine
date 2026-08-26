@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  enterAppAfterAuth,
   invitedOrganizationIdFromMetadata,
   readInviteLanding,
 } from "@/lib/invite-auth";
@@ -86,10 +87,9 @@ export function InviteAcceptPane() {
         }
       }
       toast.success("Passord lagret. Du er inne.");
-      navigate({ to: "/", replace: true });
+      enterAppAfterAuth();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Kunne ikke lagre passord");
-    } finally {
       setBusy(false);
     }
   }

@@ -12,6 +12,11 @@ export type InviteLanding = {
   error: string | null;
 };
 
+/** Full reload so the next route sees the session (client navigate can bounce back to /auth). */
+export function enterAppAfterAuth() {
+  window.location.replace("/");
+}
+
 export function inviteRedirectUrl(appUrl: string): string {
   const base = appUrl.replace(/\/+$/, "");
   if (!base) return "";

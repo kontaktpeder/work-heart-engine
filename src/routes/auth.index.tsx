@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getNexusAppUrl, isSharedAuthEnabled } from "@/integrations/supabase/shared-auth";
-import { readInviteLanding } from "@/lib/invite-auth";
+import { enterAppAfterAuth, readInviteLanding } from "@/lib/invite-auth";
 import { InviteAcceptPane } from "@/components/invite-accept";
 
 export const Route = createFileRoute("/auth/")({
@@ -13,7 +13,6 @@ export const Route = createFileRoute("/auth/")({
 });
 
 function AuthPage() {
-  const navigate = useNavigate();
   const shared = isSharedAuthEnabled();
   const nexusApp = getNexusAppUrl();
   const [email, setEmail] = useState("");
@@ -28,9 +27,9 @@ function AuthPage() {
       return;
     }
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) enterAppAfterAuth();
     });
-  }, [navigate]);
+  }, []);
 
   function loginViaNexus() {
     if (!nexusApp) {
@@ -48,14 +47,13 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: "/dashboard", replace: true });
+      enterAppAfterAuth();
     } catch (err) {
       const raw = err instanceof Error ? err.message : "Noe gikk galt";
       const msg = /invalid login credentials/i.test(raw)
         ? "Feil e-post eller passord. Har du fått invitasjon? Åpne lenken i e-posten og velg passord først."
         : raw;
       toast.error(msg);
-    } finally {
       setLoading(false);
     }
   }
