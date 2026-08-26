@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { isEditableFocused } from "@/hooks/useKeyboardInset";
 
 const PAN_ACTIVATE_PX = 12;
 const AXIS_LOCK_RATIO = 1.15;
@@ -54,6 +55,8 @@ export function useOrgStackSwipe(opts: { enabled: boolean; onSwipe: (direction: 
     const onDown = (e: PointerEvent) => {
       if (!enabledRef.current) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
+      // Typing: never steal vertical pans (field may be covered by the keyboard).
+      if (isEditableFocused()) return;
       if (isSheetGestureTarget(e.target) || isFieldGestureTarget(e.target)) return;
 
       stateRef.current = {
@@ -70,7 +73,7 @@ export function useOrgStackSwipe(opts: { enabled: boolean; onSwipe: (direction: 
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
       if (s.pointerId !== e.pointerId) return;
-      if (!enabledRef.current) return;
+      if (!enabledRef.current || isEditableFocused()) return;
 
       const dx = e.clientX - s.startX;
       const dy = e.clientY - s.startY;
@@ -134,7 +137,7 @@ export function useOrgStackSwipe(opts: { enabled: boolean; onSwipe: (direction: 
       } catch {
         /* ignore */
       }
-      if (!wasStack || !enabledRef.current) return;
+      if (!wasStack || !enabledRef.current || isEditableFocused()) return;
 
       const flicked = Math.abs(vy) > STACK_COMMIT_VELOCITY;
       const dragged = Math.abs(dy) > STACK_COMMIT_PX;

@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { seedWorkDemoData } from "@/lib/demo-seed.functions";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { sheetFieldClass } from "@/lib/sheetField";
+import { revealFocusedField } from "@/lib/focusSheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/start")({
   head: () => ({ meta: [{ title: "Start · Work Core" }] }),
@@ -245,7 +246,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+    <div
+      data-org-stack-scroll
+      className="scroll-touch flex h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain"
+    >
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
@@ -408,6 +412,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <input
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
+              onFocus={(e) => revealFocusedField(e.currentTarget)}
               placeholder="Fritekst"
               className={sheetFieldClass}
             />
@@ -416,6 +421,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <input
               value={task}
               onChange={(e) => setTask(e.target.value)}
+              onFocus={(e) => revealFocusedField(e.currentTarget)}
               placeholder="Hva skal du gjøre?"
               className={sheetFieldClass}
             />

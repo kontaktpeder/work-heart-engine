@@ -37,6 +37,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { getNestDepth, subscribeNest } from "@/lib/sheetNest";
 import { useAppFrame } from "@/hooks/useAppFrame";
+import { isEditableFocused, useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { startOfDay } from "@/lib/time-utils";
 import { StartPane } from "./start";
 import { TimerPane } from "./timer";
@@ -105,7 +106,9 @@ function OrgLayout() {
   const sheet = search.sheet;
   const section = search.section;
   const nestDepth = useSyncExternalStore(subscribeNest, getNestDepth, () => 0);
+  const keyboardInset = useKeyboardInset();
   const sheetOpen = !!sheet || menuOpen || nestDepth > 0;
+  const keyboardOpen = keyboardInset > 24;
 
   // Prefetch neighbor orgs so swipe lands warm.
   useEffect(() => {
@@ -140,7 +143,7 @@ function OrgLayout() {
   const switchOrg = useCallback(
     (nextId: string, direction: 1 | -1) => {
       if (switchingRef.current || nextId === orgId) return;
-      if (getNestDepth() > 0) return;
+      if (getNestDepth() > 0 || isEditableFocused()) return;
       switchingRef.current = true;
       setStackDir(direction);
       // Persist preference in background — don't block UI.
@@ -164,15 +167,15 @@ function OrgLayout() {
 
   const onStackSwipe = useCallback(
     (direction: 1 | -1) => {
-      if (sheetOpen) return;
+      if (sheetOpen || keyboardOpen) return;
       const nextId = adjacentOrgId(orgs, orgId, direction);
       if (nextId) switchOrg(nextId, direction);
     },
-    [sheetOpen, orgs, orgId, switchOrg],
+    [sheetOpen, keyboardOpen, orgs, orgId, switchOrg],
   );
 
   const swipeRef = useOrgStackSwipe({
-    enabled: canSwipeOrgs && !sheetOpen,
+    enabled: canSwipeOrgs && !sheetOpen && !keyboardOpen,
     onSwipe: onStackSwipe,
   });
 

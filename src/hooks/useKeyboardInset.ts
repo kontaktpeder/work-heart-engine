@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
-function isEditableFocused(): boolean {
+export function isEditableFocused(): boolean {
   const ae = document.activeElement;
   if (!ae || ae === document.body) return false;
   return ae.matches(EDITABLE_SELECTOR);
@@ -55,6 +55,7 @@ export function useKeyboardInset(): number {
       focusOutTimerB = window.setTimeout(clearIfBlurred, 360);
     };
 
+    document.addEventListener("focusin", syncViewport);
     document.addEventListener("focusout", onFocusOut);
     syncViewport();
 
@@ -64,6 +65,7 @@ export function useKeyboardInset(): number {
       vv?.removeEventListener("resize", syncViewport);
       vv?.removeEventListener("scroll", syncViewport);
       window.removeEventListener("resize", syncViewport);
+      document.removeEventListener("focusin", syncViewport);
       document.removeEventListener("focusout", onFocusOut);
       window.clearTimeout(focusOutTimerA);
       window.clearTimeout(focusOutTimerB);
