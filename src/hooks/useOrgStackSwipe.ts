@@ -5,8 +5,7 @@ const AXIS_LOCK_RATIO = 1.15;
 const STACK_COMMIT_PX = 64;
 const STACK_COMMIT_VELOCITY = 420;
 
-const SHEET_GESTURE_SELECTOR =
-  "[data-content-sheet], [role='dialog'], [data-sheet-grabber]";
+const SHEET_GESTURE_SELECTOR = "[data-content-sheet], [role='dialog'], [data-sheet-grabber]";
 const FIELD_GESTURE_SELECTOR = "input, textarea, select, [contenteditable='true']";
 
 type Mode = "pending" | "stack" | "blocked";
@@ -26,10 +25,7 @@ function isFieldGestureTarget(target: EventTarget | null): boolean {
  * Buttons/links may start a swipe (click still fires if the finger never locks).
  * Sheets and form fields are left alone so their own drag/scroll wins.
  */
-export function useOrgStackSwipe(opts: {
-  enabled: boolean;
-  onSwipe: (direction: 1 | -1) => void;
-}) {
+export function useOrgStackSwipe(opts: { enabled: boolean; onSwipe: (direction: 1 | -1) => void }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const onSwipeRef = useRef(opts.onSwipe);
   onSwipeRef.current = opts.onSwipe;
@@ -101,8 +97,7 @@ export function useOrgStackSwipe(opts: {
           if (scrollParent) {
             const atTop = scrollParent.scrollTop <= 0;
             const atBottom =
-              scrollParent.scrollTop + scrollParent.clientHeight >=
-              scrollParent.scrollHeight - 1;
+              scrollParent.scrollTop + scrollParent.clientHeight >= scrollParent.scrollHeight - 1;
             const pullingDown = dy > 0;
             const pullingUp = dy < 0;
             if ((pullingDown && !atTop) || (pullingUp && !atBottom)) {
