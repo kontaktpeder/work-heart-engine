@@ -4,7 +4,15 @@ import {
   Link,
   useNavigate,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
 import { z } from "zod";
 import {
   Settings,
@@ -27,6 +35,7 @@ import { ContentSheet } from "@/components/content-sheet";
 import { authSupabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
+import { getNestDepth, subscribeNest } from "@/lib/sheetNest";
 import { useAppFrame } from "@/hooks/useAppFrame";
 import { startOfDay } from "@/lib/time-utils";
 import { StartPane } from "./start";
@@ -93,7 +102,8 @@ function OrgLayout() {
 
   const sheet = search.sheet;
   const section = search.section;
-  const sheetOpen = !!sheet || menuOpen;
+  const nestDepth = useSyncExternalStore(subscribeNest, getNestDepth, () => 0);
+  const sheetOpen = !!sheet || menuOpen || nestDepth > 0;
 
   // Prefetch neighbor orgs so swipe lands warm.
   useEffect(() => {
@@ -128,6 +138,7 @@ function OrgLayout() {
   const switchOrg = useCallback(
     (nextId: string, direction: 1 | -1) => {
       if (switchingRef.current || nextId === orgId) return;
+      if (getNestDepth() > 0) return;
       switchingRef.current = true;
       setStackDir(direction);
       // Persist preference in background — don't block UI.
@@ -203,8 +214,12 @@ function OrgLayout() {
 
   return (
     <div
-      className="mx-auto flex max-w-2xl flex-col overflow-hidden px-5 pt-[max(0.5rem,env(safe-area-inset-top))]"
+      ref={swipeRef}
+      className={`mx-auto flex max-w-2xl flex-col overflow-hidden px-5 pt-[max(0.5rem,env(safe-area-inset-top))] ${
+        canSwipeOrgs ? "touch-pan-y" : ""
+      }`}
       style={{ height: "var(--app-height, 100dvh)" }}
+      aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
     >
       <header className="mb-3 flex shrink-0 items-center justify-between gap-2">
         <button
@@ -242,13 +257,7 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div
-        ref={swipeRef}
-        className={`min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))] ${
-          canSwipeOrgs ? "touch-pan-y" : ""
-        }`}
-        aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
-      >
+      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div
           key={orgId}
           className={`h-full min-h-0 ${canSwipeOrgs ? "org-stack-enter" : ""}`}

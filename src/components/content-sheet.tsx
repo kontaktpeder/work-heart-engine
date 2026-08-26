@@ -4,8 +4,10 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { lockSheetDismiss, unlockSheetDismiss } from "@/lib/sheetGate";
@@ -537,14 +539,23 @@ export function ContentSheet({
     ? `translate3d(0, ${NEST_RECESS_Y_PX}px, 0) scale(${NEST_RECESS_SCALE})`
     : "translate3d(0, 0, 0) scale(1)";
 
-  return (
+  const stopSheetPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  };
+
+  const overlay = (
     <div
+      data-content-sheet
       className={cn(
         "fixed inset-0",
         zClassName,
         (flyingOut || isRecessed) && "pointer-events-none",
       )}
       aria-hidden={isRecessed || undefined}
+      onPointerDown={stopSheetPointer}
+      onPointerMove={stopSheetPointer}
+      onPointerUp={stopSheetPointer}
+      onPointerCancel={stopSheetPointer}
     >
       <div
         className="absolute inset-0 transition-opacity"
@@ -644,4 +655,7 @@ export function ContentSheet({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return overlay;
+  return createPortal(overlay, document.body);
 }

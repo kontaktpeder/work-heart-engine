@@ -5,11 +5,26 @@ const AXIS_LOCK_RATIO = 1.15;
 const STACK_COMMIT_PX = 64;
 const STACK_COMMIT_VELOCITY = 420;
 
+const SHEET_GESTURE_SELECTOR =
+  "[data-content-sheet], [role='dialog'], [data-sheet-grabber]";
+const FIELD_GESTURE_SELECTOR = "input, textarea, select, [contenteditable='true']";
+
 type Mode = "pending" | "stack" | "blocked";
+
+function isSheetGestureTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && !!target.closest(SHEET_GESTURE_SELECTOR);
+}
+
+function isFieldGestureTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && !!target.closest(FIELD_GESTURE_SELECTOR);
+}
 
 /**
  * Vertical swipe (Dagenvår-style) to switch org stack.
  * Attaches pointer listeners to `ref`; call onSwipe(1) next / (-1) previous.
+ *
+ * Buttons/links may start a swipe (click still fires if the finger never locks).
+ * Sheets and form fields are left alone so their own drag/scroll wins.
  */
 export function useOrgStackSwipe(opts: {
   enabled: boolean;
@@ -43,9 +58,7 @@ export function useOrgStackSwipe(opts: {
     const onDown = (e: PointerEvent) => {
       if (!enabledRef.current) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
-      // Don't steal from interactive controls
-      const t = e.target as HTMLElement | null;
-      if (t?.closest("button, a, input, textarea, select, [role='button']")) return;
+      if (isSheetGestureTarget(e.target) || isFieldGestureTarget(e.target)) return;
 
       stateRef.current = {
         mode: "pending",
@@ -76,6 +89,11 @@ export function useOrgStackSwipe(opts: {
         if (ady < PAN_ACTIVATE_PX && adx < PAN_ACTIVATE_PX) return;
         // Vertical wins → org stack
         if (ady >= PAN_ACTIVATE_PX && ady > adx * AXIS_LOCK_RATIO) {
+          // Sheet overlays must keep their own vertical drag.
+          if (isSheetGestureTarget(e.target)) {
+            s.mode = "blocked";
+            return;
+          }
           // If inside a nested scroller, only allow when pulling past edge
           const scrollParent = (e.target as HTMLElement | null)?.closest(
             "[data-org-stack-scroll]",
