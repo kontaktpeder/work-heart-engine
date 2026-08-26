@@ -172,6 +172,8 @@ export type Database = {
           created_at: string
           id: string
           organization_id: string
+          report_employee_name: string | null
+          report_manager_name: string | null
           role: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
@@ -179,6 +181,8 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id: string
+          report_employee_name?: string | null
+          report_manager_name?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
@@ -186,6 +190,8 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id?: string
+          report_employee_name?: string | null
+          report_manager_name?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           user_id?: string
         }
@@ -645,6 +651,14 @@ export type Database = {
         Returns: boolean
       }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
+      update_my_report_names: {
+        Args: {
+          _org_id: string
+          _employee_name: string | null
+          _manager_name: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       api_scope:

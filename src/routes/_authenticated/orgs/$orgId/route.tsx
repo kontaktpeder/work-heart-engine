@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  redirect,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, redirect, Link, useNavigate } from "@tanstack/react-router";
 import {
   useCallback,
   useEffect,
@@ -14,17 +9,13 @@ import {
   type CSSProperties,
 } from "react";
 import { z } from "zod";
-import {
-  Settings,
-  ArrowLeftRight,
-  LogOut,
-  ChevronRight,
-} from "lucide-react";
+import { Settings, ArrowLeftRight, LogOut, ChevronRight } from "lucide-react";
 import {
   fetchOrganizations,
   fetchProjects,
   fetchRates,
   fetchTimeEntries,
+  fetchMyOrgMembership,
   setDefaultOrgId,
   type Organization,
 } from "@/lib/work-core";
@@ -44,15 +35,23 @@ import { ReportsPane } from "./reports";
 import { ProjectsPane } from "./settings.projects";
 import { RatesPane } from "./settings.rates";
 import { OrganizationSettingsPane } from "./settings.organization";
+import { ReportSettingsPane } from "./settings.report";
 import { MembersPane } from "./settings.members";
 import { FinanceIntegrationPane } from "./settings.finance-integration";
 import { ApiKeysPane } from "./settings.api-keys";
+import {
+  canOpenSettingsSection,
+  SETTINGS_ITEMS,
+  visibleSettingsItems,
+  type OrgMembership,
+  type SettingsSection,
+} from "@/lib/org-access";
 
 const OrgSearch = z.object({
   return: z.string().optional(),
   sheet: z.enum(["timer", "reports", "settings"]).optional(),
   section: z
-    .enum(["members", "organization", "projects", "rates", "finance", "api-keys"])
+    .enum(["report", "members", "organization", "projects", "rates", "finance", "api-keys"])
     .optional(),
 });
 
@@ -69,29 +68,44 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
     });
     const org = orgs.find((o) => o.id === params.orgId);
     if (!org) throw redirect({ to: "/orgs" });
-    return { org, orgId: params.orgId };
+    const membership = await qc.ensureQueryData({
+      queryKey: ["org-membership", params.orgId],
+      queryFn: () => fetchMyOrgMembership(params.orgId),
+      staleTime: 60_000,
+    });
+    return { org, orgId: params.orgId, membership };
   },
   component: OrgLayout,
 });
 
-const settingsItems = [
-  { section: "members" as const, label: "Medlemmer", hint: "Inviter kollega – egne timer" },
-  { section: "organization" as const, label: "Organisasjon", hint: "Navn og rapport" },
-  { section: "projects" as const, label: "Prosjekter", hint: "Felles prosjektliste" },
-  { section: "rates" as const, label: "Satser", hint: "Felles timepriser" },
-  { section: "finance" as const, label: "Finance", hint: "Eksport og kobling" },
-  { section: "api-keys" as const, label: "API-nøkler", hint: "Nøkler for integrasjoner" },
-];
-
 function OrgLayout() {
   useAppFrame();
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+  const {
+    org,
+    orgId,
+    membership: initialMembership,
+  } = Route.useRouteContext() as {
+    org: Organization;
+    orgId: string;
+    membership: OrgMembership | null;
+  };
   const search = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const switchingRef = useRef(false);
   const [stackDir, setStackDir] = useState(0);
+
+  const membershipQ = useQuery({
+    queryKey: ["org-membership", orgId],
+    queryFn: () => fetchMyOrgMembership(orgId),
+    initialData: initialMembership ?? undefined,
+    staleTime: 60_000,
+  });
+  const membership = membershipQ.data ?? initialMembership;
+  const role = membership?.role ?? null;
+  const roleKnown = membershipQ.isSuccess || initialMembership != null;
+  const settingsItems = useMemo(() => visibleSettingsItems(role), [role]);
 
   const orgsQ = useQuery({
     queryKey: ["orgs"],
@@ -200,6 +214,21 @@ function OrgLayout() {
   function closeSection() {
     setSheet("settings", undefined);
   }
+
+  useEffect(() => {
+    if (!section || !roleKnown) return;
+    if (!canOpenSettingsSection(section as SettingsSection, role)) {
+      void navigate({
+        to: "/orgs/$orgId/start",
+        params: { orgId },
+        search: {
+          return: search.return,
+          sheet: "settings",
+        },
+        replace: true,
+      });
+    }
+  }, [section, role, roleKnown, navigate, orgId, search.return]);
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -318,16 +347,17 @@ function OrgLayout() {
         </ContentSheet>
       ) : null}
 
-      {sheet === "settings" && section ? (
+      {sheet === "settings" && section && canOpenSettingsSection(section, role) ? (
         <ContentSheet
           onClose={closeSection}
-          title={settingsItems.find((i) => i.section === section)?.label ?? "Innstillinger"}
+          title={SETTINGS_ITEMS.find((i) => i.section === section)?.label ?? "Innstillinger"}
           zClassName="z-[60]"
         >
           <div
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
+            {section === "report" ? <ReportSettingsPane /> : null}
             {section === "members" ? <MembersPane /> : null}
             {section === "organization" ? <OrganizationSettingsPane /> : null}
             {section === "projects" ? <ProjectsPane /> : null}
@@ -339,7 +369,11 @@ function OrgLayout() {
       ) : null}
 
       {menuOpen ? (
-        <ContentSheet onClose={() => setMenuOpen(false)} title={org.name} detents={["half", "full"]}>
+        <ContentSheet
+          onClose={() => setMenuOpen(false)}
+          title={org.name}
+          detents={["half", "full"]}
+        >
           <div
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"

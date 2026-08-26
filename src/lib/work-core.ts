@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { isPersonalOrganizationName } from "@/lib/invite-auth";
+import type { OrgMembership, OrgRole } from "@/lib/org-access";
 
 export type Organization = {
   id: string;
@@ -124,26 +125,63 @@ export async function setDefaultOrgId(orgId: string): Promise<void> {
 export async function fetchOrganizations(): Promise<Organization[]> {
   const { data, error } = await supabase
     .from("organizations")
-    .select(
-      "id, name, owner_id, report_company_name, report_employee_name, report_manager_name",
-    )
+    .select("id, name, owner_id, report_company_name, report_employee_name, report_manager_name")
     .order("created_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Organization[];
+}
+
+export async function fetchMyOrgMembership(orgId: string): Promise<OrgMembership | null> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+
+  const full = await supabase
+    .from("organization_members")
+    .select("role, report_employee_name, report_manager_name")
+    .eq("organization_id", orgId)
+    .eq("user_id", u.user.id)
+    .maybeSingle();
+  if (!full.error && full.data) {
+    return {
+      role: full.data.role as OrgRole,
+      report_employee_name: full.data.report_employee_name ?? null,
+      report_manager_name: full.data.report_manager_name ?? null,
+    };
+  }
+
+  const fallback = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", orgId)
+    .eq("user_id", u.user.id)
+    .maybeSingle();
+  if (fallback.error || !fallback.data) return null;
+  return {
+    role: fallback.data.role as OrgRole,
+    report_employee_name: null,
+    report_manager_name: null,
+  };
+}
+
+export async function updateMyReportNames(
+  orgId: string,
+  fields: { employeeName: string | null; managerName: string | null },
+): Promise<void> {
+  const { error } = await supabase.rpc("update_my_report_names", {
+    _org_id: orgId,
+    _employee_name: fields.employeeName,
+    _manager_name: fields.managerName,
+  });
+  if (error) throw error;
 }
 
 export async function updateOrganizationReportFields(
   orgId: string,
   fields: {
     report_company_name: string | null;
-    report_employee_name: string | null;
-    report_manager_name: string | null;
   },
 ): Promise<void> {
-  const { error } = await supabase
-    .from("organizations")
-    .update(fields)
-    .eq("id", orgId);
+  const { error } = await supabase.from("organizations").update(fields).eq("id", orgId);
   if (error) throw error;
 }
 
@@ -229,9 +267,7 @@ export async function fetchFrequentRates(orgId: string, limit = 5): Promise<Rate
     .from("rates")
     .select("id, organization_id, name, amount, currency, description, is_active")
     .in("id", ids);
-  const map = new Map(
-    (rates ?? []).map((r) => [r.id, { ...r, amount: Number(r.amount) } as Rate]),
-  );
+  const map = new Map((rates ?? []).map((r) => [r.id, { ...r, amount: Number(r.amount) } as Rate]));
   return ids.map((id) => map.get(id)).filter((x): x is Rate => !!x);
 }
 
@@ -284,7 +320,9 @@ export async function fetchActiveSession(): Promise<WorkSession | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("work_sessions")
-    .select("id, user_id, organization_id, project_id, rate_id, started_at, comment, customer, task")
+    .select(
+      "id, user_id, organization_id, project_id, rate_id, started_at, comment, customer, task",
+    )
     .eq("user_id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -359,10 +397,7 @@ export function sumPauseMinutes(marks: TimeEntryMark[]): number {
   }, 0);
 }
 
-export async function attachMarksToEntry(
-  sessionId: string,
-  timeEntryId: string,
-): Promise<void> {
+export async function attachMarksToEntry(sessionId: string, timeEntryId: string): Promise<void> {
   const { error } = await supabase
     .from("time_entry_marks")
     .update({ time_entry_id: timeEntryId, work_session_id: null })

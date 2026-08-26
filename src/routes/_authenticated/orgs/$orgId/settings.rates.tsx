@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchRates, type Rate } from "@/lib/work-core";
+import { canEditCatalog, isOrgAdmin, type OrgMembership } from "@/lib/org-access";
 import { ContentSheet } from "@/components/content-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
 import { sheetFieldClass, sheetTextareaClass } from "@/lib/sheetField";
@@ -23,7 +24,13 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/rates
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
 export function RatesPane() {
-  const { org, orgId } = orgRoute.useRouteContext();
+  const { org, orgId, membership } = orgRoute.useRouteContext() as {
+    org: { name: string };
+    orgId: string;
+    membership: OrgMembership | null;
+  };
+  const canEdit = canEditCatalog(membership?.role);
+  const canDelete = isOrgAdmin(membership?.role);
   const qc = useQueryClient();
   const ratesQ = useQuery({
     queryKey: ["rates", orgId, "all"],
@@ -53,18 +60,20 @@ export function RatesPane() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">i {org.name}</p>
-        <button
-          onClick={() =>
-            tryOpenSheet(() => {
-              setEditing(null);
-              setOpen(true);
-            })
-          }
-          className="tap-target bg-primary text-primary-foreground h-11 px-4"
-        >
-          <Plus className="w-5 h-5 mr-1" />
-          Ny
-        </button>
+        {canEdit ? (
+          <button
+            onClick={() =>
+              tryOpenSheet(() => {
+                setEditing(null);
+                setOpen(true);
+              })
+            }
+            className="tap-target bg-primary text-primary-foreground h-11 px-4"
+          >
+            <Plus className="w-5 h-5 mr-1" />
+            Ny
+          </button>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -88,31 +97,37 @@ export function RatesPane() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => toggleActive(r)}
-                className="text-xs text-muted-foreground px-2 py-1"
-              >
-                {r.is_active ? "Arkiver" : "Aktiver"}
-              </button>
-              <button
-                onClick={() =>
-                  tryOpenSheet(() => {
-                    setEditing(r);
-                    setOpen(true);
-                  })
-                }
-                className="p-2 text-muted-foreground hover:text-foreground"
-                aria-label="Rediger"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => remove(r)}
-                className="p-2 text-muted-foreground hover:text-destructive"
-                aria-label="Slett"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {canEdit ? (
+                <button
+                  onClick={() => toggleActive(r)}
+                  className="text-xs text-muted-foreground px-2 py-1"
+                >
+                  {r.is_active ? "Arkiver" : "Aktiver"}
+                </button>
+              ) : null}
+              {canEdit ? (
+                <button
+                  onClick={() =>
+                    tryOpenSheet(() => {
+                      setEditing(r);
+                      setOpen(true);
+                    })
+                  }
+                  className="p-2 text-muted-foreground hover:text-foreground"
+                  aria-label="Rediger"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              ) : null}
+              {canDelete ? (
+                <button
+                  onClick={() => remove(r)}
+                  className="p-2 text-muted-foreground hover:text-destructive"
+                  aria-label="Slett"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              ) : null}
             </div>
           </div>
         ))}
