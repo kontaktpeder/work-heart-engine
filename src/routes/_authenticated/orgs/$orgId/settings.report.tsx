@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { fetchMyOrgMembership, updateMyReportNames, type Organization } from "@/lib/work-core";
-import { hasRequiredEmployeeName } from "@/lib/org-access";
+import { hasRequiredEmployeeName, type OrgMembership } from "@/lib/org-access";
 import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/report")({
@@ -21,14 +21,20 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/repor
 const orgRoute = getRouteApi("/_authenticated/orgs/$orgId");
 
 export function ReportSettingsPane() {
-  const { org, orgId } = orgRoute.useRouteContext() as {
+  const {
+    org,
+    orgId,
+    membership: initialMembership,
+  } = orgRoute.useRouteContext() as {
     org: Organization;
     orgId: string;
+    membership: OrgMembership | null;
   };
   const qc = useQueryClient();
   const membershipQ = useQuery({
     queryKey: ["org-membership", orgId],
     queryFn: () => fetchMyOrgMembership(orgId),
+    initialData: initialMembership ?? undefined,
   });
 
   const [employeeName, setEmployeeName] = useState("");

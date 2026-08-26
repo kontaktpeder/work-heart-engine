@@ -29,7 +29,7 @@ import {
 } from "@/lib/pay-cycle";
 import { ExportApprovalSheet } from "@/components/export-approval-sheet";
 import { tryOpenSheet } from "@/lib/sheetGate";
-import { hasRequiredEmployeeName, isOrgAdmin } from "@/lib/org-access";
+import { hasRequiredEmployeeName, isOrgAdmin, type OrgMembership } from "@/lib/org-access";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/reports")({
   beforeLoad: ({ params, search }) => {
@@ -48,12 +48,21 @@ type PeriodPreset = "current" | "previous" | "month" | "custom";
 type PendingExport = "csv" | "pdf" | "finance" | null;
 
 export function ReportsPane() {
-  const { org, orgId } = orgRoute.useRouteContext();
+  const {
+    org,
+    orgId,
+    membership: initialMembership,
+  } = orgRoute.useRouteContext() as {
+    org: { name: string; report_company_name: string | null };
+    orgId: string;
+    membership: OrgMembership | null;
+  };
   const search = orgRoute.useSearch();
   const navigate = useNavigate();
   const membershipQ = useQuery({
     queryKey: ["org-membership", orgId],
     queryFn: () => fetchMyOrgMembership(orgId),
+    initialData: initialMembership ?? undefined,
   });
   const membership = membershipQ.data;
   const canFinanceExport = isOrgAdmin(membership?.role);
@@ -228,6 +237,7 @@ export function ReportsPane() {
   }
 
   function requestExport(kind: NonNullable<PendingExport>) {
+    if (membershipQ.isLoading && !membership) return;
     if (!hasRequiredEmployeeName(employeeName)) {
       setMissingEmployee(true);
       toast.error("Fyll inn ansattnavn før eksport", {
