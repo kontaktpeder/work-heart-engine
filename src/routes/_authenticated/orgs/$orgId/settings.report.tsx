@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { fetchMyOrgMembership, updateMyReportNames, type Organization } from "@/lib/work-core";
-import { hasRequiredEmployeeName, type OrgMembership } from "@/lib/org-access";
+import type { OrgMembership } from "@/lib/org-access";
 import { sheetFieldClass } from "@/lib/sheetField";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/report")({
@@ -64,8 +64,8 @@ export function ReportSettingsPane() {
         <div>
           <p className="text-sm font-semibold">Navn på rapporten</p>
           <p className="text-xs text-muted-foreground">
-            Ansattnavn må fylles inn før CSV/PDF-eksport. Dette er ditt navn — ikke felles for hele
-            arbeidsrommet.
+            Ditt navn på CSV/PDF — ikke felles for arbeidsrommet. Feltene kan tømmes og lagres tomme
+            før kontoen gis videre. Ansattnavn kreves først ved eksport.
           </p>
         </div>
         <div>
@@ -82,7 +82,6 @@ export function ReportSettingsPane() {
             onChange={(e) => setEmployeeName(e.target.value)}
             className={`${sheetFieldClass} mt-1`}
             placeholder="Navn på rapport"
-            required
           />
         </div>
         <div>
@@ -97,11 +96,7 @@ export function ReportSettingsPane() {
             placeholder="Leder / godkjenner"
           />
         </div>
-        <Button
-          type="button"
-          onClick={() => saveMut.mutate()}
-          disabled={saveMut.isPending || !hasRequiredEmployeeName(employeeName)}
-        >
+        <Button type="button" onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
           {saveMut.isPending ? "Lagrer…" : "Lagre"}
         </Button>
       </div>
