@@ -497,6 +497,7 @@ export function ContentSheet({
         frozeScroll: false,
       };
       gestureRef.current = state;
+      freezeNativeScroll(state);
       if (fromGrabber) {
         beginDrag(state, event.clientY, event.timeStamp);
       }
@@ -534,7 +535,11 @@ export function ContentSheet({
     };
 
     const onTouchMove = (event: TouchEvent) => {
-      if (gestureRef.current?.dragging) {
+      const state = gestureRef.current;
+      if (!state) return;
+      const y = event.touches[0]?.clientY;
+      const moved = y == null ? true : Math.abs(y - state.startY) >= 3;
+      if (state.dragging || moved) {
         event.preventDefault();
       }
     };
@@ -543,7 +548,7 @@ export function ContentSheet({
     card.addEventListener("pointermove", onPointerMove, { passive: false });
     card.addEventListener("pointerup", finishPointer);
     card.addEventListener("pointercancel", finishPointer);
-    card.addEventListener("touchmove", onTouchMove, { passive: false });
+    card.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
 
     return () => {
       card.removeEventListener("pointerdown", onPointerDown);
@@ -626,6 +631,7 @@ export function ContentSheet({
                 "rounded-t-lg rounded-b-none border border-border border-b-0",
                 className,
               )}
+              style={{ touchAction: "none" }}
             >
               <div
                 data-sheet-grabber

@@ -100,8 +100,11 @@ body {
   overscroll-behavior: contain;
 }
 
-/* Sheet lists: JS owns pan so sheet Y and scrollTop stay one chain. */
-[data-content-sheet] [data-sheet-scroll] {
+/* Sheet lists: JS owns pan so sheet Y and scrollTop stay one chain.
+   Descendants must also be none — a button's default `auto` would let
+   Chrome native-scroll the list and never expand the sheet. */
+[data-content-sheet] [data-sheet-scroll],
+[data-content-sheet] [data-sheet-scroll] * {
   touch-action: none;
 }
 [data-content-sheet] input,
