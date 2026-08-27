@@ -62,7 +62,12 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
   if (!open) return null;
 
   return (
-    <ContentSheet onClose={onClose} title="Velg sats" zClassName="z-[90]" detents={["half", "full"]}>
+    <ContentSheet
+      onClose={onClose}
+      title="Velg sats"
+      zClassName="z-[90]"
+      detents={["half", "full"]}
+    >
       <div
         data-sheet-scroll
         className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
@@ -75,7 +80,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Søk i satser…"
-                className="w-full h-11 pl-9 pr-3 rounded-xl bg-input border border-border text-base"
+                className="w-full h-11 pl-9 pr-3 rounded-md bg-input border border-border text-base"
               />
             </div>
 
@@ -126,7 +131,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="f.eks. Rigging"
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border text-base"
+                className="w-full h-11 px-3 rounded-md bg-input border border-border text-base"
                 required
               />
             </div>
@@ -138,7 +143,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
                 value={newAmount}
                 onChange={(e) => setNewAmount(e.target.value)}
                 placeholder="f.eks. 210"
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border"
+                className="w-full h-11 px-3 rounded-md bg-input border border-border"
                 required
               />
             </div>
@@ -153,7 +158,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
               <button
                 type="submit"
                 disabled={busy || !newName.trim() || !newAmount}
-                className="flex-1 tap-target bg-primary text-primary-foreground disabled:opacity-60"
+                className="flex-1 tap-target cta-brand bg-primary text-primary-foreground disabled:opacity-60"
               >
                 Opprett
               </button>
@@ -169,7 +174,7 @@ function RateRow({ rate, active, onPick }: { rate: Rate; active: boolean; onPick
   return (
     <button
       onClick={onPick}
-      className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between ${
+      className={`w-full text-left p-3 rounded-md border transition flex items-center justify-between ${
         active ? "border-primary bg-primary/10" : "border-border bg-card hover:bg-accent"
       }`}
     >

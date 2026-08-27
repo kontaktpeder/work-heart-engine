@@ -38,6 +38,7 @@ import { Route as ApiPublicV1ModuleOrganizationRouteImport } from './routes/api/
 import { Route as ApiPublicV1ModuleInfoRouteImport } from './routes/api/public/v1/module.info'
 import { Route as ApiPublicV1ModuleHealthRouteImport } from './routes/api/public/v1/module.health'
 import { Route as ApiPublicV1ModuleAlertsRouteImport } from './routes/api/public/v1/module.alerts'
+import { Route as AuthenticatedOrgsOrgIdSettingsReportRouteImport } from './routes/_authenticated/orgs/$orgId/settings.report'
 import { Route as AuthenticatedOrgsOrgIdSettingsRatesRouteImport } from './routes/_authenticated/orgs/$orgId/settings.rates'
 import { Route as AuthenticatedOrgsOrgIdSettingsProjectsRouteImport } from './routes/_authenticated/orgs/$orgId/settings.projects'
 import { Route as AuthenticatedOrgsOrgIdSettingsOrganizationRouteImport } from './routes/_authenticated/orgs/$orgId/settings.organization'
@@ -200,6 +201,12 @@ const ApiPublicV1ModuleAlertsRoute = ApiPublicV1ModuleAlertsRouteImport.update({
   path: '/api/public/v1/module/alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOrgsOrgIdSettingsReportRoute =
+  AuthenticatedOrgsOrgIdSettingsReportRouteImport.update({
+    id: '/report',
+    path: '/report',
+    getParentRoute: () => AuthenticatedOrgsOrgIdSettingsRoute,
+  } as any)
 const AuthenticatedOrgsOrgIdSettingsRatesRoute =
   AuthenticatedOrgsOrgIdSettingsRatesRouteImport.update({
     id: '/rates',
@@ -272,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/orgs/$orgId/settings/report': typeof AuthenticatedOrgsOrgIdSettingsReportRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
@@ -306,6 +314,7 @@ export interface FileRoutesByTo {
   '/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/orgs/$orgId/settings/report': typeof AuthenticatedOrgsOrgIdSettingsReportRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
@@ -345,6 +354,7 @@ export interface FileRoutesById {
   '/_authenticated/orgs/$orgId/settings/organization': typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   '/_authenticated/orgs/$orgId/settings/projects': typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   '/_authenticated/orgs/$orgId/settings/rates': typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  '/_authenticated/orgs/$orgId/settings/report': typeof AuthenticatedOrgsOrgIdSettingsReportRoute
   '/api/public/v1/module/alerts': typeof ApiPublicV1ModuleAlertsRoute
   '/api/public/v1/module/health': typeof ApiPublicV1ModuleHealthRoute
   '/api/public/v1/module/info': typeof ApiPublicV1ModuleInfoRoute
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/orgs/$orgId/settings/report'
     | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/orgs/$orgId/settings/organization'
     | '/orgs/$orgId/settings/projects'
     | '/orgs/$orgId/settings/rates'
+    | '/orgs/$orgId/settings/report'
     | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
@@ -456,6 +468,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orgs/$orgId/settings/organization'
     | '/_authenticated/orgs/$orgId/settings/projects'
     | '/_authenticated/orgs/$orgId/settings/rates'
+    | '/_authenticated/orgs/$orgId/settings/report'
     | '/api/public/v1/module/alerts'
     | '/api/public/v1/module/health'
     | '/api/public/v1/module/info'
@@ -684,6 +697,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ModuleAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/orgs/$orgId/settings/report': {
+      id: '/_authenticated/orgs/$orgId/settings/report'
+      path: '/report'
+      fullPath: '/orgs/$orgId/settings/report'
+      preLoaderRoute: typeof AuthenticatedOrgsOrgIdSettingsReportRouteImport
+      parentRoute: typeof AuthenticatedOrgsOrgIdSettingsRoute
+    }
     '/_authenticated/orgs/$orgId/settings/rates': {
       id: '/_authenticated/orgs/$orgId/settings/rates'
       path: '/rates'
@@ -743,6 +763,7 @@ interface AuthenticatedOrgsOrgIdSettingsRouteChildren {
   AuthenticatedOrgsOrgIdSettingsOrganizationRoute: typeof AuthenticatedOrgsOrgIdSettingsOrganizationRoute
   AuthenticatedOrgsOrgIdSettingsProjectsRoute: typeof AuthenticatedOrgsOrgIdSettingsProjectsRoute
   AuthenticatedOrgsOrgIdSettingsRatesRoute: typeof AuthenticatedOrgsOrgIdSettingsRatesRoute
+  AuthenticatedOrgsOrgIdSettingsReportRoute: typeof AuthenticatedOrgsOrgIdSettingsReportRoute
   AuthenticatedOrgsOrgIdSettingsIndexRoute: typeof AuthenticatedOrgsOrgIdSettingsIndexRoute
 }
 
@@ -760,6 +781,8 @@ const AuthenticatedOrgsOrgIdSettingsRouteChildren: AuthenticatedOrgsOrgIdSetting
       AuthenticatedOrgsOrgIdSettingsProjectsRoute,
     AuthenticatedOrgsOrgIdSettingsRatesRoute:
       AuthenticatedOrgsOrgIdSettingsRatesRoute,
+    AuthenticatedOrgsOrgIdSettingsReportRoute:
+      AuthenticatedOrgsOrgIdSettingsReportRoute,
     AuthenticatedOrgsOrgIdSettingsIndexRoute:
       AuthenticatedOrgsOrgIdSettingsIndexRoute,
   }

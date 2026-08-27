@@ -4,8 +4,8 @@
   "description": "Work Core – verdens enkleste arbeids- og timemotor.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1d24",
-  "theme_color": "#1a1d24",
+  "background_color": "#111511",
+  "theme_color": "#111511",
   "lang": "nb",
   "icons": [
     {

@@ -7,10 +7,8 @@ import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  updateOrganizationReportFields,
-  type Organization,
-} from "@/lib/work-core";
+import { updateOrganizationReportFields, type Organization } from "@/lib/work-core";
+import { isOrgAdmin, type OrgMembership } from "@/lib/org-access";
 import {
   getOrganizationPlatformLink,
   saveOrganizationPlatformLink,
@@ -40,23 +38,24 @@ async function copyText(value: string, label: string) {
 }
 
 export function OrganizationSettingsPane() {
-  const { org, orgId } = orgRoute.useRouteContext() as {
+  const { org, orgId, membership } = orgRoute.useRouteContext() as {
     org: Organization;
     orgId: string;
+    membership: OrgMembership | null;
   };
   const qc = useQueryClient();
   const getFn = useServerFn(getOrganizationPlatformLink);
   const saveFn = useServerFn(saveOrganizationPlatformLink);
+  const admin = isOrgAdmin(membership?.role);
 
   const linkQ = useQuery({
     queryKey: ["org-platform-link", orgId],
     queryFn: () => getFn({ data: { organizationId: orgId } }),
+    enabled: admin,
   });
 
   const [platformOrgId, setPlatformOrgId] = useState("");
   const [companyName, setCompanyName] = useState(org.report_company_name ?? org.name ?? "");
-  const [employeeName, setEmployeeName] = useState(org.report_employee_name ?? "");
-  const [managerName, setManagerName] = useState(org.report_manager_name ?? "");
   const [reportBusy, setReportBusy] = useState(false);
 
   useEffect(() => {
@@ -65,9 +64,7 @@ export function OrganizationSettingsPane() {
 
   useEffect(() => {
     setCompanyName(org.report_company_name ?? org.name ?? "");
-    setEmployeeName(org.report_employee_name ?? "");
-    setManagerName(org.report_manager_name ?? "");
-  }, [org.id, org.name, org.report_company_name, org.report_employee_name, org.report_manager_name]);
+  }, [org.id, org.name, org.report_company_name]);
 
   const saveMut = useMutation({
     mutationFn: () =>
@@ -89,12 +86,9 @@ export function OrganizationSettingsPane() {
     try {
       await updateOrganizationReportFields(orgId, {
         report_company_name: companyName.trim() || null,
-        report_employee_name: employeeName.trim() || null,
-        report_manager_name: managerName.trim() || null,
       });
-      toast.success("Rapportfelter lagret");
-      // Force org reload on next navigation
-      window.location.reload();
+      toast.success("Firmanavn lagret");
+      await qc.invalidateQueries({ queryKey: ["orgs"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Kunne ikke lagre");
     } finally {
@@ -102,21 +96,20 @@ export function OrganizationSettingsPane() {
     }
   }
 
-  const appBase =
-    typeof window !== "undefined" ? window.location.origin : "https://…";
+  const appBase = typeof window !== "undefined" ? window.location.origin : "https://…";
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border p-4">
+      <div className="rounded-md border border-border p-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Navn</p>
         <p className="text-lg font-medium">{org.name}</p>
       </div>
 
-      <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="rounded-md border border-border p-4 space-y-3">
         <div>
-          <p className="text-sm font-semibold">Rapport (e-skjenk)</p>
+          <p className="text-sm font-semibold">Firmanavn på rapport</p>
           <p className="text-xs text-muted-foreground">
-            Forhåndsutfylt i CSV/PDF-header. Periode settes ved eksport.
+            Felles for arbeidsrommet. Ansatt og leder fyller hver person inn under Rapport.
           </p>
         </div>
         <div>
@@ -128,36 +121,25 @@ export function OrganizationSettingsPane() {
             placeholder={org.name}
           />
         </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Ansatt</label>
-          <input
-            value={employeeName}
-            onChange={(e) => setEmployeeName(e.target.value)}
-            className={`${sheetFieldClass} mt-1`}
-            placeholder="Navn på rapport"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Leder</label>
-          <input
-            value={managerName}
-            onChange={(e) => setManagerName(e.target.value)}
-            className={`${sheetFieldClass} mt-1`}
-            placeholder="Leder / godkjenner"
-          />
-        </div>
         <Button type="button" onClick={saveReportFields} disabled={reportBusy}>
-          {reportBusy ? "Lagrer…" : "Lagre rapportfelter"}
+          {reportBusy ? "Lagrer…" : "Lagre firmanavn"}
         </Button>
+        <Link
+          to="/orgs/$orgId/settings/report"
+          params={{ orgId }}
+          className="inline-flex text-sm text-primary hover:underline"
+        >
+          Ansatt og leder (per person) →
+        </Link>
       </div>
 
-      <div className="rounded-lg border border-border p-4 space-y-4">
+      <div className="rounded-md border border-border p-4 space-y-4">
         <div>
           <h2 className="font-medium">Platform-kobling (Nexus)</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Bruk disse verdiene når du kobler Work i Nexus → Moduler. Opprett en
-            API-nøkkel med <code className="font-mono text-xs">platform:read</code>{" "}
-            + <code className="font-mono text-xs">platform:verify</code>.
+            Bruk disse verdiene når du kobler Work i Nexus → Moduler. Opprett en API-nøkkel med{" "}
+            <code className="font-mono text-xs">platform:read</code> +{" "}
+            <code className="font-mono text-xs">platform:verify</code>.
           </p>
         </div>
 
@@ -226,7 +208,7 @@ export function OrganizationSettingsPane() {
       <Link
         to="/orgs/$orgId/settings/finance-integration"
         params={{ orgId }}
-        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+        className="block rounded-md border border-border p-4 hover:border-primary transition"
       >
         <p className="font-medium">Finance integration →</p>
         <p className="text-sm text-muted-foreground">
@@ -237,7 +219,7 @@ export function OrganizationSettingsPane() {
       <Link
         to="/orgs/$orgId/settings/api-keys"
         params={{ orgId }}
-        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+        className="block rounded-md border border-border p-4 hover:border-primary transition"
       >
         <p className="font-medium">Manage API keys →</p>
         <p className="text-sm text-muted-foreground">

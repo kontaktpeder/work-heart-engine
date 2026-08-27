@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate, getRouteApi } from "@tanstack/react
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
-import { ArrowRight, Building2, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandWordmark } from "@/components/brand-mark";
 import { repairWorkIdentityWorkspace } from "@/lib/identity.functions";
 import { fetchDefaultOrgId, fetchOrganizations, setDefaultOrgId } from "@/lib/work-core";
 
@@ -45,10 +46,16 @@ function OrgsPicker() {
   }
 
   return (
-    <div className="scroll-touch mx-auto h-full max-w-2xl space-y-4 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]" style={{ height: "var(--app-height, 100dvh)" }}>
+    <div
+      className="scroll-touch mx-auto h-full max-w-2xl space-y-4 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]"
+      style={{ height: "var(--app-height, 100dvh)" }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Velg organisasjon</h1>
+          <BrandWordmark size="sm" className="block" />
+          <h1 className="mt-3 font-display text-3xl font-bold uppercase tracking-wide">
+            Velg organisasjon
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Alt du gjør etter dette skjer inne i det valgte arbeidsrommet.
           </p>
@@ -74,14 +81,12 @@ function OrgsPicker() {
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 rounded-xl bg-accent inline-flex items-center justify-center shrink-0">
-                  <Building2 className="w-5 h-5" />
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center bg-primary font-display text-lg font-bold text-primary-foreground">
+                  {o.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <div className="font-semibold truncate">{o.name}</div>
-                  {isDefault && (
-                    <div className="text-xs text-primary">Standard</div>
-                  )}
+                  {isDefault && <div className="stamp text-primary">Standard</div>}
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-muted-foreground" />

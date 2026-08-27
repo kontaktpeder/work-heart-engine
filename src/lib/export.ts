@@ -31,14 +31,14 @@ function fmtHours(min: number): string {
 }
 
 export function buildReportMeta(
-  org: Organization,
+  org: Pick<Organization, "name" | "report_company_name">,
   periodLabel: string,
-  fallbackEmployee?: string | null,
+  names: { employeeName?: string | null; managerName?: string | null } = {},
 ): ReportMeta {
   return {
     companyName: (org.report_company_name || org.name || "").trim(),
-    employeeName: (org.report_employee_name || fallbackEmployee || "").trim(),
-    managerName: (org.report_manager_name || "").trim(),
+    employeeName: (names.employeeName || "").trim(),
+    managerName: (names.managerName || "").trim(),
     periodLabel,
   };
 }
@@ -92,18 +92,24 @@ function csvEscape(v: string | number | null | undefined): string {
   return s;
 }
 
-export function buildCsv(
-  rows: ExportRow[],
-  meta: ReportMeta,
-  filename = "prosjekttimeliste.csv",
-) {
+export function buildCsv(rows: ExportRow[], meta: ReportMeta, filename = "prosjekttimeliste.csv") {
   const lines: string[] = [
     ["Firmanavn", meta.companyName].map(csvEscape).join(";"),
     ["Ansatt", meta.employeeName].map(csvEscape).join(";"),
     ["Periode", meta.periodLabel].map(csvEscape).join(";"),
     ["Leder", meta.managerName].map(csvEscape).join(";"),
     "",
-    ["Dato", "Kunde", "Prosjekt", "Oppgave", "Starttid", "Sluttid", "Pause", "Arbeidede timer", "Notater"]
+    [
+      "Dato",
+      "Kunde",
+      "Prosjekt",
+      "Oppgave",
+      "Starttid",
+      "Sluttid",
+      "Pause",
+      "Arbeidede timer",
+      "Notater",
+    ]
       .map(csvEscape)
       .join(";"),
   ];
@@ -129,9 +135,7 @@ export function buildCsv(
   const totalMin = Math.round(rows.reduce((s, r) => s + r.hours * 60, 0));
   lines.push("");
   lines.push(
-    ["", "", "", "", "", "", "Prosjekt totalt", fmtHours(totalMin), ""]
-      .map(csvEscape)
-      .join(";"),
+    ["", "", "", "", "", "", "Prosjekt totalt", fmtHours(totalMin), ""].map(csvEscape).join(";"),
   );
 
   const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -161,7 +165,9 @@ export function buildPdf(
   }
   doc.setTextColor(0);
 
-  const head = [["Dato", "Kunde", "Prosjekt", "Oppgave", "Start", "Slutt", "Pause", "Timer", "Notater"]];
+  const head = [
+    ["Dato", "Kunde", "Prosjekt", "Oppgave", "Start", "Slutt", "Pause", "Timer", "Notater"],
+  ];
   const body = rows.map((r) => [
     r.date,
     r.customer,

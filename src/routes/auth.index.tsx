@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getNexusAppUrl, isSharedAuthEnabled } from "@/integrations/supabase/shared-auth";
 import { enterAppAfterAuth, readInviteLanding } from "@/lib/invite-auth";
 import { InviteAcceptPane } from "@/components/invite-accept";
+import { BrandLockup } from "@/components/brand-mark";
 
 export const Route = createFileRoute("/auth/")({
   ssr: false,
@@ -63,19 +64,16 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 bg-background">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-12 bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground text-2xl font-bold mb-4">
-            W
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Work Core</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Logg inn med e-post og passord
-          </p>
+        <div className="mb-10 text-center">
+          <h1 className="sr-only">Work Core</h1>
+          <BrandLockup size="lg" />
+          <p className="stamp mt-4 text-muted-foreground">Logg inn med e-post og passord</p>
         </div>
 
-        <div className="surface-card p-5 space-y-4">
+        <div className="surface-card space-y-4 p-5">
           <form onSubmit={handleEmail} className="space-y-3">
             <input
               type="email"
@@ -84,7 +82,7 @@ function AuthPage() {
               placeholder="E-post"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-12 w-full rounded-md border border-border bg-input px-4 focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <input
               type="password"
@@ -94,20 +92,20 @@ function AuthPage() {
               placeholder="Passord"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-12 w-full rounded-md border border-border bg-input px-4 focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full tap-target bg-primary text-primary-foreground disabled:opacity-60"
+              className="tap-target cta-brand w-full bg-primary text-primary-foreground disabled:opacity-60"
             >
               {loading ? "Logger inn…" : "Logg inn"}
             </button>
           </form>
 
           <p className="text-xs text-muted-foreground text-center">
-            Ny her? Du får en e-post når noen inviterer deg. Åpne lenken og velg passord — så
-            logger du inn her.
+            Ny her? Du får en e-post når noen inviterer deg. Åpne lenken og velg passord — så logger
+            du inn her.
           </p>
 
           {shared && nexusApp ? (

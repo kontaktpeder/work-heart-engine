@@ -18,9 +18,12 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-sm text-center">
-        <h1 className="text-6xl font-bold">404</h1>
+        <h1 className="font-display text-7xl font-bold uppercase tracking-wide">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">Siden finnes ikke.</p>
-        <Link to="/" className="mt-6 inline-flex tap-target bg-primary text-primary-foreground">
+        <Link
+          to="/"
+          className="mt-6 inline-flex tap-target cta-brand bg-primary text-primary-foreground"
+        >
           Til forsiden
         </Link>
       </div>
@@ -42,8 +45,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">Prøv igjen eller gå tilbake.</p>
         <div className="mt-6 flex justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
-            className="tap-target bg-primary text-primary-foreground"
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="tap-target cta-brand bg-primary text-primary-foreground"
           >
             Prøv igjen
           </button>
@@ -57,8 +63,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" },
-      { name: "theme-color", content: "#1a1d24" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no",
+      },
+      { name: "theme-color", content: "#111511" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "mobile-web-app-capable", content: "yes" },
@@ -67,15 +76,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Work Core – verdens enkleste arbeids- og timemotor." },
       { property: "og:title", content: "Work Core" },
       { name: "twitter:title", content: "Work Core" },
-      { property: "og:description", content: "Work Core – verdens enkleste arbeids- og timemotor." },
-      { name: "twitter:description", content: "Work Core – verdens enkleste arbeids- og timemotor." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/787284d9-3fea-4540-86a3-d50323513872/id-preview-b2cf02ff--e54a4ca2-d840-46de-8766-b391bf3ff42a.lovable.app-1782680445700.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/787284d9-3fea-4540-86a3-d50323513872/id-preview-b2cf02ff--e54a4ca2-d840-46de-8766-b391bf3ff42a.lovable.app-1782680445700.png" },
+      {
+        property: "og:description",
+        content: "Work Core – verdens enkleste arbeids- og timemotor.",
+      },
+      {
+        name: "twitter:description",
+        content: "Work Core – verdens enkleste arbeids- og timemotor.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/787284d9-3fea-4540-86a3-d50323513872/id-preview-b2cf02ff--e54a4ca2-d840-46de-8766-b391bf3ff42a.lovable.app-1782680445700.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/787284d9-3fea-4540-86a3-d50323513872/id-preview-b2cf02ff--e54a4ca2-d840-46de-8766-b391bf3ff42a.lovable.app-1782680445700.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/site.webmanifest" },
@@ -90,8 +120,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="nb">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
     </html>
   );
 }

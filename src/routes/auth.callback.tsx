@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { completeNexusSsoLogin } from "@/lib/identity.functions";
+import { BrandMark } from "@/components/brand-mark";
 
 export const Route = createFileRoute("/auth/callback")({
   ssr: false,
@@ -59,7 +60,9 @@ function AuthCallbackPage() {
   }, [code, completeSso, navigate]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+    <main className="relative min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
+      <BrandMark size="lg" className="mb-6" />
       <p className="text-sm text-muted-foreground text-center max-w-sm">{errorText ?? message}</p>
       {errorText ? (
         <button

@@ -11,13 +11,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { lockSheetDismiss, unlockSheetDismiss } from "@/lib/sheetGate";
-import {
-  getNestDepth,
-  getNestIndex,
-  nestPop,
-  nestPush,
-  subscribeNest,
-} from "@/lib/sheetNest";
+import { getNestDepth, getNestIndex, nestPop, nestPush, subscribeNest } from "@/lib/sheetNest";
 import { blurSheetField } from "@/lib/focusSheetField";
 import {
   BODY_ACTIVATE_PX,
@@ -173,10 +167,8 @@ export function ContentSheet({
     }
   };
 
-  const myNestIndex =
-    nestIdRef.current != null ? getNestIndex(nestIdRef.current) : -1;
-  const isRecessed =
-    nestEnabled && myNestIndex >= 0 && nestDepth > myNestIndex + 1;
+  const myNestIndex = nestIdRef.current != null ? getNestIndex(nestIdRef.current) : -1;
+  const isRecessed = nestEnabled && myNestIndex >= 0 && nestDepth > myNestIndex + 1;
 
   const canDrag = !flyingOut && !isRecessed;
   canDragRef.current = canDrag;
@@ -371,9 +363,7 @@ export function ContentSheet({
     const currentY = yForDetent(current, h);
     const deltaFromCurrent = y - currentY;
 
-    const positions = detents
-      .map((d) => ({ d, y: yForDetent(d, h) }))
-      .sort((a, b) => a.y - b.y);
+    const positions = detents.map((d) => ({ d, y: yForDetent(d, h) })).sort((a, b) => a.y - b.y);
 
     const peekY = positions[positions.length - 1]?.y ?? 0;
     const dismissLine = peekY + Math.max(100, (h - peekY) * 0.35);
@@ -442,11 +432,16 @@ export function ContentSheet({
         return;
       }
       const target = event.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+      if (
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], [data-sheet-close], [data-sheet-footer], [data-sheet-no-drag]',
+        )
+      ) {
         gestureRef.current = null;
         return;
       }
-      if (target.closest("[data-sheet-close]")) {
+      // Footer / form buttons must get a real click — not a 2px sheet-drag.
+      if (target.closest("button, a") && !target.closest("[data-sheet-grabber]")) {
         gestureRef.current = null;
         return;
       }
@@ -592,9 +587,7 @@ export function ContentSheet({
             className="flex h-full min-h-0 w-full origin-top"
             style={{
               transform: recessTransform,
-              transition: isRecessed
-                ? "none"
-                : `transform ${NEST_RECESS_MS}ms ${NEST_RECESS_EASE}`,
+              transition: isRecessed ? "none" : `transform ${NEST_RECESS_MS}ms ${NEST_RECESS_EASE}`,
               willChange: isRecessed ? "transform" : undefined,
             }}
           >
@@ -605,7 +598,7 @@ export function ContentSheet({
               aria-label={title}
               className={cn(
                 "relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background shadow-2xl",
-                "rounded-t-[1.35rem] rounded-b-none border border-border border-b-0",
+                "rounded-t-lg rounded-b-none border border-border border-b-0",
                 className,
               )}
             >
@@ -621,7 +614,7 @@ export function ContentSheet({
                   aria-label="Dra sheet"
                   tabIndex={-1}
                 >
-                  <span className="block h-1.5 w-12 rounded-full bg-muted-foreground/40" />
+                  <span className="block h-1 w-10 rounded-sm bg-muted-foreground/45" />
                 </button>
                 <button
                   type="button"
@@ -630,7 +623,7 @@ export function ContentSheet({
                     e.stopPropagation();
                     flyOutThenDismiss();
                   }}
-                  className="relative z-40 flex h-11 w-11 items-center justify-center rounded-full bg-muted/90 text-muted-foreground"
+                  className="relative z-40 flex h-11 w-11 items-center justify-center rounded-md bg-muted/90 text-muted-foreground"
                   aria-label="Lukk"
                 >
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -645,7 +638,9 @@ export function ContentSheet({
               </div>
               {title ? (
                 <div className="shrink-0 px-5 pb-3">
-                  <h2 className="text-xl font-bold">{title}</h2>
+                  <h2 className="font-display text-2xl font-bold uppercase tracking-[0.08em]">
+                    {title}
+                  </h2>
                 </div>
               ) : null}
               {children}

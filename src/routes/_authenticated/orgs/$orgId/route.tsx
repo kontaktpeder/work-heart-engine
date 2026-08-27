@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  redirect,
-  Link,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, redirect, Link, useNavigate } from "@tanstack/react-router";
 import {
   useCallback,
   useEffect,
@@ -14,17 +9,13 @@ import {
   type CSSProperties,
 } from "react";
 import { z } from "zod";
-import {
-  Settings,
-  ArrowLeftRight,
-  LogOut,
-  ChevronRight,
-} from "lucide-react";
+import { Settings, ArrowLeftRight, LogOut, ChevronRight } from "lucide-react";
 import {
   fetchOrganizations,
   fetchProjects,
   fetchRates,
   fetchTimeEntries,
+  fetchMyOrgMembership,
   setDefaultOrgId,
   type Organization,
 } from "@/lib/work-core";
@@ -32,6 +23,7 @@ import { adjacentOrgId, orgStackIndex } from "@/lib/org-stack";
 import { useOrgStackSwipe } from "@/hooks/useOrgStackSwipe";
 import { MissionReturnLink } from "@/components/mission-return-link";
 import { ContentSheet } from "@/components/content-sheet";
+import { BrandMark } from "@/components/brand-mark";
 import { authSupabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
@@ -45,15 +37,23 @@ import { ReportsPane } from "./reports";
 import { ProjectsPane } from "./settings.projects";
 import { RatesPane } from "./settings.rates";
 import { OrganizationSettingsPane } from "./settings.organization";
+import { ReportSettingsPane } from "./settings.report";
 import { MembersPane } from "./settings.members";
 import { FinanceIntegrationPane } from "./settings.finance-integration";
 import { ApiKeysPane } from "./settings.api-keys";
+import {
+  canOpenSettingsSection,
+  SETTINGS_ITEMS,
+  visibleSettingsItems,
+  type OrgMembership,
+  type SettingsSection,
+} from "@/lib/org-access";
 
 const OrgSearch = z.object({
   return: z.string().optional(),
   sheet: z.enum(["timer", "reports", "settings"]).optional(),
   section: z
-    .enum(["members", "organization", "projects", "rates", "finance", "api-keys"])
+    .enum(["report", "members", "organization", "projects", "rates", "finance", "api-keys"])
     .optional(),
 });
 
@@ -70,29 +70,44 @@ export const Route = createFileRoute("/_authenticated/orgs/$orgId")({
     });
     const org = orgs.find((o) => o.id === params.orgId);
     if (!org) throw redirect({ to: "/orgs" });
-    return { org, orgId: params.orgId };
+    const membership = await qc.ensureQueryData({
+      queryKey: ["org-membership", params.orgId],
+      queryFn: () => fetchMyOrgMembership(params.orgId),
+      staleTime: 60_000,
+    });
+    return { org, orgId: params.orgId, membership };
   },
   component: OrgLayout,
 });
 
-const settingsItems = [
-  { section: "members" as const, label: "Medlemmer", hint: "Inviter kollega – egne timer" },
-  { section: "organization" as const, label: "Organisasjon", hint: "Navn og rapport" },
-  { section: "projects" as const, label: "Prosjekter", hint: "Felles prosjektliste" },
-  { section: "rates" as const, label: "Satser", hint: "Felles timepriser" },
-  { section: "finance" as const, label: "Finance", hint: "Eksport og kobling" },
-  { section: "api-keys" as const, label: "API-nøkler", hint: "Nøkler for integrasjoner" },
-];
-
 function OrgLayout() {
   useAppFrame();
-  const { org, orgId } = Route.useRouteContext() as { org: Organization; orgId: string };
+  const {
+    org,
+    orgId,
+    membership: initialMembership,
+  } = Route.useRouteContext() as {
+    org: Organization;
+    orgId: string;
+    membership: OrgMembership | null;
+  };
   const search = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const switchingRef = useRef(false);
   const [stackDir, setStackDir] = useState(0);
+
+  const membershipQ = useQuery({
+    queryKey: ["org-membership", orgId],
+    queryFn: () => fetchMyOrgMembership(orgId),
+    initialData: initialMembership ?? undefined,
+    staleTime: 60_000,
+  });
+  const membership = membershipQ.data ?? initialMembership;
+  const role = membership?.role ?? null;
+  const roleKnown = membershipQ.isSuccess || initialMembership != null;
+  const settingsItems = useMemo(() => visibleSettingsItems(role), [role]);
 
   const orgsQ = useQuery({
     queryKey: ["orgs"],
@@ -204,6 +219,21 @@ function OrgLayout() {
     setSheet("settings", undefined);
   }
 
+  useEffect(() => {
+    if (!section || !roleKnown) return;
+    if (!canOpenSettingsSection(section as SettingsSection, role)) {
+      void navigate({
+        to: "/orgs/$orgId/start",
+        params: { orgId },
+        search: {
+          return: search.return,
+          sheet: "settings",
+        },
+        replace: true,
+      });
+    }
+  }, [section, role, roleKnown, navigate, orgId, search.return]);
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -230,26 +260,25 @@ function OrgLayout() {
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
-          className="flex min-w-0 items-center gap-2 text-left"
+          className="flex min-w-0 items-center gap-2.5 text-left"
         >
+          <BrandMark size="sm" />
           {canSwipeOrgs ? (
             <span className="flex shrink-0 flex-col gap-1" aria-hidden>
               {orgs.map((o, i) => (
                 <span
                   key={o.id}
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    i === stackIndex ? "bg-foreground/70" : "bg-border"
-                  }`}
+                  className={`h-1.5 w-1.5 ${i === stackIndex ? "bg-primary" : "bg-border"}`}
                 />
               ))}
             </span>
           ) : null}
-          <p className="truncate text-sm font-semibold tracking-tight">{org.name}</p>
+          <p className="truncate font-display text-xl font-bold tracking-wide">{org.name}</p>
         </button>
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-sm"
+          className="flex h-9 w-9 shrink-0 items-center justify-center bg-secondary font-display text-sm font-bold text-foreground"
           aria-label="Meny"
         >
           {org.name.charAt(0).toUpperCase()}
@@ -308,7 +337,7 @@ function OrgLayout() {
                 key={item.section}
                 type="button"
                 onClick={() => openSheet("settings", item.section)}
-                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 text-left transition hover:bg-accent"
+                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 text-left transition hover:bg-accent"
               >
                 <div className="min-w-0">
                   <p className="font-medium">{item.label}</p>
@@ -321,16 +350,17 @@ function OrgLayout() {
         </ContentSheet>
       ) : null}
 
-      {sheet === "settings" && section ? (
+      {sheet === "settings" && section && canOpenSettingsSection(section, role) ? (
         <ContentSheet
           onClose={closeSection}
-          title={settingsItems.find((i) => i.section === section)?.label ?? "Innstillinger"}
+          title={SETTINGS_ITEMS.find((i) => i.section === section)?.label ?? "Innstillinger"}
           zClassName="z-[60]"
         >
           <div
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
+            {section === "report" ? <ReportSettingsPane /> : null}
             {section === "members" ? <MembersPane /> : null}
             {section === "organization" ? <OrganizationSettingsPane /> : null}
             {section === "projects" ? <ProjectsPane /> : null}
@@ -342,7 +372,11 @@ function OrgLayout() {
       ) : null}
 
       {menuOpen ? (
-        <ContentSheet onClose={() => setMenuOpen(false)} title={org.name} detents={["half", "full"]}>
+        <ContentSheet
+          onClose={() => setMenuOpen(false)}
+          title={org.name}
+          detents={["half", "full"]}
+        >
           <div
             data-sheet-scroll
             className="scroll-touch min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
@@ -353,21 +387,21 @@ function OrgLayout() {
                 setMenuOpen(false);
                 openSheet("settings");
               }}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium"
+              className="flex min-h-14 w-full items-center gap-3 rounded-md border border-border bg-card px-4 font-medium"
             >
               <Settings className="h-5 w-5 text-primary" /> Innstillinger
             </button>
             <Link
               to="/orgs"
               onClick={() => setMenuOpen(false)}
-              className="flex min-h-14 items-center gap-3 rounded-2xl border border-border px-4 font-medium"
+              className="flex min-h-14 items-center gap-3 rounded-md border border-border px-4 font-medium"
             >
               <ArrowLeftRight className="h-5 w-5" /> Bytt arbeidsrom
             </Link>
             <button
               type="button"
               onClick={signOut}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left font-medium text-destructive"
+              className="flex min-h-14 w-full items-center gap-3 rounded-md px-4 text-left font-medium text-destructive"
             >
               <LogOut className="h-5 w-5" /> Logg ut
             </button>
