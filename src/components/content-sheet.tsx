@@ -432,11 +432,16 @@ export function ContentSheet({
         return;
       }
       const target = event.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+      if (
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], [data-sheet-close], [data-sheet-footer], [data-sheet-no-drag]',
+        )
+      ) {
         gestureRef.current = null;
         return;
       }
-      if (target.closest("[data-sheet-close]")) {
+      // Footer / form buttons must get a real click — not a 2px sheet-drag.
+      if (target.closest("button, a") && !target.closest("[data-sheet-grabber]")) {
         gestureRef.current = null;
         return;
       }

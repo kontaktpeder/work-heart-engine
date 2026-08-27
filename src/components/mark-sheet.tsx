@@ -37,6 +37,7 @@ export function MarkSheet({
   const [kind, setKind] = useState<"note" | "pause">(initial.kind);
   const [pauseMinutes, setPauseMinutes] = useState(initial.pauseMinutes);
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -46,6 +47,7 @@ export function MarkSheet({
     setNote(d.note);
     setKind(d.kind);
     setPauseMinutes(d.pauseMinutes);
+    setConfirmDelete(false);
   }, [open, mark?.id, initialKind]);
 
   async function save(e: React.FormEvent) {
@@ -104,9 +106,25 @@ export function MarkSheet({
 
   async function remove() {
     if (!mark) return;
-    if (!confirm("Slette dette merket?")) return;
-    const { error } = await supabase.from("time_entry_marks").delete().eq("id", mark.id);
-    if (error) return toast.error(error.message);
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("time_entry_marks")
+      .delete()
+      .eq("id", mark.id)
+      .select("id");
+    setBusy(false);
+    if (error) {
+      setConfirmDelete(false);
+      return toast.error(error.message);
+    }
+    if (!data?.length) {
+      setConfirmDelete(false);
+      return toast.error("Kunne ikke slette merket.");
+    }
     toast.success("Slettet");
     void qc.invalidateQueries({ queryKey: ["marks"] });
     onClose();
@@ -213,31 +231,55 @@ export function MarkSheet({
           )}
         </div>
         <SheetStickyFooter>
-          <div className="flex gap-2">
-            {mark ? (
+          {mark && confirmDelete ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Slette dette merket?</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={busy}
+                  className="tap-target h-12 flex-1 border border-border bg-card"
+                >
+                  Avbryt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void remove()}
+                  disabled={busy}
+                  className="tap-target h-12 flex-1 bg-destructive text-destructive-foreground disabled:opacity-60"
+                >
+                  {busy ? "Sletter…" : "Slett"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {mark ? (
+                <button
+                  type="button"
+                  onClick={() => void remove()}
+                  className="tap-target h-12 px-4 text-destructive"
+                  aria-label="Slett"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              ) : null}
               <button
-                type="button"
-                onClick={remove}
-                className="tap-target h-12 px-4 text-destructive"
-                aria-label="Slett"
+                type="submit"
+                disabled={busy}
+                className="tap-target cta-brand h-12 flex-1 bg-primary text-primary-foreground disabled:opacity-60"
               >
-                <Trash2 className="h-5 w-5" />
+                {busy
+                  ? "Lagrer…"
+                  : kind === "pause"
+                    ? "Lagre pause"
+                    : mark
+                      ? "Lagre"
+                      : "Legg til merke"}
               </button>
-            ) : null}
-            <button
-              type="submit"
-              disabled={busy}
-              className="tap-target cta-brand h-12 flex-1 bg-primary text-primary-foreground disabled:opacity-60"
-            >
-              {busy
-                ? "Lagrer…"
-                : kind === "pause"
-                  ? "Lagre pause"
-                  : mark
-                    ? "Lagre"
-                    : "Legg til merke"}
-            </button>
-          </div>
+            </div>
+          )}
         </SheetStickyFooter>
       </form>
     </ContentSheet>

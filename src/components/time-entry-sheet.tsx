@@ -52,6 +52,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
   const [markKind, setMarkKind] = useState<"note" | "pause">("note");
   const [editingMark, setEditingMark] = useState<TimeEntryMark | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +67,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
     setComment(d.comment);
     setProject(null);
     setRate(null);
+    setConfirmDelete(false);
   }, [open, entry?.id, orgId]);
 
   const activeOrgId = entry?.organization_id ?? orgId;
@@ -147,9 +149,25 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
 
   async function remove() {
     if (!entry) return;
-    if (!confirm("Slette denne timeføringen?")) return;
-    const { error } = await supabase.from("time_entries").delete().eq("id", entry.id);
-    if (error) return toast.error(error.message);
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("time_entries")
+      .delete()
+      .eq("id", entry.id)
+      .select("id");
+    setBusy(false);
+    if (error) {
+      setConfirmDelete(false);
+      return toast.error(error.message);
+    }
+    if (!data?.length) {
+      setConfirmDelete(false);
+      return toast.error("Kunne ikke slette. Dette er kanskje ikke dine timer.");
+    }
     toast.success("Slettet");
     qc.invalidateQueries({ queryKey: ["entries"] });
     onClose();
@@ -332,25 +350,49 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
           </div>
 
           <SheetStickyFooter>
-            <div className="flex gap-2">
-              {entry && (
+            {entry && confirmDelete ? (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Slette denne timeføringen?</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={busy}
+                    className="tap-target h-12 flex-1 border border-border bg-card"
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void remove()}
+                    disabled={busy}
+                    className="tap-target h-12 flex-1 bg-destructive text-destructive-foreground disabled:opacity-60"
+                  >
+                    {busy ? "Sletter…" : "Slett"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {entry ? (
+                  <button
+                    type="button"
+                    onClick={() => void remove()}
+                    className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
+                    aria-label="Slett"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                ) : null}
                 <button
-                  type="button"
-                  onClick={remove}
-                  className="tap-target bg-destructive/10 text-destructive border border-destructive/30 h-12 px-4"
-                  aria-label="Slett"
+                  type="submit"
+                  disabled={busy}
+                  className="flex-1 tap-target cta-brand bg-primary text-primary-foreground h-12 disabled:opacity-60"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  Lagre
                 </button>
-              )}
-              <button
-                type="submit"
-                disabled={busy}
-                className="flex-1 tap-target cta-brand bg-primary text-primary-foreground h-12 disabled:opacity-60"
-              >
-                {entry ? "Lagre" : "Lagre"}
-              </button>
-            </div>
+              </div>
+            )}
           </SheetStickyFooter>
         </form>
       </ContentSheet>
