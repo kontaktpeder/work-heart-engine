@@ -70,7 +70,7 @@ export function RatePicker({ open, onClose, orgId, value, onChange, allowClear }
     >
       <div
         data-sheet-scroll
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+        className="scroll-touch min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       >
         {!creating && (
           <>

@@ -14,7 +14,6 @@ import { lockSheetDismiss, unlockSheetDismiss } from "@/lib/sheetGate";
 import { getNestDepth, getNestIndex, nestPop, nestPush, subscribeNest } from "@/lib/sheetNest";
 import { blurSheetField } from "@/lib/focusSheetField";
 import {
-  BODY_ACTIVATE_PX,
   COMMIT_PROJECT_SEC,
   DETENT_SPRING,
   DISMISS_VEL,
@@ -98,7 +97,9 @@ type GestureState = {
 };
 
 /**
- * Soft bottom sheet — finger follows + spring settle, drag from grabber and content.
+ * Soft bottom sheet — finger follows + spring settle.
+ * Dagenvår: sheet drag only from the grabber. Body content always scrolls natively,
+ * including when the scroller is already at the top.
  */
 export function ContentSheet({
   onClose,
@@ -432,22 +433,17 @@ export function ContentSheet({
         return;
       }
       const target = event.target as HTMLElement;
-      if (
-        target.closest(
-          'input, textarea, select, [contenteditable="true"], [data-sheet-close], [data-sheet-footer], [data-sheet-no-drag]',
-        )
-      ) {
+      if (target.closest("[data-sheet-close]")) {
         gestureRef.current = null;
         return;
       }
-      // Footer / form buttons must get a real click — not a 2px sheet-drag.
-      if (target.closest("button, a") && !target.closest("[data-sheet-grabber]")) {
-        gestureRef.current = null;
-        return;
-      }
-
       const fromGrabber = !!target.closest("[data-sheet-grabber]");
-      if (!fromGrabber && !canDragRef.current) {
+      // Content scroll is native. Sheet drag is grabber-only — not "at scroll top".
+      if (!fromGrabber) {
+        gestureRef.current = null;
+        return;
+      }
+      if (!canDragRef.current) {
         gestureRef.current = null;
         return;
       }
@@ -465,27 +461,13 @@ export function ContentSheet({
           (target.closest("[data-sheet-scroll]") as HTMLElement | null) ?? getScrollEl(card),
       };
       gestureRef.current = state;
-
-      if (fromGrabber) {
-        beginDrag(state, event.clientY, event.timeStamp);
-      }
+      beginDrag(state, event.clientY, event.timeStamp);
     };
 
     const onPointerMove = (event: PointerEvent) => {
       const state = gestureRef.current;
       if (!state || event.pointerId !== state.pointerId) return;
-
-      const dy = event.clientY - state.startY;
-
-      if (!state.dragging) {
-        if (!canDragRef.current) return;
-        const scrollTop = state.scrollEl?.scrollTop ?? 0;
-        const expandFromHalf =
-          dy < -BODY_ACTIVATE_PX && multiDetentRef.current && detentRef.current !== "full";
-        const pullDownFromTop = dy > BODY_ACTIVATE_PX && scrollTop <= 1;
-        if (!expandFromHalf && !pullDownFromTop) return;
-        beginDrag(state, event.clientY, event.timeStamp);
-      }
+      if (!state.dragging) return;
 
       const elapsed = Math.max(1, event.timeStamp - state.lastAt);
       const sample = ((event.clientY - state.lastY) / elapsed) * 1000;

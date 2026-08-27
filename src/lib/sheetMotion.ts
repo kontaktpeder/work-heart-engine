@@ -11,7 +11,7 @@ export type SheetSpringOpts = {
   restSpeed?: number;
 };
 
-/** Tiny body threshold only to separate scroll intent from sheet drag. Grabber is 0. */
+/** Grabber drag is immediate. Body content never starts sheet drag. */
 export const BODY_ACTIVATE_PX = 2;
 /** Tiny unfinished nudges only — soft return home. Larger moves use nearest + velocity. */
 export const NUDGE_DEADZONE_PX = 16;
