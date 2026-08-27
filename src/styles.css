@@ -100,6 +100,17 @@ body {
   overscroll-behavior: contain;
 }
 
+/* Sheet lists: JS owns pan so sheet Y and scrollTop stay one chain. */
+[data-content-sheet] [data-sheet-scroll] {
+  touch-action: none;
+}
+[data-content-sheet] input,
+[data-content-sheet] textarea,
+[data-content-sheet] select,
+[data-content-sheet] [contenteditable="true"] {
+  touch-action: manipulation;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   body {
