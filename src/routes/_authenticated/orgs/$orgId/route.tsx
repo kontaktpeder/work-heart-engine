@@ -253,7 +253,7 @@ function OrgLayout() {
       className={`mx-auto flex max-w-2xl flex-col overflow-hidden px-5 pt-[max(0.5rem,env(safe-area-inset-top))] ${
         canSwipeOrgs ? "touch-pan-y" : ""
       }`}
-      style={{ height: "var(--app-height, 100dvh)" }}
+      style={{ height: "var(--app-height, 100svh)" }}
       aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
     >
       <header className="mb-3 flex shrink-0 items-center justify-between gap-2">
@@ -291,12 +291,11 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        <div
-          key={orgId}
-          className={`h-full min-h-0 ${canSwipeOrgs ? "org-stack-enter" : ""}`}
-          style={stackStyle}
-        >
+      <div
+        data-org-stack-scroll
+        className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+      >
+        <div key={orgId} className={canSwipeOrgs ? "org-stack-enter" : ""} style={stackStyle}>
           <StartPane
             onOpenTimer={() => openSheet("timer")}
             onOpenReports={() => openSheet("reports")}

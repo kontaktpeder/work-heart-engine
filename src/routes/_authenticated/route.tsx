@@ -17,7 +17,7 @@ function AuthedLayout() {
   return (
     <main
       className="overflow-hidden bg-background"
-      style={{ height: "var(--app-height, 100dvh)" }}
+      style={{ height: "var(--app-height, 100svh)" }}
     >
       <Outlet />
     </main>

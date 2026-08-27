@@ -70,7 +70,7 @@ html {
   -webkit-tap-highlight-color: transparent;
   background-color: var(--color-background);
   color: var(--color-foreground);
-  --app-height: 100dvh;
+  --app-height: 100svh;
   --app-top: 0px;
 }
 

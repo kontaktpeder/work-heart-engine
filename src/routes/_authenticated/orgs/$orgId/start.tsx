@@ -253,10 +253,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   }
 
   return (
-    <div
-      data-org-stack-scroll
-      className="scroll-touch flex h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain"
-    >
+    <div className="flex min-h-full flex-col gap-3">
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
@@ -303,7 +300,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       ) : null}
 
       {activeInThisOrg ? (
-        <div className="work-card-soft-land surface-card surface-live flex min-h-0 flex-1 flex-col gap-3 overflow-hidden !p-4">
+        <div className="work-card-soft-land surface-card surface-live flex shrink-0 flex-col gap-3 !p-4">
           <div className="shrink-0 text-center">
             <p className="stamp inline-flex items-center gap-2 text-muted-foreground">
               <span className="live-dot" />
@@ -340,7 +337,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             </button>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+          <div className="flex flex-col gap-2">
             <div className="flex shrink-0 items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">Logg</span>
               <div className="flex gap-1.5">
@@ -367,10 +364,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                 Pause eller merke underveis — følger med i rapporten.
               </p>
             ) : (
-              <ul
-                data-org-stack-scroll
-                className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain"
-              >
+              <ul className="space-y-1">
                 {(marksQ.data ?? []).map((m) => (
                   <li key={m.id}>
                     <button
@@ -460,7 +454,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         </div>
       )}
 
-      <div className="surface-card shrink-0 !py-3">
+      <div className="surface-card mt-auto shrink-0 !py-3">
         <div className="flex items-baseline justify-between">
           <span className="stamp text-muted-foreground">I dag · {org.name}</span>
           <span className="clock-face text-2xl">{formatDuration(todayMin)}</span>
