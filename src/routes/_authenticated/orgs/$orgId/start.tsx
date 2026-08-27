@@ -253,7 +253,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden">
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
@@ -285,10 +285,6 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             {seedMut.isPending ? "Legger inn…" : "Demodata"}
           </Button>
         </div>
-      ) : null}
-
-      {(recentEntriesQ.data?.length ?? 0) === 0 && org.owner_id !== user.id ? (
-        <p className="shrink-0 text-sm text-muted-foreground">Ingen timer ennå.</p>
       ) : null}
 
       {activeSession && !activeInThisOrg ? (
@@ -396,58 +392,55 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           </button>
         </div>
       ) : (
-        <div className="surface-card shrink-0 space-y-2 !p-3">
-          <div className="space-y-1.5">
-            <label className="stamp text-muted-foreground">Prosjekt</label>
+        <div className="surface-card shrink-0 space-y-1.5 !p-2">
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left text-sm"
+              aria-label="Prosjekt"
+              className="flex h-9 min-w-0 items-center rounded-md border border-border bg-input px-2.5 text-left text-sm"
             >
-              <span className={project ? "" : "text-muted-foreground"}>
-                {project?.name ?? "Velg prosjekt…"}
+              <span className={`truncate ${project ? "" : "text-muted-foreground"}`}>
+                {project?.name ?? "Prosjekt"}
               </span>
             </button>
-
-            <label className="stamp mt-1 block text-muted-foreground">Kunde (valgfri)</label>
+            <button
+              type="button"
+              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
+              aria-label="Sats"
+              className="flex h-9 min-w-0 items-center justify-between gap-1 rounded-md border border-border bg-input px-2.5 text-left text-sm"
+            >
+              <span className={`truncate ${rate ? "" : "text-muted-foreground"}`}>
+                {rate?.name ?? "Sats"}
+              </span>
+              {rate ? (
+                <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                  {rate.amount}
+                </span>
+              ) : null}
+            </button>
             <input
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
               onFocus={(e) => revealFocusedField(e.currentTarget)}
-              placeholder="Fritekst"
-              className={`${sheetFieldClass} !px-3 !py-2`}
+              placeholder="Kunde"
+              aria-label="Kunde"
+              className={`${sheetFieldClass} !h-9 !px-2.5 !py-0`}
             />
-
-            <label className="stamp mt-1 block text-muted-foreground">Oppgave</label>
             <input
               value={task}
               onChange={(e) => setTask(e.target.value)}
               onFocus={(e) => revealFocusedField(e.currentTarget)}
-              placeholder="Hva skal du gjøre?"
-              className={`${sheetFieldClass} !px-3 !py-2`}
+              placeholder="Oppgave"
+              aria-label="Oppgave"
+              className={`${sheetFieldClass} !h-9 !px-2.5 !py-0`}
             />
-
-            <label className="stamp mt-1 block text-muted-foreground">Sats (valgfri)</label>
-            <button
-              type="button"
-              onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left text-sm"
-            >
-              <span className={rate ? "" : "text-muted-foreground"}>
-                {rate?.name ?? "Velg sats…"}
-              </span>
-              {rate ? (
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {rate.amount} kr/t
-                </span>
-              ) : null}
-            </button>
           </div>
 
           <button
             onClick={startWork}
             disabled={busy || !projectId || !task.trim() || !!activeSession}
-            className="cta-brand inline-flex h-10 w-full items-center justify-center bg-primary text-sm text-primary-foreground disabled:opacity-60"
+            className="cta-brand inline-flex h-9 w-full items-center justify-center bg-primary text-sm text-primary-foreground disabled:opacity-60"
           >
             <Play className="mr-2 h-4 w-4" fill="currentColor" />
             Start arbeid
@@ -455,10 +448,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         </div>
       )}
 
-      <div className="surface-card mt-auto shrink-0 !py-2">
-        <div className="flex items-baseline justify-between">
-          <span className="stamp text-muted-foreground">I dag · {org.name}</span>
-          <span className="clock-face text-2xl">{formatDuration(todayMin)}</span>
+      <div className="surface-card mt-auto shrink-0 !px-3 !py-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="stamp truncate text-muted-foreground">I dag · {org.name}</span>
+          <span className="clock-face text-lg">{formatDuration(todayMin)}</span>
         </div>
       </div>
 

@@ -291,7 +291,7 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="min-h-0 flex-1 overflow-hidden pb-2">
         <div
           key={orgId}
           className={`h-full min-h-0 ${canSwipeOrgs ? "org-stack-enter" : ""}`}
