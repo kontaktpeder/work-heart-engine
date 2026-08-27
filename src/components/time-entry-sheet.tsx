@@ -290,7 +290,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
                     <button
                       type="button"
                       onClick={() => openMark("pause")}
-                      className="inline-flex h-9 items-center gap-1 rounded-xl border border-border bg-card px-3 text-sm font-medium"
+                      className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-card px-3 text-sm font-medium"
                     >
                       <Coffee className="h-4 w-4 text-primary" />
                       Pause
@@ -298,7 +298,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
                     <button
                       type="button"
                       onClick={() => openMark("note")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-sm font-medium"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium"
                     >
                       <BookmarkPlus className="h-4 w-4 text-primary" />
                       Merke
@@ -314,7 +314,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
                         <button
                           type="button"
                           onClick={() => openMark(m.kind, m)}
-                          className="flex w-full gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-left text-sm"
+                          className="flex w-full gap-3 rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-left text-sm"
                         >
                           <span className="shrink-0 font-semibold tabular-nums">
                             {formatMarkTime(m.marked_at)}
@@ -346,7 +346,7 @@ export function TimeEntrySheet({ open, onClose, onSaved, entry, orgId }: Props) 
               <button
                 type="submit"
                 disabled={busy}
-                className="flex-1 tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
+                className="flex-1 tap-target cta-brand bg-primary text-primary-foreground h-12 disabled:opacity-60"
               >
                 {entry ? "Lagre" : "Lagre"}
               </button>

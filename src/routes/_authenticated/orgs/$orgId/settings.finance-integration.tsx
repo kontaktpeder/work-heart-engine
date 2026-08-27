@@ -12,9 +12,7 @@ import {
   testFinanceIntegration,
 } from "@/lib/finance-integration.functions";
 
-export const Route = createFileRoute(
-  "/_authenticated/orgs/$orgId/settings/finance-integration",
-)({
+export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/finance-integration")({
   beforeLoad: ({ params, search }) => {
     throw redirect({
       to: "/orgs/$orgId/start",
@@ -68,11 +66,11 @@ export function FinanceIntegrationPane() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="rounded-md border border-border p-4 space-y-3">
         <h2 className="font-medium">Finance Core connection</h2>
         <p className="text-sm text-muted-foreground">
-          Configure the Finance API key used to export time entries as expense
-          entries. The key is stored encrypted server-side.
+          Configure the Finance API key used to export time entries as expense entries. The key is
+          stored encrypted server-side.
         </p>
 
         <div className="space-y-2">
@@ -93,9 +91,7 @@ export function FinanceIntegrationPane() {
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={
-              infoQ.data?.configured
-                ? "•••••••• (leave blank to keep current)"
-                : "fc_live_..."
+              infoQ.data?.configured ? "•••••••• (leave blank to keep current)" : "fc_live_..."
             }
           />
           <p className="text-xs text-muted-foreground">
@@ -122,9 +118,7 @@ export function FinanceIntegrationPane() {
         {infoQ.data?.configured && (
           <p className="text-xs text-muted-foreground">
             Configured · updated{" "}
-            {infoQ.data.updatedAt
-              ? new Date(infoQ.data.updatedAt).toLocaleString()
-              : "—"}
+            {infoQ.data.updatedAt ? new Date(infoQ.data.updatedAt).toLocaleString() : "—"}
           </p>
         )}
       </div>

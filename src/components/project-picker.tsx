@@ -78,7 +78,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Søk i prosjekter…"
-                className="w-full h-11 pl-9 pr-3 rounded-xl bg-input border border-border text-base"
+                className="w-full h-11 pl-9 pr-3 rounded-md bg-input border border-border text-base"
               />
             </div>
 
@@ -117,7 +117,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Prosjektnavn"
-                className="w-full h-11 px-3 rounded-xl bg-input border border-border text-base"
+                className="w-full h-11 px-3 rounded-md bg-input border border-border text-base"
                 required
               />
             </div>
@@ -132,7 +132,7 @@ export function ProjectPicker({ open, onClose, orgId, value, onChange }: Props) 
               <button
                 type="submit"
                 disabled={busy || !newName.trim()}
-                className="flex-1 tap-target bg-primary text-primary-foreground disabled:opacity-60"
+                className="flex-1 tap-target cta-brand bg-primary text-primary-foreground disabled:opacity-60"
               >
                 Opprett
               </button>
@@ -156,7 +156,7 @@ function ProjectRow({
   return (
     <button
       onClick={onPick}
-      className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between ${
+      className={`w-full text-left p-3 rounded-md border transition flex items-center justify-between ${
         active ? "border-primary bg-primary/10" : "border-border bg-card hover:bg-accent"
       }`}
     >

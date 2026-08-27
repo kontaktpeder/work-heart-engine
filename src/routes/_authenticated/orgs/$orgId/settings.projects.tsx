@@ -69,7 +69,7 @@ export function ProjectsPane() {
                 setOpen(true);
               })
             }
-            className="tap-target bg-primary text-primary-foreground h-11 px-4"
+            className="tap-target cta-brand bg-primary text-primary-foreground h-11 px-4"
           >
             <Plus className="w-5 h-5 mr-1" />
             Nytt
@@ -87,7 +87,7 @@ export function ProjectsPane() {
               <div className="flex items-center gap-2">
                 <span className="font-medium truncate">{p.name}</span>
                 {!p.is_active && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  <span className="text-xs px-2 py-0.5 rounded-sm bg-muted text-muted-foreground">
                     Inaktiv
                   </span>
                 )}
@@ -223,7 +223,7 @@ function ProjectSheet({
         <button
           type="submit"
           disabled={busy || !name.trim()}
-          className="w-full tap-target bg-primary text-primary-foreground h-12 disabled:opacity-60"
+          className="w-full tap-target cta-brand bg-primary text-primary-foreground h-12 disabled:opacity-60"
         >
           {project ? "Lagre" : "Opprett"}
         </button>

@@ -8,11 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Copy, Trash2 } from "lucide-react";
-import {
-  createApiKey,
-  listApiClients,
-  revokeApiClient,
-} from "@/lib/api-keys.functions";
+import { createApiKey, listApiClients, revokeApiClient } from "@/lib/api-keys.functions";
 
 export const Route = createFileRoute("/_authenticated/orgs/$orgId/settings/api-keys")({
   beforeLoad: ({ params, search }) => {
@@ -68,8 +64,7 @@ export function ApiKeysPane() {
   });
 
   const revokeMut = useMutation({
-    mutationFn: (clientId: string) =>
-      revokeFn({ data: { organizationId: orgId, clientId } }),
+    mutationFn: (clientId: string) => revokeFn({ data: { organizationId: orgId, clientId } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["api-clients", orgId] });
       toast.success("Key revoked");
@@ -82,7 +77,7 @@ export function ApiKeysPane() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="rounded-md border border-border p-4 space-y-3">
         <h2 className="font-medium">Create API key</h2>
 
         <div className="space-y-2">
@@ -103,10 +98,7 @@ export function ApiKeysPane() {
                 key={s}
                 className="flex items-center gap-2 text-sm border border-border rounded px-2 py-1.5"
               >
-                <Checkbox
-                  checked={scopes.includes(s)}
-                  onCheckedChange={() => toggle(s)}
-                />
+                <Checkbox checked={scopes.includes(s)} onCheckedChange={() => toggle(s)} />
                 <span className="font-mono">{s}</span>
               </label>
             ))}
@@ -159,9 +151,7 @@ export function ApiKeysPane() {
 
       <div className="space-y-2">
         <h2 className="font-medium">Existing keys</h2>
-        {clientsQ.isLoading && (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        )}
+        {clientsQ.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {clientsQ.data && clientsQ.data.length === 0 && (
           <p className="text-sm text-muted-foreground">No API keys yet.</p>
         )}
@@ -169,7 +159,7 @@ export function ApiKeysPane() {
           {clientsQ.data?.map((c: any) => (
             <div
               key={c.id}
-              className="rounded-lg border border-border p-3 flex items-start justify-between gap-3"
+              className="rounded-md border border-border p-3 flex items-start justify-between gap-3"
             >
               <div className="min-w-0">
                 <p className="font-medium truncate">{c.name}</p>

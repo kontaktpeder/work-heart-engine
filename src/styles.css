@@ -5,12 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-2xl: calc(var(--radius) + 6px);
+  --radius-3xl: calc(var(--radius) + 10px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -32,33 +32,34 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "IBM Plex Sans", ui-sans-serif, sans-serif;
 }
 
-/* Work Core – dark, minimal, mobile-first. Shared design tokens with Core platform. */
+/* Work Core – industrial field tool. Dark, high-vis, mobile-first. */
 :root {
-  --radius: 1rem;
-  --background: oklch(0.16 0.012 260);
-  --foreground: oklch(0.98 0.003 250);
-  --card: oklch(0.21 0.014 260);
-  --card-foreground: oklch(0.98 0.003 250);
-  --popover: oklch(0.21 0.014 260);
-  --popover-foreground: oklch(0.98 0.003 250);
-  --primary: oklch(0.78 0.16 145);            /* signature green – "Start arbeid" */
-  --primary-foreground: oklch(0.18 0.02 150);
-  --secondary: oklch(0.27 0.018 260);
-  --secondary-foreground: oklch(0.98 0.003 250);
-  --muted: oklch(0.24 0.014 260);
-  --muted-foreground: oklch(0.7 0.02 260);
-  --accent: oklch(0.3 0.02 260);
-  --accent-foreground: oklch(0.98 0.003 250);
-  --success: oklch(0.78 0.16 145);
-  --success-foreground: oklch(0.18 0.02 150);
-  --destructive: oklch(0.7 0.2 25);
-  --destructive-foreground: oklch(0.98 0.003 250);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.78 0.16 145 / 60%);
+  --radius: 0.375rem;
+  --background: oklch(0.125 0.014 145);
+  --foreground: oklch(0.97 0.01 145);
+  --card: oklch(0.17 0.016 145);
+  --card-foreground: oklch(0.97 0.01 145);
+  --popover: oklch(0.17 0.016 145);
+  --popover-foreground: oklch(0.97 0.01 145);
+  --primary: oklch(0.88 0.2 125);
+  --primary-foreground: oklch(0.16 0.04 145);
+  --secondary: oklch(0.23 0.018 145);
+  --secondary-foreground: oklch(0.97 0.01 145);
+  --muted: oklch(0.2 0.016 145);
+  --muted-foreground: oklch(0.68 0.025 145);
+  --accent: oklch(0.24 0.02 145);
+  --accent-foreground: oklch(0.97 0.01 145);
+  --success: oklch(0.88 0.2 125);
+  --success-foreground: oklch(0.16 0.04 145);
+  --destructive: oklch(0.68 0.2 28);
+  --destructive-foreground: oklch(0.98 0.01 30);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.88 0.2 125 / 55%);
 }
 
 /* Document lock — only inner containers scroll (keeps Safari chrome from bouncing). */
@@ -101,28 +102,68 @@ body {
 
 @layer base {
   * { border-color: var(--color-border); }
-  body { font-family: var(--font-display); -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
   button { font-family: inherit; }
 }
 
 @utility surface-card {
   background-color: var(--color-card);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  padding: 1.25rem;
+  padding: 1rem;
+}
+
+@utility surface-live {
+  border-color: color-mix(in oklch, var(--color-primary) 42%, var(--color-border));
+  box-shadow: inset 3px 0 0 var(--color-primary);
 }
 
 @utility tap-target {
   min-height: 3.25rem;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0 1.25rem;
   transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
 }
 .tap-target:active { transform: scale(0.98); }
+
+@utility cta-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@utility stamp {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility clock-face {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+}
+
+@utility live-dot {
+  display: inline-block;
+  height: 0.45rem;
+  width: 0.45rem;
+  border-radius: 1px;
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 22%, transparent);
+}
 
 @keyframes work-card-soft-land {
   from {

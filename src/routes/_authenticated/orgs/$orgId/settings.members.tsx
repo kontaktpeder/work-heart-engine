@@ -6,10 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  inviteOrganizationMember,
-  listOrganizationMembers,
-} from "@/lib/members.functions";
+import { inviteOrganizationMember, listOrganizationMembers } from "@/lib/members.functions";
 import {
   Select,
   SelectContent,
@@ -75,11 +72,11 @@ export function MembersPane() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border p-4 space-y-2">
+      <div className="rounded-md border border-border p-4 space-y-2">
         <h2 className="font-medium">Hvordan det funker</h2>
         <p className="text-sm text-muted-foreground">
-          De får e-post fra Work, velger sitt eget passord og logger inn her. De trenger ikke
-          Nexus. Dere deler prosjekter og satser — timene er hver for dere.
+          De får e-post fra Work, velger sitt eget passord og logger inn her. De trenger ikke Nexus.
+          Dere deler prosjekter og satser — timene er hver for dere.
         </p>
       </div>
 
@@ -108,7 +105,7 @@ export function MembersPane() {
       </div>
 
       {membersQ.data?.canInvite ? (
-        <div className="rounded-lg border border-border p-4 space-y-3">
+        <div className="rounded-md border border-border p-4 space-y-3">
           <div>
             <h2 className="font-medium">Inviter kollega</h2>
             <p className="text-sm text-muted-foreground mt-1">

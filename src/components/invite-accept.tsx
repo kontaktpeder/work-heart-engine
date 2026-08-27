@@ -8,6 +8,7 @@ import {
   readInviteLanding,
 } from "@/lib/invite-auth";
 import { setDefaultOrgId } from "@/lib/work-core";
+import { BrandLockup } from "@/components/brand-mark";
 
 export function InviteAcceptPane() {
   const navigate = useNavigate();
@@ -95,13 +96,13 @@ export function InviteAcceptPane() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 bg-background">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-12 bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground text-2xl font-bold mb-4">
-            W
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">Velkommen til Work</h1>
+        <div className="mb-8 text-center">
+          <h1 className="sr-only">Work Core</h1>
+          <BrandLockup size="lg" />
+          <p className="stamp mt-4 text-muted-foreground">Velkommen inn</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Velg et passord. Etterpå logger du inn med e-post her — du trenger ikke Nexus.
           </p>
@@ -140,7 +141,7 @@ export function InviteAcceptPane() {
                 placeholder="Velg passord"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-12 w-full rounded-md border border-border bg-input px-4 focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <input
                 type="password"
@@ -150,12 +151,12 @@ export function InviteAcceptPane() {
                 placeholder="Gjenta passord"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-12 w-full rounded-md border border-border bg-input px-4 focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full tap-target bg-primary text-primary-foreground disabled:opacity-60"
+                className="tap-target cta-brand w-full bg-primary text-primary-foreground disabled:opacity-60"
               >
                 {busy ? "Lagrer…" : "Lagre passord og fortsett"}
               </button>

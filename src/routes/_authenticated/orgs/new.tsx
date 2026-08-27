@@ -41,14 +41,14 @@ function NewOrgPage() {
             <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold">Ny organisasjon</h1>
+        <h1 className="font-display text-3xl font-bold uppercase tracking-wide">Ny organisasjon</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Du blir eier. Standard prosjekt og satser opprettes automatisk.
         </p>
       </div>
 
       <form
-        className="space-y-4 rounded-lg border border-border p-4"
+        className="space-y-4 rounded-md border border-border p-4"
         onSubmit={(e) => {
           e.preventDefault();
           createMut.mutate();

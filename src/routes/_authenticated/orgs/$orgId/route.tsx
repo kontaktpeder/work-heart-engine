@@ -23,6 +23,7 @@ import { adjacentOrgId, orgStackIndex } from "@/lib/org-stack";
 import { useOrgStackSwipe } from "@/hooks/useOrgStackSwipe";
 import { MissionReturnLink } from "@/components/mission-return-link";
 import { ContentSheet } from "@/components/content-sheet";
+import { BrandMark } from "@/components/brand-mark";
 import { authSupabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tryOpenSheet } from "@/lib/sheetGate";
@@ -256,26 +257,25 @@ function OrgLayout() {
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
-          className="flex min-w-0 items-center gap-2 text-left"
+          className="flex min-w-0 items-center gap-2.5 text-left"
         >
+          <BrandMark size="sm" />
           {canSwipeOrgs ? (
             <span className="flex shrink-0 flex-col gap-1" aria-hidden>
               {orgs.map((o, i) => (
                 <span
                   key={o.id}
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    i === stackIndex ? "bg-foreground/70" : "bg-border"
-                  }`}
+                  className={`h-1.5 w-1.5 ${i === stackIndex ? "bg-primary" : "bg-border"}`}
                 />
               ))}
             </span>
           ) : null}
-          <p className="truncate text-sm font-semibold tracking-tight">{org.name}</p>
+          <p className="truncate font-display text-xl font-bold tracking-wide">{org.name}</p>
         </button>
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-sm"
+          className="flex h-9 w-9 shrink-0 items-center justify-center bg-secondary font-display text-sm font-bold text-foreground"
           aria-label="Meny"
         >
           {org.name.charAt(0).toUpperCase()}
@@ -334,7 +334,7 @@ function OrgLayout() {
                 key={item.section}
                 type="button"
                 onClick={() => openSheet("settings", item.section)}
-                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 text-left transition hover:bg-accent"
+                className="flex min-h-14 w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-4 text-left transition hover:bg-accent"
               >
                 <div className="min-w-0">
                   <p className="font-medium">{item.label}</p>
@@ -384,21 +384,21 @@ function OrgLayout() {
                 setMenuOpen(false);
                 openSheet("settings");
               }}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 font-medium"
+              className="flex min-h-14 w-full items-center gap-3 rounded-md border border-border bg-card px-4 font-medium"
             >
               <Settings className="h-5 w-5 text-primary" /> Innstillinger
             </button>
             <Link
               to="/orgs"
               onClick={() => setMenuOpen(false)}
-              className="flex min-h-14 items-center gap-3 rounded-2xl border border-border px-4 font-medium"
+              className="flex min-h-14 items-center gap-3 rounded-md border border-border px-4 font-medium"
             >
               <ArrowLeftRight className="h-5 w-5" /> Bytt arbeidsrom
             </Link>
             <button
               type="button"
               onClick={signOut}
-              className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left font-medium text-destructive"
+              className="flex min-h-14 w-full items-center gap-3 rounded-md px-4 text-left font-medium text-destructive"
             >
               <LogOut className="h-5 w-5" /> Logg ut
             </button>

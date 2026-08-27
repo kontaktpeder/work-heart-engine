@@ -79,10 +79,7 @@ export function MarkSheet({
     };
 
     if (mark) {
-      const { error } = await supabase
-        .from("time_entry_marks")
-        .update(payload)
-        .eq("id", mark.id);
+      const { error } = await supabase.from("time_entry_marks").update(payload).eq("id", mark.id);
       setBusy(false);
       if (error) return toast.error(error.message);
       toast.success("Merke oppdatert");
@@ -143,7 +140,7 @@ export function MarkSheet({
               <button
                 type="button"
                 onClick={() => setKind("note")}
-                className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                className={`rounded-md border px-3 py-2.5 text-sm font-medium ${
                   kind === "note" ? "border-primary bg-primary/10" : "border-border bg-card"
                 }`}
               >
@@ -152,7 +149,7 @@ export function MarkSheet({
               <button
                 type="button"
                 onClick={() => setKind("pause")}
-                className={`rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                className={`rounded-md border px-3 py-2.5 text-sm font-medium ${
                   kind === "pause" ? "border-primary bg-primary/10" : "border-border bg-card"
                 }`}
               >
@@ -230,9 +227,15 @@ export function MarkSheet({
             <button
               type="submit"
               disabled={busy}
-              className="tap-target h-12 flex-1 bg-primary text-primary-foreground disabled:opacity-60"
+              className="tap-target cta-brand h-12 flex-1 bg-primary text-primary-foreground disabled:opacity-60"
             >
-              {busy ? "Lagrer…" : kind === "pause" ? "Lagre pause" : mark ? "Lagre" : "Legg til merke"}
+              {busy
+                ? "Lagrer…"
+                : kind === "pause"
+                  ? "Lagre pause"
+                  : mark
+                    ? "Lagre"
+                    : "Legg til merke"}
             </button>
           </div>
         </SheetStickyFooter>

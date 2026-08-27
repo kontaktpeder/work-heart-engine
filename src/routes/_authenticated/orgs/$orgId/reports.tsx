@@ -300,7 +300,7 @@ export function ReportsPane() {
               key={key}
               type="button"
               onClick={() => applyPeriod(key)}
-              className={`rounded-xl border px-3 py-2 text-left text-sm ${
+              className={`rounded-md border px-3 py-2 text-left text-sm ${
                 preset === key
                   ? "border-primary bg-primary/10 font-semibold"
                   : "border-border bg-card"
@@ -316,7 +316,7 @@ export function ReportsPane() {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="min-w-0">
-            <label className="text-xs text-muted-foreground">Fra</label>
+            <label className="stamp text-muted-foreground">Fra</label>
             <input
               type="date"
               value={from}
@@ -328,7 +328,7 @@ export function ReportsPane() {
             />
           </div>
           <div className="min-w-0">
-            <label className="text-xs text-muted-foreground">Til</label>
+            <label className="stamp text-muted-foreground">Til</label>
             <input
               type="date"
               value={to}
@@ -341,7 +341,7 @@ export function ReportsPane() {
           </div>
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Prosjekt</label>
+          <label className="stamp text-muted-foreground">Prosjekt</label>
           <select
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
@@ -359,22 +359,20 @@ export function ReportsPane() {
 
       <div className="surface-card space-y-2">
         <div className="flex items-baseline justify-between">
-          <span className="text-sm text-muted-foreground">Total tid</span>
-          <span className="text-2xl font-bold tabular-nums">{formatDuration(totalMin)}</span>
+          <span className="stamp text-muted-foreground">Total tid</span>
+          <span className="clock-face text-3xl">{formatDuration(totalMin)}</span>
         </div>
         {anyAmount && (
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-muted-foreground">Total beløp</span>
-            <span className="text-xl font-bold tabular-nums">{formatNok(totalAmount)}</span>
+            <span className="stamp text-muted-foreground">Total beløp</span>
+            <span className="clock-face text-2xl">{formatNok(totalAmount)}</span>
           </div>
         )}
       </div>
 
       {byProject.length > 0 && (
         <div className="surface-card">
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">
-            Per prosjekt
-          </h2>
+          <h2 className="stamp mb-3 text-muted-foreground">Per prosjekt</h2>
           <div className="space-y-2">
             {byProject.map((p) => (
               <div key={p.name} className="flex items-baseline justify-between">
@@ -428,7 +426,7 @@ export function ReportsPane() {
         <button
           onClick={() => requestExport("pdf")}
           disabled={!entries.length}
-          className="tap-target bg-primary text-primary-foreground h-12 disabled:opacity-50"
+          className="tap-target cta-brand bg-primary text-primary-foreground h-12 disabled:opacity-50"
         >
           <FileText className="w-4 h-4 mr-2" />
           PDF
@@ -436,7 +434,7 @@ export function ReportsPane() {
       </div>
 
       {missingEmployee ? (
-        <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm">
           <p className="font-medium">Ansattnavn mangler</p>
           <p className="mt-1 text-muted-foreground">
             Fyll inn navnet ditt på rapportskjemaet før du eksporterer.
@@ -455,7 +453,7 @@ export function ReportsPane() {
         <button
           onClick={() => requestExport("finance")}
           disabled={(exportableQ.data?.count ?? 0) === 0}
-          className="tap-target w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
+          className="tap-target cta-brand w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
         >
           <Send className="w-4 h-4 mr-2" />
           {`Export to Finance (${exportableQ.data?.count ?? 0})`}

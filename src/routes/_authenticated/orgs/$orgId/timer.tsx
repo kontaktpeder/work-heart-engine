@@ -92,10 +92,7 @@ export function TimerPane() {
     queryFn: () => fetchMarksForEntries(entryIds),
     enabled: entryIds.length > 0,
   });
-  const marksByEntry = useMemo(
-    () => groupMarksByEntryId(marksQ.data ?? []),
-    [marksQ.data],
-  );
+  const marksByEntry = useMemo(() => groupMarksByEntryId(marksQ.data ?? []), [marksQ.data]);
 
   const totalMin = entries.reduce((s, e) => s + entryMinutes(e), 0);
   const totalAmount = entries.reduce((s, e) => s + (e.amount ?? 0), 0);
@@ -119,14 +116,14 @@ export function TimerPane() {
       <div className="flex items-center justify-end">
         <button
           onClick={openNew}
-          className="tap-target bg-primary text-primary-foreground h-11 px-4"
+          className="tap-target cta-brand bg-primary text-primary-foreground h-11 px-4"
         >
           <Plus className="w-5 h-5 mr-1" />
           Legg til
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted text-xs sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 rounded-md bg-muted p-1 text-xs sm:grid-cols-4">
         {(
           [
             ["current", "Denne syklus"],
@@ -138,7 +135,7 @@ export function TimerPane() {
           <button
             key={k}
             onClick={() => setPeriod(k)}
-            className={`rounded-lg py-2 font-medium ${
+            className={`rounded-md py-2 font-medium ${
               period === k ? "bg-card" : "text-muted-foreground"
             }`}
           >
@@ -164,9 +161,9 @@ export function TimerPane() {
       </select>
 
       <div className="surface-card flex items-baseline justify-between">
-        <span className="text-sm text-muted-foreground">Totalt · {org.name}</span>
+        <span className="stamp text-muted-foreground">Totalt · {org.name}</span>
         <div className="text-right">
-          <div className="text-2xl font-bold tabular-nums">{formatDuration(totalMin)}</div>
+          <div className="clock-face text-3xl">{formatDuration(totalMin)}</div>
           {anyAmount && (
             <div className="text-sm text-muted-foreground tabular-nums">
               {formatNok(totalAmount)}
@@ -177,9 +174,7 @@ export function TimerPane() {
 
       <div className="space-y-2">
         {entries.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-12">
-            Ingen timer registrert.
-          </p>
+          <p className="text-center text-sm text-muted-foreground py-12">Ingen timer registrert.</p>
         )}
         {entries.map((e) => {
           const start = e.started_at ? new Date(e.started_at) : null;
@@ -212,7 +207,7 @@ export function TimerPane() {
                 </div>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
                   {proj && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-accent">{proj.name}</span>
+                    <span className="rounded-sm bg-accent px-2 py-0.5 text-xs">{proj.name}</span>
                   )}
                   <span className="text-sm font-semibold tabular-nums">
                     {formatDuration(entryMinutes(e))}

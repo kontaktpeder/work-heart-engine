@@ -60,7 +60,7 @@ export function ReportSettingsPane() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="rounded-md border border-border p-4 space-y-3">
         <div>
           <p className="text-sm font-semibold">Navn på rapporten</p>
           <p className="text-xs text-muted-foreground">

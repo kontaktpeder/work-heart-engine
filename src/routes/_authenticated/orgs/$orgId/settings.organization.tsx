@@ -100,12 +100,12 @@ export function OrganizationSettingsPane() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border p-4">
+      <div className="rounded-md border border-border p-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Navn</p>
         <p className="text-lg font-medium">{org.name}</p>
       </div>
 
-      <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="rounded-md border border-border p-4 space-y-3">
         <div>
           <p className="text-sm font-semibold">Firmanavn på rapport</p>
           <p className="text-xs text-muted-foreground">
@@ -133,7 +133,7 @@ export function OrganizationSettingsPane() {
         </Link>
       </div>
 
-      <div className="rounded-lg border border-border p-4 space-y-4">
+      <div className="rounded-md border border-border p-4 space-y-4">
         <div>
           <h2 className="font-medium">Platform-kobling (Nexus)</h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -208,7 +208,7 @@ export function OrganizationSettingsPane() {
       <Link
         to="/orgs/$orgId/settings/finance-integration"
         params={{ orgId }}
-        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+        className="block rounded-md border border-border p-4 hover:border-primary transition"
       >
         <p className="font-medium">Finance integration →</p>
         <p className="text-sm text-muted-foreground">
@@ -219,7 +219,7 @@ export function OrganizationSettingsPane() {
       <Link
         to="/orgs/$orgId/settings/api-keys"
         params={{ orgId }}
-        className="block rounded-lg border border-border p-4 hover:border-primary transition"
+        className="block rounded-md border border-border p-4 hover:border-primary transition"
       >
         <p className="font-medium">Manage API keys →</p>
         <p className="text-sm text-muted-foreground">

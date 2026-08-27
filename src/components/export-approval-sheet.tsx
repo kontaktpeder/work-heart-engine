@@ -59,7 +59,10 @@ function MonthGrid({
   const startPad = (first.getDay() + 6) % 7;
   const days = new Date(year, monthIndex + 1, 0).getDate();
   const label = first.toLocaleDateString("nb-NO", { month: "long", year: "numeric" });
-  const cells: (number | null)[] = [...Array(startPad).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
+  const cells: (number | null)[] = [
+    ...Array(startPad).fill(null),
+    ...Array.from({ length: days }, (_, i) => i + 1),
+  ];
 
   return (
     <div className="space-y-2">
@@ -86,7 +89,11 @@ function MonthGrid({
               } ${hasWork ? "active:scale-95" : ""}`}
             >
               <span>{day}</span>
-              {hasWork ? <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary" /> : <span className="mt-0.5 h-1.5" />}
+              {hasWork ? (
+                <span className="mt-0.5 h-1.5 w-1.5 bg-primary" />
+              ) : (
+                <span className="mt-0.5 h-1.5" />
+              )}
             </button>
           );
         })}
@@ -151,7 +158,8 @@ export function ExportApprovalSheet({
 
   const fromDate = new Date(draftFrom + "T00:00:00");
   const toDate = new Date(draftTo + "T00:00:00");
-  const periodOk = !Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime()) && draftFrom <= draftTo;
+  const periodOk =
+    !Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime()) && draftFrom <= draftTo;
 
   if (!open) return null;
 
@@ -166,10 +174,16 @@ export function ExportApprovalSheet({
         </p>
 
         {metaPreview ? (
-          <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-0.5">
-            <p>Firmanavn: <span className="text-foreground">{metaPreview.company || "—"}</span></p>
-            <p>Ansatt: <span className="text-foreground">{metaPreview.employee || "—"}</span></p>
-            <p>Leder: <span className="text-foreground">{metaPreview.manager || "—"}</span></p>
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-0.5">
+            <p>
+              Firmanavn: <span className="text-foreground">{metaPreview.company || "—"}</span>
+            </p>
+            <p>
+              Ansatt: <span className="text-foreground">{metaPreview.employee || "—"}</span>
+            </p>
+            <p>
+              Leder: <span className="text-foreground">{metaPreview.manager || "—"}</span>
+            </p>
           </div>
         ) : null}
 
@@ -209,7 +223,9 @@ export function ExportApprovalSheet({
             <span className="text-sm text-muted-foreground">Timer i perioden</span>
             <span className="text-xl font-bold tabular-nums">{formatDuration(totalMin)}</span>
           </div>
-          <p className="text-xs text-muted-foreground">{entries.length} føringer · prikk = jobbet</p>
+          <p className="text-xs text-muted-foreground">
+            {entries.length} føringer · prikk = jobbet
+          </p>
         </div>
 
         <div className="space-y-5">
@@ -232,7 +248,7 @@ export function ExportApprovalSheet({
           type="button"
           disabled={!periodOk || busy || entries.length === 0}
           onClick={onConfirm}
-          className="tap-target w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
+          className="tap-target cta-brand w-full bg-primary text-primary-foreground h-12 disabled:opacity-50"
         >
           {busy ? "Eksporterer…" : confirmLabel}
         </button>
@@ -246,7 +262,7 @@ export function ExportApprovalSheet({
           aria-label="Lukk referat"
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 text-left shadow-xl"
+            className="w-full max-w-sm rounded-md border border-border bg-card p-4 text-left shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-xs text-muted-foreground">
@@ -258,7 +274,7 @@ export function ExportApprovalSheet({
             </p>
             <div className="mt-3 space-y-3">
               {peekEntries.map((e) => (
-                <div key={e.id} className="rounded-xl border border-border/60 px-3 py-2">
+                <div key={e.id} className="rounded-md border border-border/60 px-3 py-2">
                   <p className="font-medium tabular-nums">
                     {fmtClock(e.started_at, e.start_time)} – {fmtClock(e.ended_at, e.end_time)}
                     <span className="ml-2 text-sm text-muted-foreground">

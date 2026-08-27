@@ -149,7 +149,14 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
     if (activeSession.rate_id) setRateId(activeSession.rate_id);
     setCustomer(activeSession.customer ?? "");
     setTask(activeSession.task ?? "");
-  }, [activeInThisOrg, activeSession?.id, activeSession?.project_id, activeSession?.rate_id, activeSession?.customer, activeSession?.task]);
+  }, [
+    activeInThisOrg,
+    activeSession?.id,
+    activeSession?.project_id,
+    activeSession?.rate_id,
+    activeSession?.customer,
+    activeSession?.task,
+  ]);
 
   useEffect(() => {
     const pid = projectId ?? (activeInThisOrg ? activeSession!.project_id : null);
@@ -250,21 +257,21 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
         <button
           type="button"
           onClick={() => onOpenTimer?.()}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 font-display text-sm font-bold uppercase tracking-[0.12em]"
         >
           <List className="h-4 w-4 text-primary" /> Timer
         </button>
         <button
           type="button"
           onClick={() => onOpenReports?.()}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm font-semibold"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 font-display text-sm font-bold uppercase tracking-[0.12em]"
         >
           <BarChart3 className="h-4 w-4 text-primary" /> Rapport
         </button>
       </div>
 
       {(recentEntriesQ.data?.length ?? 0) === 0 && org.owner_id === user.id ? (
-        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-lg border border-dashed border-border p-3 sm:flex-row sm:items-center">
+        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-md border border-dashed border-border p-3 sm:flex-row sm:items-center">
           <p className="text-sm text-muted-foreground">
             Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
           </p>
@@ -292,12 +299,13 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       ) : null}
 
       {activeInThisOrg ? (
-        <div className="work-card-soft-land surface-card flex min-h-0 flex-1 flex-col gap-3 overflow-hidden border-primary/40 !p-4">
+        <div className="work-card-soft-land surface-card surface-live flex min-h-0 flex-1 flex-col gap-3 overflow-hidden !p-4">
           <div className="shrink-0 text-center">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Du jobber</p>
-            <p className="mt-1 text-4xl font-bold tabular-nums leading-none">
-              {formatDuration(elapsedMin)}
+            <p className="stamp inline-flex items-center gap-2 text-muted-foreground">
+              <span className="live-dot" />
+              Du jobber
             </p>
+            <p className="clock-face mt-2 text-5xl text-primary">{formatDuration(elapsedMin)}</p>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {project?.name ?? "—"}
               {task ? ` · ${task}` : ""}
@@ -313,7 +321,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="h-10 truncate rounded-xl border border-border bg-input px-2.5 text-left text-sm"
+              className="h-10 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
             >
               <span className={project ? "" : "text-muted-foreground"}>
                 {project?.name ?? "Prosjekt…"}
@@ -322,11 +330,9 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="h-10 truncate rounded-xl border border-border bg-input px-2.5 text-left text-sm"
+              className="h-10 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
             >
-              <span className={rate ? "" : "text-muted-foreground"}>
-                {rate?.name ?? "Sats…"}
-              </span>
+              <span className={rate ? "" : "text-muted-foreground"}>{rate?.name ?? "Sats…"}</span>
             </button>
           </div>
 
@@ -337,7 +343,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                 <button
                   type="button"
                   onClick={() => openMark("pause")}
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
+                  className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-xs font-medium"
                 >
                   <Coffee className="h-3.5 w-3.5 text-primary" />
                   Pause
@@ -345,7 +351,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                 <button
                   type="button"
                   onClick={() => openMark("note")}
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-xs font-medium"
+                  className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-xs font-medium"
                 >
                   <BookmarkPlus className="h-3.5 w-3.5 text-primary" />
                   Merke
@@ -384,7 +390,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <button
             onClick={stopWork}
             disabled={busy}
-            className="tap-target h-14 w-full shrink-0 bg-destructive text-base text-destructive-foreground disabled:opacity-60"
+            className="tap-target cta-brand h-14 w-full shrink-0 bg-destructive text-base text-destructive-foreground disabled:opacity-60"
           >
             <Square className="mr-2 h-4 w-4" fill="currentColor" />
             {busy ? "Stopper…" : "Stopp arbeid"}
@@ -393,18 +399,18 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       ) : (
         <div className="surface-card shrink-0 space-y-3 !p-4">
           <div className="space-y-2">
-            <label className="text-xs text-muted-foreground">Prosjekt</label>
+            <label className="stamp text-muted-foreground">Prosjekt</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="flex h-11 w-full items-center justify-between rounded-xl border border-border bg-input px-3 text-left"
+              className="flex h-11 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left"
             >
               <span className={project ? "" : "text-muted-foreground"}>
                 {project?.name ?? "Velg prosjekt…"}
               </span>
             </button>
 
-            <label className="mt-2 block text-xs text-muted-foreground">Kunde (valgfri)</label>
+            <label className="stamp mt-2 block text-muted-foreground">Kunde (valgfri)</label>
             <input
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
@@ -412,7 +418,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
               className={sheetFieldClass}
             />
 
-            <label className="mt-2 block text-xs text-muted-foreground">Oppgave</label>
+            <label className="stamp mt-2 block text-muted-foreground">Oppgave</label>
             <input
               value={task}
               onChange={(e) => setTask(e.target.value)}
@@ -420,17 +426,19 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
               className={sheetFieldClass}
             />
 
-            <label className="mt-2 block text-xs text-muted-foreground">Sats (valgfri)</label>
+            <label className="stamp mt-2 block text-muted-foreground">Sats (valgfri)</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="flex h-11 w-full items-center justify-between rounded-xl border border-border bg-input px-3 text-left"
+              className="flex h-11 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left"
             >
               <span className={rate ? "" : "text-muted-foreground"}>
                 {rate?.name ?? "Velg sats…"}
               </span>
               {rate ? (
-                <span className="text-xs tabular-nums text-muted-foreground">{rate.amount} kr/t</span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {rate.amount} kr/t
+                </span>
               ) : null}
             </button>
           </div>
@@ -438,7 +446,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <button
             onClick={startWork}
             disabled={busy || !projectId || !task.trim() || !!activeSession}
-            className="tap-target h-14 w-full bg-primary text-base text-primary-foreground disabled:opacity-60"
+            className="tap-target cta-brand h-14 w-full bg-primary text-base text-primary-foreground disabled:opacity-60"
           >
             <Play className="mr-2 h-5 w-5" fill="currentColor" />
             Start arbeid
@@ -448,8 +456,8 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
 
       <div className="surface-card shrink-0 !py-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-sm text-muted-foreground">I dag ({org.name})</span>
-          <span className="text-xl font-bold tabular-nums">{formatDuration(todayMin)}</span>
+          <span className="stamp text-muted-foreground">I dag · {org.name}</span>
+          <span className="clock-face text-2xl">{formatDuration(todayMin)}</span>
         </div>
       </div>
 
