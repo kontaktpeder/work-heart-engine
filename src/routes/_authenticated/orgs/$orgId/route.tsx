@@ -256,7 +256,7 @@ function OrgLayout() {
       style={{ height: "var(--app-height, 100svh)" }}
       aria-label={canSwipeOrgs ? "Sveip opp eller ned for å bytte organisasjon" : undefined}
     >
-      <header className="mb-3 flex shrink-0 items-center justify-between gap-2">
+      <header className="mb-2 flex shrink-0 items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => tryOpenSheet(() => setMenuOpen(true))}
@@ -273,7 +273,7 @@ function OrgLayout() {
               ))}
             </span>
           ) : null}
-          <p className="truncate font-display text-xl font-bold tracking-wide">{org.name}</p>
+          <p className="truncate font-display text-lg font-bold tracking-wide">{org.name}</p>
         </button>
         <button
           type="button"
@@ -291,11 +291,12 @@ function OrgLayout() {
         </div>
       ) : null}
 
-      <div
-        data-org-stack-scroll
-        className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-      >
-        <div key={orgId} className={canSwipeOrgs ? "org-stack-enter" : ""} style={stackStyle}>
+      <div className="min-h-0 flex-1 overflow-hidden pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div
+          key={orgId}
+          className={`h-full min-h-0 ${canSwipeOrgs ? "org-stack-enter" : ""}`}
+          style={stackStyle}
+        >
           <StartPane
             onOpenTimer={() => openSheet("timer")}
             onOpenReports={() => openSheet("reports")}

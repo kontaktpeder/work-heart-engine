@@ -253,38 +253,36 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onOpenTimer?.()}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 font-display text-sm font-bold uppercase tracking-[0.12em]"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 font-display text-xs font-bold uppercase tracking-[0.12em]"
         >
-          <List className="h-4 w-4 text-primary" /> Timer
+          <List className="h-3.5 w-3.5 text-primary" /> Timer
         </button>
         <button
           type="button"
           onClick={() => onOpenReports?.()}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-border bg-card px-3 font-display text-sm font-bold uppercase tracking-[0.12em]"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 font-display text-xs font-bold uppercase tracking-[0.12em]"
         >
-          <BarChart3 className="h-4 w-4 text-primary" /> Rapport
+          <BarChart3 className="h-3.5 w-3.5 text-primary" /> Rapport
         </button>
       </div>
 
       {(recentEntriesQ.data?.length ?? 0) === 0 && org.owner_id === user.id ? (
-        <div className="flex shrink-0 flex-col justify-between gap-3 rounded-md border border-dashed border-border p-3 sm:flex-row sm:items-center">
-          <p className="text-sm text-muted-foreground">
-            Ingen timer ennå. Fyll med demodata for å se Mission-alerts og rapporter.
-          </p>
+        <div className="flex shrink-0 items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2">
+          <p className="min-w-0 truncate text-xs text-muted-foreground">Ingen timer ennå.</p>
           <Button
             size="sm"
             variant="secondary"
-            className="shrink-0 gap-1"
+            className="h-8 shrink-0 gap-1 px-2 text-xs"
             disabled={seedMut.isPending}
             onClick={() => seedMut.mutate()}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            {seedMut.isPending ? "Legger inn…" : "Fyll med demodata"}
+            {seedMut.isPending ? "Legger inn…" : "Demodata"}
           </Button>
         </div>
       ) : null}
@@ -300,13 +298,13 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
       ) : null}
 
       {activeInThisOrg ? (
-        <div className="work-card-soft-land surface-card surface-live flex shrink-0 flex-col gap-3 !p-4">
+        <div className="work-card-soft-land surface-card surface-live flex min-h-0 flex-1 flex-col gap-2 overflow-hidden !p-3">
           <div className="shrink-0 text-center">
             <p className="stamp inline-flex items-center gap-2 text-muted-foreground">
               <span className="live-dot" />
               Du jobber
             </p>
-            <p className="clock-face mt-2 text-5xl text-primary">{formatDuration(elapsedMin)}</p>
+            <p className="clock-face mt-1.5 text-4xl text-primary">{formatDuration(elapsedMin)}</p>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {project?.name ?? "—"}
               {task ? ` · ${task}` : ""}
@@ -322,7 +320,7 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="h-10 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
+              className="h-9 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
             >
               <span className={project ? "" : "text-muted-foreground"}>
                 {project?.name ?? "Prosjekt…"}
@@ -331,13 +329,13 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="h-10 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
+              className="h-9 truncate rounded-md border border-border bg-input px-2.5 text-left text-sm"
             >
               <span className={rate ? "" : "text-muted-foreground"}>{rate?.name ?? "Sats…"}</span>
             </button>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
             <div className="flex shrink-0 items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">Logg</span>
               <div className="flex gap-1.5">
@@ -364,7 +362,10 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
                 Pause eller merke underveis — følger med i rapporten.
               </p>
             ) : (
-              <ul className="space-y-1">
+              <ul
+                data-org-stack-scroll
+                className="scroll-touch min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain"
+              >
                 {(marksQ.data ?? []).map((m) => (
                   <li key={m.id}>
                     <button
@@ -388,49 +389,49 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <button
             onClick={stopWork}
             disabled={busy}
-            className="tap-target cta-brand h-14 w-full shrink-0 bg-destructive text-base text-destructive-foreground disabled:opacity-60"
+            className="cta-brand inline-flex h-10 w-full shrink-0 items-center justify-center bg-destructive text-sm text-destructive-foreground disabled:opacity-60"
           >
             <Square className="mr-2 h-4 w-4" fill="currentColor" />
             {busy ? "Stopper…" : "Stopp arbeid"}
           </button>
         </div>
       ) : (
-        <div className="surface-card shrink-0 space-y-3 !p-4">
-          <div className="space-y-2">
+        <div className="surface-card shrink-0 space-y-2 !p-3">
+          <div className="space-y-1.5">
             <label className="stamp text-muted-foreground">Prosjekt</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setProjectPickerOpen(true))}
-              className="flex h-11 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left"
+              className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left text-sm"
             >
               <span className={project ? "" : "text-muted-foreground"}>
                 {project?.name ?? "Velg prosjekt…"}
               </span>
             </button>
 
-            <label className="stamp mt-2 block text-muted-foreground">Kunde (valgfri)</label>
+            <label className="stamp mt-1 block text-muted-foreground">Kunde (valgfri)</label>
             <input
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
               onFocus={(e) => revealFocusedField(e.currentTarget)}
               placeholder="Fritekst"
-              className={sheetFieldClass}
+              className={`${sheetFieldClass} !px-3 !py-2`}
             />
 
-            <label className="stamp mt-2 block text-muted-foreground">Oppgave</label>
+            <label className="stamp mt-1 block text-muted-foreground">Oppgave</label>
             <input
               value={task}
               onChange={(e) => setTask(e.target.value)}
               onFocus={(e) => revealFocusedField(e.currentTarget)}
               placeholder="Hva skal du gjøre?"
-              className={sheetFieldClass}
+              className={`${sheetFieldClass} !px-3 !py-2`}
             />
 
-            <label className="stamp mt-2 block text-muted-foreground">Sats (valgfri)</label>
+            <label className="stamp mt-1 block text-muted-foreground">Sats (valgfri)</label>
             <button
               type="button"
               onClick={() => tryOpenSheet(() => setRatePickerOpen(true))}
-              className="flex h-11 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left"
+              className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-input px-3 text-left text-sm"
             >
               <span className={rate ? "" : "text-muted-foreground"}>
                 {rate?.name ?? "Velg sats…"}
@@ -446,15 +447,15 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
           <button
             onClick={startWork}
             disabled={busy || !projectId || !task.trim() || !!activeSession}
-            className="tap-target cta-brand h-14 w-full bg-primary text-base text-primary-foreground disabled:opacity-60"
+            className="cta-brand inline-flex h-10 w-full items-center justify-center bg-primary text-sm text-primary-foreground disabled:opacity-60"
           >
-            <Play className="mr-2 h-5 w-5" fill="currentColor" />
+            <Play className="mr-2 h-4 w-4" fill="currentColor" />
             Start arbeid
           </button>
         </div>
       )}
 
-      <div className="surface-card mt-auto shrink-0 !py-3">
+      <div className="surface-card mt-auto shrink-0 !py-2">
         <div className="flex items-baseline justify-between">
           <span className="stamp text-muted-foreground">I dag · {org.name}</span>
           <span className="clock-face text-2xl">{formatDuration(todayMin)}</span>
