@@ -205,7 +205,7 @@ export function ContentSheet({
 
   useEffect(() => {
     return () => {
-      cancelSpringRef.current?.();
+      stopSpring();
       if (dismissLockedRef.current) {
         dismissLockedRef.current = false;
         unlockSheetDismiss();
@@ -224,6 +224,10 @@ export function ContentSheet({
     yRef.current = y;
     writeSheetY(sheetLayerRef.current, y);
   };
+
+  useLayoutEffect(() => {
+    writeSheetY(sheetLayerRef.current, yRef.current);
+  });
 
   const stopSpring = () => {
     cancelSpringRef.current?.();
@@ -559,7 +563,6 @@ export function ContentSheet({
     };
   }, []);
 
-  const initialY = yRef.current;
   const recessTransform = isRecessed
     ? `translate3d(0, ${NEST_RECESS_Y_PX}px, 0) scale(${NEST_RECESS_SCALE})`
     : "translate3d(0, 0, 0) scale(1)";
@@ -610,7 +613,6 @@ export function ContentSheet({
             "relative z-10 flex h-full max-h-full w-full max-w-xl min-h-0 self-stretch",
             !isRecessed && "pointer-events-auto",
           )}
-          style={{ transform: `translate3d(0, ${initialY}px, 0)` }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
