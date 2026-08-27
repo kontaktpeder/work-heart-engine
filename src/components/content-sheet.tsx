@@ -11,13 +11,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { lockSheetDismiss, unlockSheetDismiss } from "@/lib/sheetGate";
-import {
-  getNestDepth,
-  getNestIndex,
-  nestPop,
-  nestPush,
-  subscribeNest,
-} from "@/lib/sheetNest";
+import { getNestDepth, getNestIndex, nestPop, nestPush, subscribeNest } from "@/lib/sheetNest";
 import { blurSheetField } from "@/lib/focusSheetField";
 import {
   BODY_ACTIVATE_PX,
@@ -173,10 +167,8 @@ export function ContentSheet({
     }
   };
 
-  const myNestIndex =
-    nestIdRef.current != null ? getNestIndex(nestIdRef.current) : -1;
-  const isRecessed =
-    nestEnabled && myNestIndex >= 0 && nestDepth > myNestIndex + 1;
+  const myNestIndex = nestIdRef.current != null ? getNestIndex(nestIdRef.current) : -1;
+  const isRecessed = nestEnabled && myNestIndex >= 0 && nestDepth > myNestIndex + 1;
 
   const canDrag = !flyingOut && !isRecessed;
   canDragRef.current = canDrag;
@@ -371,9 +363,7 @@ export function ContentSheet({
     const currentY = yForDetent(current, h);
     const deltaFromCurrent = y - currentY;
 
-    const positions = detents
-      .map((d) => ({ d, y: yForDetent(d, h) }))
-      .sort((a, b) => a.y - b.y);
+    const positions = detents.map((d) => ({ d, y: yForDetent(d, h) })).sort((a, b) => a.y - b.y);
 
     const peekY = positions[positions.length - 1]?.y ?? 0;
     const dismissLine = peekY + Math.max(100, (h - peekY) * 0.35);
@@ -442,11 +432,16 @@ export function ContentSheet({
         return;
       }
       const target = event.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+      if (
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], [data-sheet-close], [data-sheet-footer], [data-sheet-no-drag]',
+        )
+      ) {
         gestureRef.current = null;
         return;
       }
-      if (target.closest("[data-sheet-close]")) {
+      // Footer / form buttons must get a real click — not a 2px sheet-drag.
+      if (target.closest("button, a") && !target.closest("[data-sheet-grabber]")) {
         gestureRef.current = null;
         return;
       }
@@ -592,9 +587,7 @@ export function ContentSheet({
             className="flex h-full min-h-0 w-full origin-top"
             style={{
               transform: recessTransform,
-              transition: isRecessed
-                ? "none"
-                : `transform ${NEST_RECESS_MS}ms ${NEST_RECESS_EASE}`,
+              transition: isRecessed ? "none" : `transform ${NEST_RECESS_MS}ms ${NEST_RECESS_EASE}`,
               willChange: isRecessed ? "transform" : undefined,
             }}
           >
