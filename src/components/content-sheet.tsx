@@ -14,6 +14,8 @@ import { lockSheetDismiss, unlockSheetDismiss } from "@/lib/sheetGate";
 import { getNestDepth, getNestIndex, nestPop, nestPush, subscribeNest } from "@/lib/sheetNest";
 import { blurSheetField } from "@/lib/focusSheetField";
 import {
+  applySheetScrollChain,
+  BODY_ACTIVATE_PX,
   COMMIT_PROJECT_SEC,
   DETENT_SPRING,
   DISMISS_VEL,
@@ -90,16 +92,22 @@ type GestureState = {
   lastY: number;
   lastAt: number;
   startDragY: number;
+  startScrollTop: number;
   velocityY: number;
   dragging: boolean;
+  sheetMoved: boolean;
   fromGrabber: boolean;
   scrollEl: HTMLElement | null;
+  frozeScroll: boolean;
 };
+
+const SKIP_SHEET_GESTURE =
+  'input, textarea, select, [contenteditable="true"], [data-sheet-close], [data-sheet-footer], [data-sheet-no-drag]';
 
 /**
  * Soft bottom sheet — finger follows + spring settle.
- * Dagenvår: sheet drag only from the grabber. Body content always scrolls natively,
- * including when the scroller is already at the top.
+ * Grabber moves the sheet only. Body content and sheet Y are one chain:
+ * pan up expands to full then scrolls; pan down unwinds scroll then drags the sheet.
  */
 export function ContentSheet({
   onClose,
@@ -121,7 +129,6 @@ export function ContentSheet({
   const detentRef = useRef<SheetDetent>("full");
   const canDragRef = useRef(true);
   const frameHRef = useRef(700);
-  const multiDetentRef = useRef(false);
   const nestIdRef = useRef<number | null>(null);
   const yRef = useRef(typeof window !== "undefined" ? window.innerHeight : 640);
   const settleDragRef = useRef<(vy: number) => void>(() => {});
@@ -175,7 +182,6 @@ export function ContentSheet({
   canDragRef.current = canDrag;
   flyingOutRef.current = flyingOut;
   frameHRef.current = frameH;
-  multiDetentRef.current = multiDetent;
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -199,7 +205,7 @@ export function ContentSheet({
 
   useEffect(() => {
     return () => {
-      cancelSpringRef.current?.();
+      stopSpring();
       if (dismissLockedRef.current) {
         dismissLockedRef.current = false;
         unlockSheetDismiss();
@@ -218,6 +224,10 @@ export function ContentSheet({
     yRef.current = y;
     writeSheetY(sheetLayerRef.current, y);
   };
+
+  useLayoutEffect(() => {
+    writeSheetY(sheetLayerRef.current, yRef.current);
+  });
 
   const stopSpring = () => {
     cancelSpringRef.current?.();
@@ -411,13 +421,24 @@ export function ContentSheet({
     const card = cardRef.current;
     if (!card) return;
 
+    const freezeNativeScroll = (state: GestureState) => {
+      if (state.fromGrabber || !state.scrollEl || state.frozeScroll) return;
+      state.scrollEl.style.overflow = "hidden";
+      state.frozeScroll = true;
+    };
+
+    const unfreezeNativeScroll = (state: GestureState) => {
+      if (!state.frozeScroll || !state.scrollEl) return;
+      state.scrollEl.style.overflow = "";
+      state.frozeScroll = false;
+    };
+
     const beginDrag = (state: GestureState, clientY: number, timeStamp: number) => {
       blurSheetField();
       state.dragging = true;
-      state.startY = clientY;
       state.lastY = clientY;
       state.lastAt = timeStamp;
-      state.startDragY = yRef.current;
+      freezeNativeScroll(state);
       stopSpring();
       setDragVisual(true);
       try {
@@ -427,79 +448,111 @@ export function ContentSheet({
       }
     };
 
+    const applyChain = (state: GestureState, clientY: number) => {
+      const h = frameHRef.current;
+      const next = applySheetScrollChain({
+        fingerDy: clientY - state.startY,
+        startSheetY: state.startDragY,
+        startScrollTop: state.startScrollTop,
+        fullY: yForDetent("full", h),
+        maxScroll: state.scrollEl
+          ? Math.max(0, state.scrollEl.scrollHeight - state.scrollEl.clientHeight)
+          : 0,
+        grabber: state.fromGrabber,
+      });
+      if (state.scrollEl && !state.fromGrabber) {
+        state.scrollEl.scrollTop = next.scrollTop;
+      }
+      const resisted = resistDragY(next.sheetY, h);
+      if (Math.abs(resisted - state.startDragY) > 0.5) state.sheetMoved = true;
+      setY(resisted);
+    };
+
     const onPointerDown = (event: PointerEvent) => {
       if (flyingOutRef.current || event.button !== 0) {
         gestureRef.current = null;
         return;
       }
       const target = event.target as HTMLElement;
-      if (target.closest("[data-sheet-close]")) {
+      if (target.closest(SKIP_SHEET_GESTURE)) {
         gestureRef.current = null;
         return;
       }
       const fromGrabber = !!target.closest("[data-sheet-grabber]");
-      // Content scroll is native. Sheet drag is grabber-only — not "at scroll top".
-      if (!fromGrabber) {
-        gestureRef.current = null;
-        return;
-      }
       if (!canDragRef.current) {
         gestureRef.current = null;
         return;
       }
 
+      const scrollEl =
+        (target.closest("[data-sheet-scroll]") as HTMLElement | null) ?? getScrollEl(card);
       const state: GestureState = {
         pointerId: event.pointerId,
         startY: event.clientY,
         lastY: event.clientY,
         lastAt: event.timeStamp,
         startDragY: yRef.current,
+        startScrollTop: scrollEl?.scrollTop ?? 0,
         velocityY: 0,
         dragging: false,
+        sheetMoved: false,
         fromGrabber,
-        scrollEl:
-          (target.closest("[data-sheet-scroll]") as HTMLElement | null) ?? getScrollEl(card),
+        scrollEl,
+        frozeScroll: false,
       };
       gestureRef.current = state;
-      beginDrag(state, event.clientY, event.timeStamp);
+      freezeNativeScroll(state);
+      if (fromGrabber) {
+        beginDrag(state, event.clientY, event.timeStamp);
+      }
     };
 
     const onPointerMove = (event: PointerEvent) => {
       const state = gestureRef.current;
       if (!state || event.pointerId !== state.pointerId) return;
-      if (!state.dragging) return;
 
+      if (!state.dragging) {
+        if (Math.abs(event.clientY - state.startY) < BODY_ACTIVATE_PX) return;
+        beginDrag(state, event.clientY, event.timeStamp);
+      }
+
+      event.preventDefault();
       const elapsed = Math.max(1, event.timeStamp - state.lastAt);
       const sample = ((event.clientY - state.lastY) / elapsed) * 1000;
       state.velocityY = state.velocityY * (1 - VEL_EMA) + sample * VEL_EMA;
       state.lastY = event.clientY;
       state.lastAt = event.timeStamp;
-
-      const h = frameHRef.current;
-      const raw = state.startDragY + event.clientY - state.startY;
-      setY(resistDragY(raw, h));
+      applyChain(state, event.clientY);
     };
 
     const finishPointer = (event: PointerEvent) => {
       const state = gestureRef.current;
       if (!state || event.pointerId !== state.pointerId) return;
       gestureRef.current = null;
-      if (state.dragging) {
+      unfreezeNativeScroll(state);
+      if (!state.dragging) return;
+      if (state.sheetMoved) {
         settleDragRef.current(state.velocityY);
+        return;
       }
+      setDragVisual(false);
     };
 
     const onTouchMove = (event: TouchEvent) => {
-      if (gestureRef.current?.dragging) {
+      const state = gestureRef.current;
+      if (!state) return;
+      const y = event.touches[0]?.clientY;
+      const moved = y == null ? true : Math.abs(y - state.startY) >= 3;
+      if (state.dragging || moved) {
         event.preventDefault();
       }
     };
 
     card.addEventListener("pointerdown", onPointerDown);
-    card.addEventListener("pointermove", onPointerMove);
+    card.addEventListener("pointermove", onPointerMove, { passive: false });
     card.addEventListener("pointerup", finishPointer);
     card.addEventListener("pointercancel", finishPointer);
-    card.addEventListener("touchmove", onTouchMove, { passive: false });
+    card.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
 
     return () => {
       card.removeEventListener("pointerdown", onPointerDown);
@@ -508,10 +561,8 @@ export function ContentSheet({
       card.removeEventListener("pointercancel", finishPointer);
       card.removeEventListener("touchmove", onTouchMove);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const initialY = yRef.current;
   const recessTransform = isRecessed
     ? `translate3d(0, ${NEST_RECESS_Y_PX}px, 0) scale(${NEST_RECESS_SCALE})`
     : "translate3d(0, 0, 0) scale(1)";
@@ -562,7 +613,6 @@ export function ContentSheet({
             "relative z-10 flex h-full max-h-full w-full max-w-xl min-h-0 self-stretch",
             !isRecessed && "pointer-events-auto",
           )}
-          style={{ transform: `translate3d(0, ${initialY}px, 0)` }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
@@ -583,6 +633,7 @@ export function ContentSheet({
                 "rounded-t-lg rounded-b-none border border-border border-b-0",
                 className,
               )}
+              style={{ touchAction: "none" }}
             >
               <div
                 data-sheet-grabber

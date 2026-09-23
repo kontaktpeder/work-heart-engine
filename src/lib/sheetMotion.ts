@@ -11,8 +11,48 @@ export type SheetSpringOpts = {
   restSpeed?: number;
 };
 
-/** Grabber drag is immediate. Body content never starts sheet drag. */
-export const BODY_ACTIVATE_PX = 2;
+/** Grabber drag is immediate. Body waits this far so a tap on a row still clicks. */
+export const BODY_ACTIVATE_PX = 10;
+
+/**
+ * One-finger sheet + scroll chain (iOS nested-scroll).
+ * `fingerDy` is down-positive. Grabber always moves the sheet only.
+ * Body: pan up expands to `fullY` first, leftover scrolls; pan down
+ * unwinds `scrollTop` first, leftover drags the sheet.
+ */
+export function applySheetScrollChain(input: {
+  fingerDy: number;
+  startSheetY: number;
+  startScrollTop: number;
+  fullY: number;
+  maxScroll: number;
+  grabber: boolean;
+}): { sheetY: number; scrollTop: number } {
+  const startScroll = Math.max(0, input.startScrollTop);
+  const maxScroll = Math.max(0, input.maxScroll);
+
+  if (input.grabber) {
+    return { sheetY: input.startSheetY + input.fingerDy, scrollTop: startScroll };
+  }
+
+  const fingerDy = input.fingerDy;
+  if (fingerDy < 0) {
+    const roomToFull = Math.max(0, input.startSheetY - input.fullY);
+    const expand = Math.min(roomToFull, -fingerDy);
+    const leftover = -fingerDy - expand;
+    return {
+      sheetY: input.startSheetY - expand,
+      scrollTop: Math.min(maxScroll, startScroll + leftover),
+    };
+  }
+
+  const unwind = Math.min(startScroll, fingerDy);
+  return {
+    sheetY: input.startSheetY + (fingerDy - unwind),
+    scrollTop: startScroll - unwind,
+  };
+}
+
 /** Tiny unfinished nudges only — soft return home. Larger moves use nearest + velocity. */
 export const NUDGE_DEADZONE_PX = 16;
 export const NUDGE_VEL = 350;
