@@ -244,6 +244,69 @@ export type Database = {
         }
         Relationships: []
       }
+      production_days: {
+        Row: {
+          break_minutes: number
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          end_time: string
+          event_date: string
+          id: string
+          location: string | null
+          name: string
+          organization_id: string
+          project_id: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          break_minutes?: number
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          event_date: string
+          id?: string
+          location?: string | null
+          name: string
+          organization_id: string
+          project_id?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          break_minutes?: number
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          event_date?: string
+          id?: string
+          location?: string | null
+          name?: string
+          organization_id?: string
+          project_id?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_days_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_days_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           code: string | null
@@ -328,6 +391,63 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_assignments: {
+        Row: {
+          assignee_name: string | null
+          assignee_user_id: string
+          break_minutes: number
+          comment: string | null
+          created_at: string
+          end_time: string
+          id: string
+          organization_id: string
+          production_day_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_name?: string | null
+          assignee_user_id: string
+          break_minutes?: number
+          comment?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          organization_id: string
+          production_day_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_name?: string | null
+          assignee_user_id?: string
+          break_minutes?: number
+          comment?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          organization_id?: string
+          production_day_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_assignments_production_day_id_fkey"
+            columns: ["production_day_id"]
+            isOneToOne: false
+            referencedRelation: "production_days"
             referencedColumns: ["id"]
           },
         ]
@@ -667,6 +787,8 @@ export type Database = {
         | "reports:read"
         | "platform:read"
         | "platform:verify"
+        | "schedule:read"
+        | "schedule:write"
       org_role: "owner" | "admin" | "editor" | "viewer"
       time_entry_source: "manual" | "timer"
     }
@@ -802,6 +924,8 @@ export const Constants = {
         "reports:read",
         "platform:read",
         "platform:verify",
+        "schedule:read",
+        "schedule:write",
       ],
       org_role: ["owner", "admin", "editor", "viewer"],
       time_entry_source: ["manual", "timer"],

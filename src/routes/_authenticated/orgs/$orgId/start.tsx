@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Play, Square, Sparkles, List, BarChart3, BookmarkPlus, Coffee } from "lucide-react";
+import { Play, Square, Sparkles, List, BarChart3, BookmarkPlus, Coffee, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   attachMarksToEntry,
@@ -46,9 +46,10 @@ const ENTRY_SELECT =
 type StartPaneProps = {
   onOpenTimer?: () => void;
   onOpenReports?: () => void;
+  onOpenSchedule?: () => void;
 };
 
-export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
+export function StartPane({ onOpenTimer, onOpenReports, onOpenSchedule }: StartPaneProps) {
   const { org, orgId } = orgRoute.useRouteContext();
   const { user } = authRoute.useRouteContext() as {
     user: { id: string; email?: string; user_metadata?: { full_name?: string } };
@@ -254,18 +255,25 @@ export function StartPane({ onOpenTimer, onOpenReports }: StartPaneProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden">
-      <div className="grid shrink-0 grid-cols-2 gap-2">
+      <div className="grid shrink-0 grid-cols-3 gap-2">
         <button
           type="button"
           onClick={() => onOpenTimer?.()}
-          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 font-display text-xs font-bold uppercase tracking-[0.12em]"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 font-display text-xs font-bold uppercase tracking-[0.12em]"
         >
           <List className="h-3.5 w-3.5 text-primary" /> Timer
         </button>
         <button
           type="button"
+          onClick={() => onOpenSchedule?.()}
+          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 font-display text-xs font-bold uppercase tracking-[0.12em]"
+        >
+          <CalendarClock className="h-3.5 w-3.5 text-primary" /> Vakt
+        </button>
+        <button
+          type="button"
           onClick={() => onOpenReports?.()}
-          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 font-display text-xs font-bold uppercase tracking-[0.12em]"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 font-display text-xs font-bold uppercase tracking-[0.12em]"
         >
           <BarChart3 className="h-3.5 w-3.5 text-primary" /> Rapport
         </button>

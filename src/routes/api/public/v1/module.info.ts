@@ -29,6 +29,7 @@ export const Route = createFileRoute("/api/public/v1/module/info")({
               projects: `${base}/api/public/v1/projects`,
               rates: `${base}/api/public/v1/rates`,
               time_entries: `${base}/api/public/v1/time-entries`,
+              schedule: `${base}/api/public/v1/schedule`,
             },
             scopes: {
               organization: ["platform:read"],
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/api/public/v1/module/info")({
               rates: ["time:read", "platform:read"],
               time_entries_read: ["time:read", "platform:read"],
               time_entries_write: ["time:write", "platform:read"],
+              schedule_read: ["schedule:read"],
+              schedule_write: ["schedule:write"],
             },
             deep_links: workModuleDeepLinks,
             widgets: workModuleWidgets,

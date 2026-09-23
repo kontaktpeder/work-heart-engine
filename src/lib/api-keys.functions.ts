@@ -8,6 +8,8 @@ const ScopeSchema = z.enum([
   "reports:read",
   "platform:read",
   "platform:verify",
+  "schedule:read",
+  "schedule:write",
 ]);
 
 const CreateInputSchema = z.object({

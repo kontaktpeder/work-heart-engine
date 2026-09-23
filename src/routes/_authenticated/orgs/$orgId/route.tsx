@@ -32,6 +32,7 @@ import { useAppFrame } from "@/hooks/useAppFrame";
 import { isEditableFocused, useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { startOfDay } from "@/lib/time-utils";
 import { StartPane } from "./start";
+import { SchedulePane } from "./schedule";
 import { TimerPane } from "./timer";
 import { ReportsPane } from "./reports";
 import { ProjectsPane } from "./settings.projects";
@@ -43,6 +44,7 @@ import { FinanceIntegrationPane } from "./settings.finance-integration";
 import { ApiKeysPane } from "./settings.api-keys";
 import {
   canOpenSettingsSection,
+  isOrgAdmin,
   SETTINGS_ITEMS,
   visibleSettingsItems,
   type OrgMembership,
@@ -51,7 +53,7 @@ import {
 
 const OrgSearch = z.object({
   return: z.string().optional(),
-  sheet: z.enum(["timer", "reports", "settings"]).optional(),
+  sheet: z.enum(["timer", "reports", "settings", "schedule"]).optional(),
   section: z
     .enum(["report", "members", "organization", "projects", "rates", "finance", "api-keys"])
     .optional(),
@@ -300,6 +302,7 @@ function OrgLayout() {
           <StartPane
             onOpenTimer={() => openSheet("timer")}
             onOpenReports={() => openSheet("reports")}
+            onOpenSchedule={() => openSheet("schedule")}
           />
         </div>
       </div>
@@ -311,6 +314,17 @@ function OrgLayout() {
             className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           >
             <TimerPane />
+          </div>
+        </ContentSheet>
+      ) : null}
+
+      {sheet === "schedule" ? (
+        <ContentSheet onClose={closeSheet} title={isOrgAdmin(role) ? "Vaktplan" : "Mine vakter"} detents={["half", "full"]}>
+          <div
+            data-sheet-scroll
+            className="scroll-touch min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          >
+            <SchedulePane />
           </div>
         </ContentSheet>
       ) : null}

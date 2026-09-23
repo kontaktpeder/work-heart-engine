@@ -102,7 +102,7 @@ export const listOrganizationMembers = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await supabase
       .from("organization_members")
-      .select("id, user_id, role, created_at")
+      .select("id, user_id, role, created_at, report_employee_name")
       .eq("organization_id", data.organizationId)
       .order("created_at");
     if (error) throw new Error(error.message);
@@ -118,6 +118,7 @@ export const listOrganizationMembers = createServerFn({ method: "POST" })
           role: m.role as string,
           createdAt: m.created_at as string,
           email: userData.user?.email ?? null,
+          reportEmployeeName: (m.report_employee_name as string | null) ?? null,
           localAccount: isWorkLocalAccountMetadata(meta),
         };
       }),

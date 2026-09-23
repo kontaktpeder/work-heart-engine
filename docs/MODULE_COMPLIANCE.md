@@ -17,6 +17,10 @@ Spec (frozen): `platform-nexus/docs/MODULE_CONTRACT.v1.md`
 | /api/public/v1/module/organization/{org_id} | GET | platform:verify |
 | /api/public/v1/module/widgets?ids=... | GET | platform:read |
 | /api/public/v1/module/alerts | GET | platform:read (v1.1 additive) |
+| /api/public/v1/schedule | GET | schedule:read |
+| /api/public/v1/schedule | POST | schedule:write |
+| /api/public/v1/schedule/{day_id} | PATCH, DELETE | schedule:write |
+| /api/public/v1/schedule/assignments/{assignment_id} | PATCH, DELETE | schedule:write |
 
 Wrong `org_id` on verify → **404** (not 403).
 
@@ -50,6 +54,7 @@ Computation:
 | org_home | `/orgs/{org_id}` |
 | org_timer | `/orgs/{org_id}/timer` |
 | org_reports | `/orgs/{org_id}/reports` |
+| org_schedule | `/orgs/{org_id}/schedule` |
 
 ## Alerts (Mission — Module Contract v1.1)
 

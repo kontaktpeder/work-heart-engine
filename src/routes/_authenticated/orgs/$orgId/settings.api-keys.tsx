@@ -29,6 +29,8 @@ const ALL_SCOPES = [
   "reports:read",
   "platform:read",
   "platform:verify",
+  "schedule:read",
+  "schedule:write",
 ] as const;
 
 type Scope = (typeof ALL_SCOPES)[number];

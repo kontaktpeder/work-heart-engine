@@ -14,6 +14,8 @@ export const workModuleInfo = {
     "projects.read",
     "rates.read",
     "reports.read",
+    "schedule.read",
+    "schedule.write",
     "platform.organization.read",
     "platform.organization.verify",
   ],
@@ -52,6 +54,7 @@ export const workModuleDeepLinks = {
   org_home: "/orgs/{org_id}",
   org_timer: "/orgs/{org_id}/timer",
   org_reports: "/orgs/{org_id}/reports",
+  org_schedule: "/orgs/{org_id}/schedule",
 } as const;
 
 export const workModuleWidgets = [
